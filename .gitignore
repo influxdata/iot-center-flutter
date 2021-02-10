@@ -19,3 +19,7 @@ doc/api/
 *.js_
 *.js.deps
 *.js.map
+/flutter_influx_app.iml
+.idea/
+/android/
+/ios/

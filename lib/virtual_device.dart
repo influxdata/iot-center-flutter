@@ -32,7 +32,9 @@ class _VirtualDeviceState extends State<VirtualDevice> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
       buildDeviceSelector(selectedDevice, deviceList, maxPastTime, (val) {
         print("selected $val");
         setState(() {
@@ -92,9 +94,10 @@ class _VirtualDeviceState extends State<VirtualDevice> {
                   child: Center(
                       child:
                           createSimpleChartComponent("TVOC", (v) => "$v ppm"))),
-            ],
+              ],
           ))),
-    ]);
+          Spacer()]
+    );
   }
 
   Widget createGaugeComponent(

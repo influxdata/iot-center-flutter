@@ -18,6 +18,7 @@ class DevicePage extends StatefulWidget {
 class _DevicePageState extends State<DevicePage> {
   Map selectedDevice;
   List deviceList;
+  bool _writeInProgress = false;
 
   _DevicePageState(this.selectedDevice, this.deviceList);
 
@@ -54,19 +55,16 @@ class _DevicePageState extends State<DevicePage> {
               ])),
           MaterialButton(
             onPressed: () async {
-              setState(() {
-                var device = selectedDevice['deviceId'];
-                print("write data.... ${device}");
-                 writeEmulatedData(device, (total, progress, ddd) {
-                  print ("$total $progress $ddd");
-                }).then((value) => print("Write Completed $value"));
-
-              });
-
+              if (_writeInProgress) {
+                return;
+              }
+              var x = await _writeSampleData();
+              print("Points written $x");
             },
             textTheme: ButtonTextTheme.primary,
-              color: Colors.indigo,
-            child: Text("Write testing data"),
+            color: _writeInProgress ? Colors.red:  Colors.indigo,
+
+            child: Text(_writeInProgress ? "Write in progress..." : "Write testing data"),
             // Icon(Icons.autorenew_rounded),
           ),
           Spacer(),
@@ -103,6 +101,23 @@ class _DevicePageState extends State<DevicePage> {
         ]));
   }
 
+  Future<num> _writeSampleData() async {
+    setState(() {
+      var device = selectedDevice['deviceId'];
+      print("write data.... ${device}");
+      _writeInProgress = true;
+      writeEmulatedData(device, (total, progress, ddd) {
+        print("$total $progress $ddd");
+      }).then((value) {
+        print("Write Completed $value");
+        setState(() {
+          _writeInProgress = false;
+        });
+        return value;
+      });
+    });
+  }
+
   void _refresh() {}
 
   Widget _buildList(DeviceConfig deviceDetail) {
@@ -113,11 +128,11 @@ class _DevicePageState extends State<DevicePage> {
         _tile(selectedDevice['deviceId'], 'Device Id', Icons.device_thermostat),
         _tile(deviceDetail.createdAt, 'Registration Time', Icons.lock_clock),
         _tile(
-            deviceDetail.influx_url, 'InfluxDB URL', Icons.cloud_done_outlined),
-        _tile(deviceDetail.influx_org, 'InfluxDB Organization', Icons.work),
-        _tile(deviceDetail.influx_bucket, 'InfluxDB Bucket',
+            deviceDetail.influxUrl, 'InfluxDB URL', Icons.cloud_done_outlined),
+        _tile(deviceDetail.influxOrg, 'InfluxDB Organization', Icons.work),
+        _tile(deviceDetail.influxBucket, 'InfluxDB Bucket',
             Icons.shopping_basket_rounded),
-        _tile(deviceDetail.influx_token.toString().substring(0, 3) + "...",
+        _tile(deviceDetail.influxToken.toString().substring(0, 3) + "...",
             'InfluxDB Token', Icons.theaters),
         Divider(),
       ],

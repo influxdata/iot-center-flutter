@@ -6,46 +6,58 @@ import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
 
 var debugClient = false;
+
+//tod make configurable
 var iotCenterApi = fixLocalhost("http://localhost:5000");
 
+//replace localhost with 10.0.2.2 for android devices
 fixLocalhost(String url) {
-    if (Platform.isAndroid) {
-      if (url.startsWith("http://localhost")) {
-
-        return url.replaceAll("/localhost", "/10.0.2.2");
+  if (Platform.isAndroid) {
+    if (url.startsWith("http://localhost")) {
+      return url.replaceAll("/localhost", "/10.0.2.2");
     }
   } else {
-      return url;
-    }
+    return url;
+  }
+}
+
+InfluxDBClient createClient(DeviceConfig config) {
+  if (config == null) {
+    return null;
+  }
+  return new InfluxDBClient(
+      url: fixLocalhost(config.influxUrl),
+      token: config.influxToken,
+      bucket: config.influxBucket,
+      debug: debugClient,
+      org: config.influxOrg);
 }
 
 class DeviceConfig {
-  String influx_url;
-  String influx_org;
-  String influx_token;
-  String influx_bucket;
+  String influxUrl;
+  String influxOrg;
+  String influxToken;
+  String influxBucket;
   String createdAt;
   String id;
 
   DeviceConfig.fromJson(Map<String, dynamic> json)
-      : influx_url = json['influx_url'],
-        influx_org = json['influx_org'],
-        influx_token = json['influx_token'],
-        influx_bucket = json['influx_bucket'],
+      : influxUrl = json['influx_url'],
+        influxOrg = json['influx_org'],
+        influxToken = json['influx_token'],
+        influxBucket = json['influx_bucket'],
         createdAt = json['createdAt'],
         id = json['id'];
 
   Map<String, dynamic> toJson() => {
-        'influx_url': influx_url,
-        'influx_org': influx_org,
-        'influx_token': influx_token,
-        'influx_bucket': influx_bucket,
+        'influx_url': influxUrl,
+        'influx_org': influxOrg,
+        'influx_token': influxToken,
+        'influx_bucket': influxBucket,
         'createdAt': createdAt,
         'id': id,
       };
 }
-
-// HttpClient http = new HttpClient();
 
 Future<List<dynamic>> fetchDevices() async {
   var response = await http.get(Uri.parse(iotCenterApi + "/api/devices"));
@@ -73,15 +85,13 @@ Future<List<FluxRecord>> fetchDeviceDataFieldLast(
   if (deviceId == null) {
     return null;
   }
-
   var config = await fetchDeviceConfig(deviceId);
-
   var influxDBClient = createClient(config);
   var queryApi = influxDBClient.getQueryService();
 
   var fluxQuery = '''
 import "influxdata/influxdb/v1"
-from(bucket: "${config.influx_bucket}")
+from(bucket: "${config.influxBucket}")
 |> range(start: ${maxPastTime})
 |> filter(fn: (r) => r.clientId == "${config.id}")
 |> filter(fn: (r) => r._measurement == "environment")
@@ -91,20 +101,12 @@ from(bucket: "${config.influx_bucket}")
 ''';
 
   print(fluxQuery);
-  var stream = await queryApi.query(fluxQuery);
-  return stream.toList();
-}
-
-InfluxDBClient createClient(DeviceConfig config) {
-  if (config == null) {
-    return null;
+  try {
+    var stream = await queryApi.query(fluxQuery);
+    return stream.toList();
+  } finally {
+    influxDBClient.close();
   }
-  return new InfluxDBClient(
-    url: fixLocalhost(config.influx_url),
-    token: config.influx_token,
-    bucket: config.influx_bucket,
-    debug: debugClient,
-    org: config.influx_org);
 }
 
 Future<List<FluxRecord>> fetchDeviceDataField(
@@ -116,7 +118,7 @@ Future<List<FluxRecord>> fetchDeviceDataField(
 
   var fluxQuery = '''
 import "influxdata/influxdb/v1"
-from(bucket: "${config.influx_bucket}")
+from(bucket: "${config.influxBucket}")
 |> range(start: ${maxPastTime})
 |> filter(fn: (r) => r.clientId == "${config.id}")
 |> filter(fn: (r) => r._measurement == "environment")
@@ -125,19 +127,26 @@ from(bucket: "${config.influx_bucket}")
 ''';
 
   print(fluxQuery);
-  var stream = await queryApi.query(fluxQuery);
-  return stream.toList();
+  try {
+    var stream = await queryApi.query(fluxQuery);
+    return stream.toList();
+  } finally {
+    influxDBClient.close();
+  }
 }
 
 Future<List<FluxRecord>> fetchMeasurements(String deviceId) async {
   var config = await fetchDeviceConfig(deviceId);
   var influxDBClient = createClient(config);
   var queryApi = influxDBClient.getQueryService();
-
-  var fluxQuery = queryMeasurements(config.influx_bucket, config.id);
+  var fluxQuery = queryMeasurements(config.influxBucket, config.id);
   print(fluxQuery);
-  var stream = await queryApi.query(fluxQuery);
-  return stream.toList();
+  try {
+    var stream = await queryApi.query(fluxQuery);
+    return stream.toList();
+  } finally {
+    influxDBClient.close();
+  }
 }
 
 String queryMeasurements(String bucket, String clientId) {
@@ -167,7 +176,9 @@ Future writeEmulatedData(String deviceId, Function onProgress) async {
   var influxDBClient = createClient(config);
 
 // calculate window to emulate writes
-  var toTime = (DateTime.now().toUtc().millisecondsSinceEpoch / 60000).truncate() * 60000;
+  var toTime =
+      (DateTime.now().toUtc().millisecondsSinceEpoch / 60000).truncate() *
+          60000;
   var lastTime = toTime - 30 * 24 * 60 * 60 * 1000;
 
 // const getGPX = generateGPXData.bind(undefined, await fetchGPXData())
@@ -226,6 +237,7 @@ Future writeEmulatedData(String deviceId, Function onProgress) async {
     } finally {
       await writeApi.flush();
       await writeApi.close();
+      influxDBClient.close();
     }
     onProgress(100, pointsWritten, totalPoints);
   }

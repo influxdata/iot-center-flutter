@@ -32,7 +32,7 @@ Expanded buildDeviceSelector(
     Function onRefresh) {
   return Expanded(
       flex: 1,
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         DropdownButton<String>(
           hint: new Text("Select device"),
           value: selectedDevice != null ? selectedDevice['deviceId'] : null,
@@ -41,7 +41,7 @@ Expanded buildDeviceSelector(
                 value: map['deviceId'].toString(),
                 child: new Text(
                   map['deviceId'],
-                  // style: TextStyle(fontSize: 20)),
+                  style: TextStyle(fontSize: 16),
                 ));
           })?.toList(),
           onChanged: onChangeDevice,
@@ -54,7 +54,7 @@ Expanded buildDeviceSelector(
                   value: map['value'].toString(),
                   child: new Text(
                     map['label'],
-                    // style: TextStyle(fontSize: 20)),
+                    style: TextStyle(fontSize: 16),
                   ));
             }).toList(),
             onChanged: onChangeTimeRange),

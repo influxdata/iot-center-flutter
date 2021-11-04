@@ -1,16 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-
-// String maxPastTime = "-1d";
-
-String getLocalhost() {
-  if (Platform.isAndroid) {
-    return 'http://10.0.2.2:8086';
-  }
-  return 'http://localhost:8086';
-}
-
 
 List timeOptions = [
   {"label": 'Past 5m', "value": '-5m'},
@@ -24,26 +12,26 @@ List timeOptions = [
 ];
 
 Expanded buildDeviceSelector(
-    Map selectedDevice,
+    Map? selectedDevice,
     List deviceList,
     String maxPastTime,
-    Function onChangeDevice,
-    Function onChangeTimeRange,
-    Function onRefresh) {
+    void Function(String?)? onChangeDevice,
+    void Function(String?)? onChangeTimeRange,
+    void Function() onRefresh) {
   return Expanded(
       flex: 1,
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         DropdownButton<String>(
           hint: new Text("Select device"),
           value: selectedDevice != null ? selectedDevice['deviceId'] : null,
-          items: deviceList?.map((dynamic map) {
+          items: deviceList.map((dynamic map) {
             return new DropdownMenuItem<String>(
                 value: map['deviceId'].toString(),
                 child: new Text(
                   map['deviceId'],
                   style: TextStyle(fontSize: 16),
                 ));
-          })?.toList(),
+          }).toList(),
           onChanged: onChangeDevice,
         ),
         DropdownButton<String>(

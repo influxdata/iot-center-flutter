@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:influxdb_client/api.dart';
+import 'package:intl/intl.dart';
 
 import 'iot_center.dart';
 
 class DevicePage extends StatefulWidget {
-  Map selectedDevice;
+  final Map selectedDevice;
 
-  List deviceList;
+  final List deviceList;
 
   @override
   State<StatefulWidget> createState() =>
       _DevicePageState(this.selectedDevice, this.deviceList);
 
-  DevicePage({this.selectedDevice, this.deviceList});
+  DevicePage(this.selectedDevice, this.deviceList);
 }
 
 class _DevicePageState extends State<DevicePage> {
@@ -30,7 +31,7 @@ class _DevicePageState extends State<DevicePage> {
         ),
         body: Column(children: [
           Expanded(
-              flex: 1,
+              flex: 2,
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 DropdownButton<String>(
@@ -39,10 +40,8 @@ class _DevicePageState extends State<DevicePage> {
                   value: selectedDevice['deviceId'],
                   items: deviceList.map((dynamic map) {
                     return new DropdownMenuItem<String>(
-                      value: map['deviceId'].toString(),
-                      child: new Text(map['deviceId'],
-                          style: TextStyle(fontSize: 20)),
-                    );
+                        value: map['deviceId'].toString(),
+                        child: new Text(map['deviceId']));
                   }).toList(),
                   onChanged: (val) {
                     print("selected $val");
@@ -62,10 +61,10 @@ class _DevicePageState extends State<DevicePage> {
               print("Points written $x");
             },
             textTheme: ButtonTextTheme.primary,
-            color: _writeInProgress ? Colors.red:  Colors.indigo,
-
-            child: Text(_writeInProgress ? "Write in progress..." : "Write testing data"),
-            // Icon(Icons.autorenew_rounded),
+            color: _writeInProgress ? Colors.red : Colors.indigo,
+            child: Text(_writeInProgress
+                ? "Write in progress..."
+                : "Write testing data"),
           ),
           Spacer(),
           Expanded(
@@ -78,7 +77,7 @@ class _DevicePageState extends State<DevicePage> {
                           return Text(snapshot.error.toString());
                         }
                         if (snapshot.hasData) {
-                          return _buildList(snapshot.data);
+                          return _buildList(snapshot.data!);
                         } else {
                           return Text("loading...");
                         }
@@ -101,10 +100,10 @@ class _DevicePageState extends State<DevicePage> {
         ]));
   }
 
-  Future<num> _writeSampleData() async {
+  Future<num?> _writeSampleData() async {
     setState(() {
       var device = selectedDevice['deviceId'];
-      print("write data.... ${device}");
+      print("write data.... $device");
       _writeInProgress = true;
       writeEmulatedData(device, (total, progress, ddd) {
         print("$total $progress $ddd");
@@ -118,12 +117,8 @@ class _DevicePageState extends State<DevicePage> {
     });
   }
 
-  void _refresh() {}
-
   Widget _buildList(DeviceConfig deviceDetail) {
     return ListView(
-      // var x = fetchDeviceInfo(selectedDevice['deviceId']);
-
       children: [
         _tile(selectedDevice['deviceId'], 'Device Id', Icons.device_thermostat),
         _tile(deviceDetail.createdAt, 'Registration Time', Icons.lock_clock),
@@ -140,16 +135,14 @@ class _DevicePageState extends State<DevicePage> {
   }
 
   ListTile _tile(String title, String subtitle, IconData icon) => ListTile(
-        title: Text(title, style: TextStyle()),
+        title: Text(title),
         subtitle: Text(subtitle),
         leading: Icon(
           icon,
-          size: 30,
-          color: Colors.indigo,
         ),
       );
 
-  TextStyle _bold = TextStyle(fontWeight: FontWeight.bold);
+  var _bold = TextStyle(fontWeight: FontWeight.bold);
 
   Widget _buildMeasurementList(List<FluxRecord> records) {
     List<TableRow> rows = [];
@@ -161,13 +154,17 @@ class _DevicePageState extends State<DevicePage> {
       Text("min", style: _bold),
     ]));
 
+    var format = NumberFormat.decimalPattern();
     records.forEach((r) {
       rows.add(TableRow(children: [
-        Text(r["_field"]),
-        Text(r["count"].toString()),
-        Text(r["maxTime"].toString()),
-        Text(r["maxValue"].toString()),
-        Text(r["minValue"].toString()),
+        Text(
+          r["_field"],
+          textScaleFactor: 0.7,
+        ),
+        Text(r["count"].toString(), textScaleFactor: 0.7),
+        Text(r["maxTime"], textScaleFactor: 0.7),
+        Text(format.format(r["maxValue"]), textScaleFactor: 0.7),
+        Text(format.format(r["minValue"]), textScaleFactor: 0.7),
       ]));
     });
 

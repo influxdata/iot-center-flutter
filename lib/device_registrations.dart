@@ -19,7 +19,9 @@ class _DeviceRegistrationsState extends State<DeviceRegistrations> {
         devices.clear();
         devices.addAll(devicesJson);
       });
-    }).catchError((e)=>print(e));
+    }).catchError((e) {
+      print(e);
+    });
   }
 
   @override
@@ -29,14 +31,16 @@ class _DeviceRegistrationsState extends State<DeviceRegistrations> {
         itemBuilder: (context, position) {
           return Column(children: <Widget>[
             Divider(height: 5.0),
-            ListTile(onTap: () {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (c) => DevicePage(selectedDevice: devices[position], deviceList: devices))
-              );
-            },
+            ListTile(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (c) =>
+                              DevicePage(devices[position], devices)));
+                },
                 title: Text('${devices[position]['deviceId']}',
                     style: TextStyle(fontSize: 22.0))),
-
           ]);
         });
   }

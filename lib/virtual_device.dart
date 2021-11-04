@@ -1,10 +1,7 @@
-import 'dart:math';
-
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
 import 'package:flutter_influx_app/iot_center.dart';
 import 'package:influxdb_client/api.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
-import 'dart:math' as math;
 
 import 'commons.dart';
 
@@ -13,7 +10,7 @@ class VirtualDevice extends StatefulWidget {
 }
 
 class _VirtualDeviceState extends State<VirtualDevice> {
-  Map selectedDevice;
+  Map? selectedDevice;
   List deviceList = [];
 
   String maxPastTime = "-1d";
@@ -27,14 +24,14 @@ class _VirtualDeviceState extends State<VirtualDevice> {
         deviceList.addAll(devicesJson);
         selectedDevice = deviceList.first;
       });
-    }).catchError((e) => print(e));
+    }).catchError((e) {
+      print(e);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
+    return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       buildDeviceSelector(selectedDevice, deviceList, maxPastTime, (val) {
         print("selected $val");
         setState(() {
@@ -44,7 +41,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
       }, (val) {
         print("selected $val");
         setState(() {
-          maxPastTime = val;
+          maxPastTime = val!;
         });
       }, () {
         print("refresh");
@@ -81,7 +78,8 @@ class _VirtualDeviceState extends State<VirtualDevice> {
               Expanded(
                   flex: 1,
                   child: Center(
-                      child: createGaugeComponent("Pressure", (v) => "$v hpa"))),
+                      child:
+                          createGaugeComponent("Pressure", (v) => "$v hpa"))),
             ],
           ))),
       Expanded(
@@ -94,17 +92,17 @@ class _VirtualDeviceState extends State<VirtualDevice> {
                   child: Center(
                       child:
                           createSimpleChartComponent("TVOC", (v) => "$v ppm"))),
-              ],
+            ],
           ))),
-          Spacer()]
-    );
+      Spacer()
+    ]);
   }
 
   Widget createGaugeComponent(
       String measurement, String Function(dynamic) labelFn) {
     return FutureBuilder<dynamic>(
         future: fetchDeviceDataFieldLast(
-            selectedDevice != null ? selectedDevice['deviceId'] : null,
+            selectedDevice != null ? selectedDevice!['deviceId'] : null,
             measurement,
             maxPastTime),
         builder: (context, AsyncSnapshot<dynamic> snapshot) {
@@ -121,14 +119,15 @@ class _VirtualDeviceState extends State<VirtualDevice> {
 
   void _refresh() {}
 
-  Widget _buildChart(List<FluxRecord> data, String measurement, Function labelFn) {
+  Widget _buildChart(
+      List<FluxRecord>? data, String measurement, Function labelFn) {
     if (data == null || data.isEmpty) {
       return Text("$measurement - no data");
     }
     var last = data.last["_value"];
     final d = [
       new charts.Series<dynamic, DateTime>(
-        id:  measurement,
+        id: measurement,
         data: data,
         // colorFn: (FluxRecord r, _) => r.color,
         domainFn: (r, _) => DateTime.parse(r['_time']),
@@ -148,8 +147,9 @@ class _VirtualDeviceState extends State<VirtualDevice> {
         animate: true,
       ),
       Center(
-        child: Text(labelFn(last is int ? last :
-            double.parse((last).toStringAsFixed(2))),
+        child: Text(
+            labelFn(
+                last is int ? last : double.parse((last).toStringAsFixed(2))),
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
       )
     ]));
@@ -159,7 +159,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
       String measurement, String Function(dynamic) labelFn) {
     return FutureBuilder<List<FluxRecord>>(
         future: fetchDeviceDataField(
-            selectedDevice != null ? selectedDevice['deviceId'] : null,
+            selectedDevice != null ? selectedDevice!['deviceId'] : null,
             measurement,
             maxPastTime),
         builder: (context, AsyncSnapshot<List<FluxRecord>> snapshot) {
@@ -176,14 +176,13 @@ class _VirtualDeviceState extends State<VirtualDevice> {
 }
 
 Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
-  if (data == null || data.isEmpty) {
+  if (data.isEmpty) {
     return Text("$s - no data");
   }
   var last = data.last["_value"];
   final chartData = [
     new GaugeSegment('', 0, charts.MaterialPalette.indigo.shadeDefault),
-    new GaugeSegment(
-        'Actual', last, charts.MaterialPalette.indigo.shadeDefault),
+    new GaugeSegment('Actual', last, charts.MaterialPalette.blue.shadeDefault),
     new GaugeSegment('', 100, charts.MaterialPalette.gray.shadeDefault),
   ];
   final d = [
@@ -191,7 +190,8 @@ Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
       id: 'Segments',
       colorFn: (GaugeSegment segment, _) => segment.color,
       domainFn: (GaugeSegment segment, _) => segment.segment,
-      measureFn: (GaugeSegment segment, _) =>  double.parse((segment.value).toStringAsFixed(2)),
+      measureFn: (GaugeSegment segment, _) =>
+          double.parse((segment.value).toStringAsFixed(2)),
       labelAccessorFn: (GaugeSegment segment, _) => labelFn(segment.value),
       data: chartData,
     )
@@ -203,13 +203,15 @@ Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
         alignment: Alignment.topCenter,
         child: Text(s,
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
-    charts.PieChart(d,
-        animate: true,
-        defaultRenderer: new charts.ArcRendererConfig(
-            arcWidth: 20, startAngle: 4 / 5 * pi, arcLength: 7 / 5 * pi)),
+    charts.PieChart(
+      d,
+      animate: true,
+      // defaultRenderer: new charts.ArcRendererConfig(
+      //     arcWidth: 20, startAngle: 4 / 5 * pi, arcLength: 7 / 5 * pi)
+    ),
     Center(
-      child: Text(labelFn(last is int ? last :
-      double.parse((last).toStringAsFixed(2))),
+      child: Text(
+          labelFn(last is int ? last : double.parse((last).toStringAsFixed(2))),
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
     )
   ]));

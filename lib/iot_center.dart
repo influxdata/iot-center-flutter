@@ -69,8 +69,8 @@ Future<List<dynamic>> fetchDevices() async {
 }
 
 Future<DeviceConfig> fetchDeviceConfig(String deviceId) async {
-  var response =
-      await http.get(Uri.parse(await _getIotCenterApi() + "/api/env/$deviceId"));
+  var response = await http
+      .get(Uri.parse(await _getIotCenterApi() + "/api/env/$deviceId"));
   if (response.statusCode == 200) {
     return DeviceConfig.fromJson(jsonDecode(response.body));
   } else {

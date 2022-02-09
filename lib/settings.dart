@@ -1,8 +1,10 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
-  SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({Key? key}) : super(key: key);
 
   @override
   _SettingsPageState createState() {
@@ -12,13 +14,13 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("Preferences"),
+          title: const Text("Preferences"),
         ),
         body: Form(
           key: _formKey,
@@ -39,7 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   SharedPreferences prefs =
                       await SharedPreferences.getInstance();
                   prefs.setString("iot_center_url", value.toString());
-                  print("Saved: $value ");
+                  developer.log("Saved: $value ", name: "SharedPreferences");
                 },
               ),
               ElevatedButton(
@@ -60,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     SharedPreferences.getInstance().then((prefs) {
       var val = prefs.getString("iot_center_url");
-      _controller.text = val != null ? val : "";
+      _controller.text = val ?? "";
     });
   }
 }

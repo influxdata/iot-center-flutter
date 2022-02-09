@@ -1,11 +1,17 @@
+import 'dart:developer' as developer;
+
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/material.dart';
 import 'package:flutter_influx_app/iot_center.dart';
 import 'package:influxdb_client/api.dart';
+import 'package:logging/logging.dart';
 
 import 'commons.dart';
 
 class VirtualDevice extends StatefulWidget {
+  const VirtualDevice({Key? key}) : super(key: key);
+
+  @override
   State createState() => _VirtualDeviceState();
 }
 
@@ -25,7 +31,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
         selectedDevice = deviceList.first;
       });
     }).catchError((e) {
-      print(e);
+      developer.log(e, name: "virtual_device", level: Level.SEVERE.value);
     });
   }
 
@@ -33,23 +39,20 @@ class _VirtualDeviceState extends State<VirtualDevice> {
   Widget build(BuildContext context) {
     return Column(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
       buildDeviceSelector(selectedDevice, deviceList, maxPastTime, (val) {
-        print("selected $val");
         setState(() {
           selectedDevice =
               deviceList.firstWhere((element) => element['deviceId'] == val);
         });
       }, (val) {
-        print("selected $val");
         setState(() {
           maxPastTime = val!;
         });
       }, () {
-        print("refresh");
         setState(() {
           _refresh();
         });
       }),
-      Spacer(),
+      const Spacer(),
       Expanded(
           flex: 4,
           child: Center(
@@ -94,7 +97,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
                           createSimpleChartComponent("TVOC", (v) => "$v ppm"))),
             ],
           ))),
-      Spacer()
+      const Spacer()
     ]);
   }
 
@@ -112,7 +115,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
           if (snapshot.hasData) {
             return _buildGauge(snapshot.data, measurement, labelFn);
           } else {
-            return Text("loading...");
+            return const Text("loading...");
           }
         });
   }
@@ -126,7 +129,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
     }
     var last = data.last["_value"];
     final d = [
-      new charts.Series<dynamic, DateTime>(
+      charts.Series<dynamic, DateTime>(
         id: measurement,
         data: data,
         // colorFn: (FluxRecord r, _) => r.color,
@@ -136,12 +139,12 @@ class _VirtualDeviceState extends State<VirtualDevice> {
       )
     ];
 
-    return Container(
-        child: Stack(children: [
+    return Stack(children: [
       Align(
           alignment: Alignment.topCenter,
           child: Text(measurement,
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
       charts.TimeSeriesChart(
         d,
         animate: true,
@@ -150,9 +153,9 @@ class _VirtualDeviceState extends State<VirtualDevice> {
         child: Text(
             labelFn(
                 last is int ? last : double.parse((last).toStringAsFixed(2))),
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
       )
-    ]));
+    ]);
   }
 
   Widget createSimpleChartComponent(
@@ -169,7 +172,7 @@ class _VirtualDeviceState extends State<VirtualDevice> {
           if (snapshot.hasData) {
             return _buildChart(snapshot.data, measurement, labelFn);
           } else {
-            return Text("loading...");
+            return const Text("loading...");
           }
         });
   }
@@ -181,12 +184,12 @@ Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
   }
   var last = data.last["_value"];
   final chartData = [
-    new GaugeSegment('', 0, charts.MaterialPalette.indigo.shadeDefault),
-    new GaugeSegment('Actual', last, charts.MaterialPalette.blue.shadeDefault),
-    new GaugeSegment('', 100, charts.MaterialPalette.gray.shadeDefault),
+    GaugeSegment('', 0, charts.MaterialPalette.indigo.shadeDefault),
+    GaugeSegment('Actual', last, charts.MaterialPalette.blue.shadeDefault),
+    GaugeSegment('', 100, charts.MaterialPalette.gray.shadeDefault),
   ];
   final d = [
-    new charts.Series<GaugeSegment, String>(
+    charts.Series<GaugeSegment, String>(
       id: 'Segments',
       colorFn: (GaugeSegment segment, _) => segment.color,
       domainFn: (GaugeSegment segment, _) => segment.segment,
@@ -197,12 +200,11 @@ Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
     )
   ];
 
-  return Container(
-      child: Stack(children: [
+  return Stack(children: [
     Align(
         alignment: Alignment.topCenter,
         child: Text(s,
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
     charts.PieChart(
       d,
       animate: true,
@@ -212,9 +214,9 @@ Widget _buildGauge(List<FluxRecord> data, String s, Function labelFn) {
     Center(
       child: Text(
           labelFn(last is int ? last : double.parse((last).toStringAsFixed(2))),
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
     )
-  ]));
+  ]);
 }
 
 /// Sample data type.

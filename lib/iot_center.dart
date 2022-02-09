@@ -1,16 +1,15 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 //replace localhost with 10.0.2.2 for android devices
 String _fixLocalhost(String? url) {
-  if (url == null) {
-    url = "http://localhost:5000";
-  }
+  url ??= "http://localhost:5000";
   if (defaultTargetPlatform == TargetPlatform.android &&
       url.startsWith("http://localhost")) {
     return url.replaceAll("/localhost", "/10.0.2.2");
@@ -24,7 +23,7 @@ Future<String> _getIotCenterApi() async {
 }
 
 InfluxDBClient _createClient(DeviceConfig config) {
-  return new InfluxDBClient(
+  return InfluxDBClient(
       url: _fixLocalhost(config.influxUrl),
       token: config.influxToken,
       bucket: config.influxBucket,
@@ -184,7 +183,7 @@ Future writeEmulatedData(String deviceId, Function onProgress) async {
   var pointsWritten = 0;
 
   if (totalPoints > 0) {
-    var batchSize = 1000;
+    var batchSize = 5000;
 
     var writeApi = influxDBClient.getWriteService(
         WriteOptions().merge(batchSize: batchSize, precision: WritePrecision.ms
@@ -229,7 +228,7 @@ Future writeEmulatedData(String deviceId, Function onProgress) async {
         }
       }
     } catch (e) {
-      print("Error: $e");
+      developer.log(e.toString(), level: 1000);
     } finally {
       await writeApi.flush();
       await writeApi.close();
@@ -241,17 +240,17 @@ Future writeEmulatedData(String deviceId, Function onProgress) async {
   return pointsWritten;
 }
 
-const _DAY_MILLIS = 24 * 60 * 60 * 1000;
+const dayMillis = 24 * 60 * 60 * 1000;
 var _rnd = Random();
 
 num _generate({required num period, int min = 0, max = 40, required num time}) {
   var dif = max - min;
 // generate main value
   var periodValue =
-      (dif / 4) * sin((((time / _DAY_MILLIS) % period) / period) * 2 * pi);
+      (dif / 4) * sin((((time / dayMillis) % period) / period) * 2 * pi);
 // generate secondary value, which is lowest at noon
   var dayValue =
-      (dif / 4) * sin(((time % _DAY_MILLIS) / _DAY_MILLIS) * 2 * pi - pi / 2);
+      (dif / 4) * sin(((time % dayMillis) / dayMillis) * 2 * pi - pi / 2);
   return (((min + dif / 2 + periodValue + dayValue + _rnd.nextDouble() * 10) /
       10));
 }

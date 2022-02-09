@@ -1,9 +1,13 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_influx_app/iot_center.dart';
 
 import 'device_page.dart';
 
 class DeviceRegistrations extends StatefulWidget {
+  const DeviceRegistrations({Key? key}) : super(key: key);
+
   @override
   State createState() => _DeviceRegistrationsState();
 }
@@ -20,7 +24,7 @@ class _DeviceRegistrationsState extends State<DeviceRegistrations> {
         devices.addAll(devicesJson);
       });
     }).catchError((e) {
-      print(e);
+      developer.log(e, level: 1000);
     });
   }
 
@@ -30,17 +34,18 @@ class _DeviceRegistrationsState extends State<DeviceRegistrations> {
         itemCount: devices.length,
         itemBuilder: (context, position) {
           return Column(children: <Widget>[
-            Divider(height: 5.0),
+            const Divider(height: 5.0),
             ListTile(
                 onTap: () {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (c) =>
-                              DevicePage(devices[position], devices)));
+                          builder: (c) => DevicePage(
+                              selectedDevice: devices[position],
+                              deviceList: devices)));
                 },
                 title: Text('${devices[position]['deviceId']}',
-                    style: TextStyle(fontSize: 22.0))),
+                    style: const TextStyle(fontSize: 22.0))),
           ]);
         });
   }

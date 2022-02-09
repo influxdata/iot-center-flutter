@@ -22,33 +22,33 @@ Expanded buildDeviceSelector(
       flex: 1,
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         DropdownButton<String>(
-          hint: new Text("Select device"),
+          hint: const Text("Select device"),
           value: selectedDevice != null ? selectedDevice['deviceId'] : null,
           items: deviceList.map((dynamic map) {
-            return new DropdownMenuItem<String>(
+            return DropdownMenuItem<String>(
                 value: map['deviceId'].toString(),
-                child: new Text(
+                child: Text(
                   map['deviceId'],
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                 ));
           }).toList(),
           onChanged: onChangeDevice,
         ),
         DropdownButton<String>(
-            hint: new Text("Time Range"),
+            hint: const Text("Time Range"),
             value: maxPastTime,
             items: timeOptions.map((dynamic map) {
-              return new DropdownMenuItem<String>(
+              return DropdownMenuItem<String>(
                   value: map['value'].toString(),
-                  child: new Text(
+                  child: Text(
                     map['label'],
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ));
             }).toList(),
             onChanged: onChangeTimeRange),
         MaterialButton(
           onPressed: onRefresh,
-          child: Icon(Icons.autorenew_rounded),
+          child: const Icon(Icons.autorenew_rounded),
         ),
       ]));
 }

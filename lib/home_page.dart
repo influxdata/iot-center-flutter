@@ -7,6 +7,8 @@ import 'device_registrations.dart';
 ThemeData myTheme = ThemeData();
 
 class HomePage extends StatelessWidget {
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,11 +22,11 @@ class HomePage extends StatelessWidget {
                 icon: const Icon(Icons.settings),
                 onPressed: () {
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (c) => SettingsPage()));
+                      MaterialPageRoute(builder: (c) => const SettingsPage()));
                 },
               ),
             ],
-            bottom: TabBar(
+            bottom: const TabBar(
               tabs: [
                 Tab(
                   icon: Icon(Icons.device_thermostat),
@@ -36,9 +38,9 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             ),
-            title: Text('IoT Center Demo'),
+            title: const Text('IoT Center Demo'),
           ),
-          body: TabBarView(
+          body: const TabBarView(
             children: [
               VirtualDevice(),
               DeviceRegistrations(),

@@ -1,0 +1,204 @@
+{
+  "$schema": "./schema.json",
+  "cells": [
+    {
+      "type": "svg",
+      "file": "factory",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "field": [
+        "Temperature",
+        "Pressure",
+        "TVOC",
+        "CO2",
+        "Humidity",
+        "Lat",
+        "Lon"
+      ]
+    },
+    {
+      "type": "plot",
+      "plotType": "gauge",
+      "range": {
+        "min": -10,
+        "max": 50
+      },
+      "field": "Temperature",
+      "label": "Temperature",
+      "unit": "°C",
+      "decimalPlaces": 1,
+      "layout": {
+        "x": 0,
+        "y": 5,
+        "w": 4,
+        "h": 2
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "gauge",
+      "range": {
+        "min": 0,
+        "max": 100
+      },
+      "field": "Humidity",
+      "label": "Humidity",
+      "unit": "%",
+      "decimalPlaces": 2,
+      "layout": {
+        "x": 4,
+        "y": 5,
+        "w": 4,
+        "h": 2
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "gauge",
+      "range": {
+        "min": 800,
+        "max": 1100
+      },
+      "field": "Pressure",
+      "label": "Pressure",
+      "unit": "hPa",
+      "decimalPlaces": 2,
+      "layout": {
+        "x": 8,
+        "y": 5,
+        "w": 4,
+        "h": 2
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "gauge",
+      "range": {
+        "min": 300,
+        "max": 3500
+      },
+      "field": "CO2",
+      "label": "CO2",
+      "unit": "ppm",
+      "decimalPlaces": 2,
+      "layout": {
+        "x": 0,
+        "y": 7,
+        "w": 6,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "gauge",
+      "range": {
+        "min": 200,
+        "max": 2200
+      },
+      "field": "TVOC",
+      "label": "TVOC",
+      "unit": "",
+      "decimalPlaces": 2,
+      "layout": {
+        "x": 6,
+        "y": 7,
+        "w": 6,
+        "h": 3
+      }
+    },
+    {
+      "type": "geo",
+      "latField": "Lat",
+      "lonField": "Lon",
+      "Live": {},
+      "Past": {},
+      "layout": {
+        "x": 0,
+        "y": 10,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": [
+        "CO2",
+        "TVOC"
+      ],
+      "label": "CO2 and TVOC",
+      "layout": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": [
+        "Temperature"
+      ],
+      "label": "Temperature",
+      "layout": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": "Humidity",
+      "label": "Humidity",
+      "layout": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": "Pressure",
+      "label": "Pressure",
+      "layout": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": "CO2",
+      "label": "CO2",
+      "layout": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 3
+      }
+    },
+    {
+      "type": "plot",
+      "plotType": "line",
+      "field": "TVOC",
+      "label": "TVOC",
+      "layout": {
+        "x": 0,
+        "y": 28,
+        "w": 12,
+        "h": 3
+      }
+    }
+  ]
+}

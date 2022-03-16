@@ -34,7 +34,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - INFLUX_URL=http://192.168.1.75:8086
+      - INFLUX_URL=http://influxdb_v2:8086
       - INFLUX_TOKEN=my-token
       - INFLUX_ORG=my-org
       - MQTT_TOPIC=iot_center

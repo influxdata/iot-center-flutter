@@ -1,27 +1,32 @@
-
+import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class AddChartPage extends StatefulWidget {
-  const AddChartPage({Key? key}) : super(key: key);
+class NewChartPage extends StatefulWidget {
+  const NewChartPage({Key? key}) : super(key: key);
 
   @override
-  _AddChartPageState createState() {
-    return _AddChartPageState();
+  _NewChartPageState createState() {
+    return _NewChartPageState();
   }
 }
 
-class _AddChartPageState extends State<AddChartPage> {
+class _NewChartPageState extends StateMVC<NewChartPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _controller = TextEditingController();
+
+  _NewChartPageState() : super(Controller()) {
+    con = controller as Controller;
+    con.loadFieldNames();
+  }
+
+  late Controller con;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(250, 250, 250, 1),
+        backgroundColor: lightGrey,
         appBar: AppBar(
-          backgroundColor: const Color.fromRGBO(2, 10, 71, 1),
-          title: const Text("Add chart"),
+          backgroundColor: darkBlue,
+          title: const Text("New chart"),
         ),
         body: Padding(
           padding:
@@ -30,90 +35,58 @@ class _AddChartPageState extends State<AddChartPage> {
             key: _formKey,
             child: ListView(
               children: [
-                getTextBoxRow(
-                  "Type:",
-                  "",
-                  (value) {
+                FormRow.dropDownListRow(
+                  label: "Type:",
+                  items: con.getChartTypeList(),
+                  mapValue: 'value',
+                  mapLabel: 'label',
+                  onChanged: (value) {},
+                ),
+                FormRow.textBoxRow(label: "Label:"),
+                FutureBuilder<dynamic>(
+                    future: con.loadFieldNames(),
+                    builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                      if (snapshot.hasError) {
+                        return Text(snapshot.error.toString());
+                      }
+                      if (snapshot.hasData) {
+                        return FormRow.dropDownListRow(
+                          label: "Field:",
+                          items: snapshot.data,
+                          mapValue: '_value',
+                          mapLabel: '_value',
+                          onChanged: (value) {},
+                        );
+                      } else {
+                        return const Text("loading...");
+                      }
+                    }),
+                FormRow.doubleTextBoxRow(label: "Range:"),
+                FormRow.textBoxRow(
+                  label: "Rounded:",
+                  validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '';
                     }
                     return null;
                   },
                 ),
-                getTextBoxRow(
-                  "Label:",
-                  "",
-                  (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                ),
-                getTextBoxRow(
-                  "Field:",
-                  "",
-                  (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                ),
-                getDoubleTextBoxRow(
-                  "Range:",
-                  "",
-                  (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                ),
-                getTextBoxRow(
-                  "Rounded:",
-                  "",
-                  (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                ),
-                getTextBoxRow(
-                  "Unit:",
-                  "",
-                  (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                ),
+                FormRow.textBoxRow(label: "Unit:"),
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(vertical: 25, horizontal: 5),
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                      padding:
-                          MaterialStateProperty.all(const EdgeInsets.all(20)),
-                      backgroundColor:
-                          MaterialStateProperty.all(Colors.deepPurple),
-                      textStyle: MaterialStateProperty.all(const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
-                    onPressed: () {
-                      // Validate returns true if the form is valid, or false otherwise.
-                      if (_formKey.currentState!.validate()) {
-                        // If the form is valid, display a snackbar. In the real world,
-                        // you'd often call a server or save the information in a database.
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Processing Data')),
-                        );
-                      }
-                    },
-                    child: const Text('Create'),
-                  ),
+                      const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
+                  child: FormButton(
+                      label: 'Create',
+                      onPressed: () {
+                        // Validate returns true if the form is valid, or false otherwise.
+                        if (_formKey.currentState!.validate()) {
+                          // If the form is valid, display a snackbar. In the real world,
+                          // you'd often call a server or save the information in a database.
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Processing Data')),
+                          );
+                        }
+                      }),
                 ),
               ],
             ),
@@ -121,122 +94,8 @@ class _AddChartPageState extends State<AddChartPage> {
         ));
   }
 
-  Padding getTextBoxRow(
-      String label, String? hintText, String? Function(String?)? validator) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [getLabel(label), getTextBox(hintText, validator)],
-      ),
-    );
-  }
-
-  Padding getDoubleTextBoxRow(
-      String label, String? hintText, String? Function(String?)? validator) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [getLabel(label), getDoubleTextBox(hintText, validator)],
-      ),
-    );
-  }
-
-  Padding getDropDownRow(
-      String label,
-      String hintText,
-      String value,
-      List items,
-      String mapValue,
-      String? labelDropDown,
-      void Function(String?)? onChange) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [
-          getLabel(label),
-          Expanded(
-              flex: 3,
-              child: MyDropDown(EdgeInsets.zero, hintText, value, items,
-                  mapValue, label, onChange))
-        ],
-      ),
-    );
-  }
-
-  Expanded getLabel(String label) {
-    return Expanded(
-        flex: 1,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ));
-  }
-
-  Expanded getTextBox(String? hintText, String? Function(String?)? validator) {
-    return Expanded(
-      flex: 3,
-      child: TextFormField(
-        decoration: InputDecoration(
-          isDense: true,
-          border: const OutlineInputBorder(),
-          fillColor: Colors.white,
-          filled: true,
-          hintText: hintText,
-        ),
-        validator: validator,
-      ),
-    );
-  }
-
-  Expanded getDoubleTextBox(
-      String? hintText, String? Function(String?)? validator) {
-    return Expanded(
-        flex: 3,
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                    hintText: hintText,
-                  ),
-                  validator: validator,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                    fillColor: Colors.white,
-                    filled: true,
-                    hintText: hintText,
-                  ),
-                  validator: validator,
-                ),
-              ),
-            )
-          ],
-        ));
-  }
-
   @override
   void initState() {
     super.initState();
-    SharedPreferences.getInstance().then((prefs) {
-      var val = prefs.getString("iot_center_url");
-      _controller.text = val ?? "";
-    });
   }
 }

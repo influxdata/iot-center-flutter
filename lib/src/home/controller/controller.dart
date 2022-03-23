@@ -2,7 +2,6 @@ import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 
-
 class Controller extends ControllerMVC {
   factory Controller([StateMVC? state]) => _this ??= Controller._(state);
   Controller._(StateMVC? state)
@@ -17,18 +16,25 @@ class Controller extends ControllerMVC {
   }
 
   List getDeviceList() => _model.deviceList;
-  List getTimeOptionsList() => _model.timeOptions;
+  List getTimeOptionsList() => _model.timeOptionList;
+  List getChartTypeList() => _model.chartTypeList;
+  List getFieldNames() => _model.fieldList;
+
+  String getSelectedDevice() => _model.selectedTimeOption;
   String getSelectedTimeOption() => _model.selectedTimeOption;
 
+  void setSelectedTimeOption(String value) => _model.selectedTimeOption = value;
+  void setSelectedDevice(String value) => _model.selectedDeviceOnChange(value);
 
   Future<void> loadDevices() => _model.loadDevices();
+  Future<void> loadFieldNames() => _model.loadFieldNames();
 
   void refreshChartListView() => setState(() {});
 
   Future<List<FluxRecord>> getDataFromInflux(
-      String measurement, bool last) async {
-    return last
-        ? _model.fetchDeviceDataFieldLast(
+      String measurement, bool median) async {
+    return median
+        ? _model.fetchDeviceDataFieldMedian(
             _model.selectedDevice != null
                 ? _model.selectedDevice!['deviceId']
                 : null,
@@ -44,7 +50,4 @@ class Controller extends ControllerMVC {
             _model.iotCenterApi);
   }
 
-  void refreshCharts(ChartListView chartListView) {
-    chartListView = ChartListView(con: this);
-  }
 }

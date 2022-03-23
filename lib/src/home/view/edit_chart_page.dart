@@ -1,6 +1,5 @@
-import 'package:flutter/services.dart';
+import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class EditChartPage extends StatefulWidget {
   const EditChartPage({Key? key, required this.chart}) : super(key: key);
@@ -13,14 +12,93 @@ class EditChartPage extends StatefulWidget {
   }
 }
 
-class _EditChartPageState extends State<EditChartPage> {
+class _EditChartPageState extends StateMVC<EditChartPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _controller = TextEditingController();
+
+  _EditChartPageState() : super(Controller()) {
+    con = controller as Controller;
+    con.loadFieldNames();
+  }
+
+  late Controller con;
 
   @override
   Widget build(BuildContext context) {
     if (widget.chart is GaugeChart) {
       var gaugeChart = widget.chart as GaugeChart;
+      return Scaffold(
+          appBar: AppBar(
+            backgroundColor: darkBlue,
+            title: const Text("Edit chart"),
+          ),
+          body: Padding(
+            padding:
+                const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 10),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  FormRow.textBoxRow(
+                    label: "Label:",
+                    value: gaugeChart.label,
+                  ),
+                  FutureBuilder<dynamic>(
+                      future: con.loadFieldNames(),
+                      builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text(snapshot.error.toString());
+                        }
+                        if (snapshot.hasData) {
+                          return FormRow.dropDownListRow(
+                            label: "Field:",
+                            items: snapshot.data,
+                            value: gaugeChart.measurement,
+                            mapValue: '_value',
+                            mapLabel: '_value',
+                            onChanged: (value) {},
+                          );
+                        } else {
+                          return const Text("loading...");
+                        }
+                      }),
+                  FormRow.doubleTextBoxRow(
+                    label: "Range:",
+                    value: gaugeChart.startValue.toString(),
+                    value2: gaugeChart.endValue.toString(),
+                  ),
+                  FormRow.textBoxRow(
+                    label: "Rounded:",
+                    value: gaugeChart.decimalPlaces.toString(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '';
+                      }
+                      return null;
+                    },
+                  ),
+                  FormRow.textBoxRow(label: "Unit:", value: gaugeChart.unit,),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
+                    child: FormButton(
+                        label: 'Update',
+                        onPressed: () {
+                          // Validate returns true if the form is valid, or false otherwise.
+                          if (_formKey.currentState!.validate()) {
+                            // If the form is valid, display a snackbar. In the real world,
+                            // you'd often call a server or save the information in a database.
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Processing Data')),
+                            );
+                          }
+                        }),
+                  ),
+                ],
+              ),
+            ),
+          ));
+    } else if (widget.chart is SimpleChart) {
+      var simpleChart = widget.chart as SimpleChart;
       return Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.deepPurple,
@@ -33,285 +111,60 @@ class _EditChartPageState extends State<EditChartPage> {
               key: _formKey,
               child: ListView(
                 children: [
-                  getTextBoxRow(
-                    "Label:",
-                    gaugeChart.label,
-                    (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                  ),
-                  getTextBoxRow(
-                    "Field:",
-                    gaugeChart.measurement,
-                    (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                  ),
-                  getRangeTextBoxRow(
-                      "Range:",
-                      gaugeChart.startValue.toStringAsFixed(0),
-                      gaugeChart.endValue.toStringAsFixed(0)),
-                  getTextBoxRow(
-                    "Rounded:",
-                    gaugeChart.decimalPlaces.toString(),
-                    (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                  ),
-                  getTextBoxRow(
-                    "Unit:",
-                    gaugeChart.unit,
-                    (value) {
-                      return null;
-                    },
-                  ),
+                  // FormRow.dropDownListRow(
+                  //   label: "Type:",
+                  //   items: con.getChartTypeList(),
+                  //   mapValue: 'value',
+                  //   mapLabel: 'label',
+                  //   onChanged: (value) {},
+                  // ),
+                  FormRow.textBoxRow(label: "Label:"),
+                  FutureBuilder<dynamic>(
+                      future: con.loadFieldNames(),
+                      builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                        if (snapshot.hasError) {
+                          return Text(snapshot.error.toString());
+                        }
+                        if (snapshot.hasData) {
+                          return FormRow.dropDownListRow(
+                            label: "Field:",
+                            items: snapshot.data,
+                            mapValue: '_value',
+                            mapLabel: '_value',
+                            onChanged: (value) {},
+                          );
+                        } else {
+                          return const Text("loading...");
+                        }
+                      }),
+                  FormRow.textBoxRow(label: "Unit:"),
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(vertical: 25, horizontal: 5),
-                    child: ElevatedButton(
-                      style: ButtonStyle(
-                        padding:
-                            MaterialStateProperty.all(const EdgeInsets.all(20)),
-                        backgroundColor:
-                            MaterialStateProperty.all(Colors.deepPurple),
-                        textStyle: MaterialStateProperty.all(const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                      ),
-                      onPressed: () {
-                        // Validate returns true if the form is valid, or false otherwise.
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          // widget.chart.refresh();
-
-                          // If the form is valid, display a snackbar. In the real world,
-                          // you'd often call a server or save the information in a database.
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
-                        }
-                      },
-                      child: const Text('Update'),
-                    ),
+                        const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
+                    child: FormButton(
+                        label: 'Update',
+                        onPressed: () {
+                          // Validate returns true if the form is valid, or false otherwise.
+                          if (_formKey.currentState!.validate()) {
+                            // If the form is valid, display a snackbar. In the real world,
+                            // you'd often call a server or save the information in a database.
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Processing Data')),
+                            );
+                          }
+                        }),
                   ),
                 ],
               ),
             ),
           ));
-    }
-    else if (widget.chart is SimpleChart) {
-      var simpleChart = widget.chart as SimpleChart;
-      return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.deepPurple,
-            title: const Text("Edit chart"),
-          ),
-          body: Padding(
-            padding:
-            const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 10),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  getTextBoxRow(
-                    "Label:",
-                    simpleChart.label,
-                        (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                  ),
-                  getTextBoxRow(
-                    "Field:",
-                    simpleChart.measurement,
-                        (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                  ),
-                  getTextBoxRow(
-                    "Unit:",
-                    "",
-                        (value) {
-                      return null;
-                    },
-                  ),
-                  Padding(
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 25, horizontal: 5),
-                    child: ElevatedButton(
-                      style: ButtonStyle(
-                        padding:
-                        MaterialStateProperty.all(const EdgeInsets.all(20)),
-                        backgroundColor:
-                        MaterialStateProperty.all(Colors.deepPurple),
-                        textStyle: MaterialStateProperty.all(const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                      ),
-                      onPressed: () {
-                        // Validate returns true if the form is valid, or false otherwise.
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-
-                          // If the form is valid, display a snackbar. In the real world,
-                          // you'd often call a server or save the information in a database.
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
-                        }
-                      },
-                      child: const Text('Update'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ));
-    }
-    else{
+    } else {
       return const Scaffold();
     }
-  }
-
-  Padding getTextBoxRow(
-      String label, String? hintText, String? Function(String?)? validator) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [getLabel(label), getTextBox(hintText, validator)],
-      ),
-    );
-  }
-
-  Padding getRangeTextBoxRow(String label, String startValue, endValue) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [
-          getLabel(label),
-          Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: TextFormField(
-                        initialValue: startValue,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ],
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                          fillColor: Colors.white,
-                          filled: true,
-                        ),
-                        onSaved: (value) {
-                          // setState(() =>
-                          //     widget.chart.startValue = double.parse(value!));
-                        },
-                        // validator: validator,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: TextFormField(
-                        initialValue: endValue,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
-                        ],
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                          fillColor: Colors.white,
-                          filled: true,
-                        ),
-                        // validator: validator,
-                      ),
-                    ),
-                  )
-                ],
-              ))
-        ],
-      ),
-    );
-  }
-
-  Padding getDropDownRow(
-      String label,
-      String hintText,
-      String value,
-      List items,
-      String mapValue,
-      String? labelDropDown,
-      void Function(String?)? onChange) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [
-          getLabel(label),
-          Expanded(
-              flex: 3,
-              child: MyDropDown(EdgeInsets.zero, hintText, value, items,
-                  mapValue, label, onChange))
-        ],
-      ),
-    );
-  }
-
-  Expanded getLabel(String label) {
-    return Expanded(
-        flex: 1,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ));
-  }
-
-  Expanded getTextBox(String? hintText, String? Function(String?)? validator) {
-    return Expanded(
-      flex: 3,
-      child: TextFormField(
-        initialValue: hintText,
-        decoration: const InputDecoration(
-          isDense: true,
-          border: OutlineInputBorder(),
-          fillColor: Colors.white,
-          filled: true,
-        ),
-        validator: validator,
-      ),
-    );
   }
 
   @override
   void initState() {
     super.initState();
-    SharedPreferences.getInstance().then((prefs) {
-      var val = prefs.getString("iot_center_url");
-      _controller.text = val ?? "";
-    });
   }
 }

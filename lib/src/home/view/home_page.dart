@@ -27,114 +27,78 @@ class _HomePageState extends StateMVC<HomePage> {
   Widget buildWidget(BuildContext context) {
     var size = MediaQuery.of(context).size;
 
-    var timeDropDown = MyDropDown(
-        const EdgeInsets.fromLTRB(5, 10, 10, 20),
-        'Time Range',
-        con.getSelectedTimeOption(),
-        con.getTimeOptionsList(),
-        'value',
-        'label',
-        (value) {});
-
-    return Container(
-      height: size.height,
-      decoration: const BoxDecoration(color: Color.fromRGBO(250, 250, 250, 1)),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Container(
-            height: 190, //size.height * 0.28,
-            decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-                gradient: const LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomCenter,
-                  stops: [
-                    0,
-                    0.8,
-                  ],
-                  colors: [
-                    Color.fromRGBO(211, 9, 113, 1),
-                    Color.fromRGBO(155, 42, 255, 1),
-                  ],
-                )),
+    return Scaffold(
+      extendBodyBehindAppBar: false,
+      backgroundColor: lightGrey,
+      appBar: AppBar(
+        title: const Text('IoT Center Demo'),
+        backgroundColor: darkBlue,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lock),
+            color: Colors.white,
+            onPressed: () {
+              onRefresh();
+            },
           ),
-          Scaffold(
-              extendBodyBehindAppBar: false,
-              backgroundColor: Colors.transparent,
-              appBar: AppBar(
-                title: const Text('IoT Center Demo'),
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.lock),
-                    color: Colors.white,
-                    onPressed: () {
-                      onRefresh();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.autorenew_rounded),
-                    color: Colors.white,
-                    onPressed: () {
-                      con.refreshChartListView();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    color: Colors.white,
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (c) => const SettingsPage()));
-                    },
-                  ),
-                ],
-              ),
-              floatingActionButton: FloatingActionButton(
-                backgroundColor: Colors.deepPurple,
-                child: const Icon(Icons.add),
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (c) => const AddChartPage()));
-                },
-              ),
-              body: Stack(
-                children: [
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                            flex: 3,
-                            child: MyDropDown(
-                                const EdgeInsets.fromLTRB(10, 10, 5, 20),
-                                'Select device',
-                                '',
-                                con.getDeviceList(),
-                                'deviceId',
-                                'deviceId',
-                                (value) {})),
-                        Expanded(
-                          flex: 2,
-                          child: timeDropDown,
-                        ),
-                      ]),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 84.0),
-                    child: con.getChartListView(),
-                  ),
-                ],
-              )),
+          IconButton(
+            icon: const Icon(Icons.autorenew_rounded),
+            color: Colors.white,
+            onPressed: () {
+              con.refreshChartListView();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (c) => const SettingsPage()));
+            },
+          ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size(size.width, 80),
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            Expanded(
+                flex: 3,
+                child: MyDropDown(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
+                    hint: 'Select device',
+                    items: con.getDeviceList(),
+                    mapValue: 'deviceId',
+                    label: 'deviceId', onChanged: (value) {
+                  con.setSelectedDevice(value!);
+                  con.refreshChartListView();
+                })),
+            Expanded(
+              flex: 2,
+              child: MyDropDown(
+                  padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
+                  hint: 'Time Range',
+                  value: con.getSelectedTimeOption(),
+                  items: con.getTimeOptionsList(),
+                  mapValue: 'value',
+                  label: 'label', onChanged: (value) {
+                con.setSelectedTimeOption(value!);
+                con.refreshChartListView();
+              }),
+            ),
+          ]),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: darkBlue,
+        child: const Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (c) => const NewChartPage()));
+        },
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(10),
+        child: con.getChartListView(),
       ),
     );
   }

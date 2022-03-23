@@ -37,19 +37,7 @@ class _MyAppState extends AppStateMVC<MyApp> {
               }
               return Container(
                 padding: const EdgeInsets.all(50),
-                decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  stops: [
-                    0,
-                    0.6,
-                  ],
-                  colors: [
-                    Colors.blue,
-                    Colors.deepPurple,
-                  ],
-                )),
+                decoration: const BoxDecoration(gradient: pinkPurpleGradient),
                 child: Container(
                   decoration: const BoxDecoration(
                     image: DecorationImage(

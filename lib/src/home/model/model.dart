@@ -16,10 +16,11 @@ class Model extends ModelMVC {
   final DeviceConfig _config = DeviceConfig();
   late ChartListView chartListView;
   String iotCenterApi = '';
+  List fieldList = [];
   Map<String, dynamic>? selectedDevice;
   String selectedTimeOption = "-1h";
   List deviceList = [];
-  List timeOptions = [
+  List timeOptionList = [
     {"label": 'Past 5m', "value": '-5m'},
     {"label": 'Past 15m', "value": '-15m'},
     {"label": 'Past 1h', "value": '-1h'},
@@ -29,6 +30,15 @@ class Model extends ModelMVC {
     {"label": 'Past 7d', "value": '-7d'},
     {"label": 'Past 30d', "value": '-30d'},
   ];
+  List chartTypeList = [
+    {"label": 'Gauge chart', "value": ChartType.gauge},
+    {"label": 'Simple chart', "value": ChartType.simple},
+  ];
+
+  void selectedDeviceOnChange(String value) {
+    selectedDevice = deviceList.firstWhere((device) => device.id == value);
+    loadFieldNames();
+  }
 
   Future<void> _getIotCenterApi() async {
     var prefs = await SharedPreferences.getInstance();
@@ -50,6 +60,36 @@ class Model extends ModelMVC {
       developer.log(e.toString());
       return [];
     }
+  }
+
+  Future<List<dynamic>> loadFieldNames() async {
+    var deviceId = selectedDevice!['deviceId'];
+
+    if (deviceId != null) {
+      await fetchDeviceConfig(iotCenterApi + "/api/env/$deviceId");
+      var _client = createClient(_config);
+      var queryApi = _client.getQueryService();
+
+      var fluxQuery = '''
+              import "influxdata/influxdb/schema"
+              schema.fieldKeys(
+                      bucket: "${_client.bucket}",
+                      predicate: (r) => r["_measurement"] == "environment" 
+                                    and r["clientId"] == "${_config.id}")
+          ''';
+
+      try {
+        var stream = await queryApi.query(fluxQuery);
+        var result = await stream.toList();
+        fieldList = result;
+        return result;
+      } catch (e) {
+        print(e);
+      } finally {
+        _client.close();
+      }
+    }
+    return [];
   }
 
 //replace localhost with 10.0.2.2 for android devices
@@ -80,7 +120,7 @@ class Model extends ModelMVC {
         org: config.influxOrg);
   }
 
-  Future<List<FluxRecord>> fetchDeviceDataFieldLast(String? deviceId,
+  Future<List<FluxRecord>> fetchDeviceDataFieldMedian(String? deviceId,
       String field, String maxPastTime, String iotCenterApi) async {
     if (deviceId == null) {
       return [];
@@ -98,8 +138,10 @@ class Model extends ModelMVC {
               |> filter(fn: (r) => r._measurement == "environment")
               |> filter(fn: (r) => r["_field"] == "$field")
               |> keep(columns: ["_value", "_time"])
-              |> last()
+              |> toFloat()
+              |> median()
           ''';
+
     try {
       var stream = await queryApi.query(fluxQuery);
       return await stream.toList();

@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:influxdb_client/api.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
-
-import '../edit_chart_page.dart';
+import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class SimpleChart extends StatefulWidget {
   const SimpleChart({
@@ -28,20 +26,21 @@ class _SimpleChart extends State<SimpleChart> {
         context,
         MaterialPageRoute(
             builder: (c) => EditChartPage(
-              chart: widget,
-            )));
+                  chart: widget,
+                )));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.data == null || widget.data!.isEmpty) {
-      return Text(widget.measurement + " - no data");
-    }
+    var label = widget.data == null || widget.data!.isEmpty
+        ? widget.measurement + " - no data"
+        : widget.measurement;
 
     var series = [
       charts.Series<dynamic, DateTime>(
         id: widget.measurement,
         data: widget.data!,
+        seriesColor: charts.ColorUtil.fromDartColor(pink),
         domainFn: (r, _) => DateTime.parse(r['_time']),
         measureFn: (r, _) => r["_value"],
       )
@@ -52,14 +51,17 @@ class _SimpleChart extends State<SimpleChart> {
         children: [
           Expanded(
             child: Text(
-              widget.measurement,
+              label,
               style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+                  fontSize: 15, fontWeight: FontWeight.w700, color: darkBlue),
             ),
           ),
-          IconButton(onPressed: onPressed, icon: const Icon(Icons.edit)),
+          IconButton(
+            onPressed: onPressed,
+            icon: const Icon(Icons.settings),
+            iconSize: 17,
+            color: darkBlue,
+          ),
         ],
       ),
       SizedBox(

@@ -1,9 +1,8 @@
-import 'dart:math' show cos, pi, sin;
-
-import 'package:flutter/material.dart';
 import 'package:influxdb_client/api.dart';
-import 'package:iot_center_flutter_mvc/src/home/view/edit_chart_page.dart';
+import 'package:iot_center_flutter_mvc/src/view.dart';
+
 import 'package:vector_math/vector_math.dart' show radians;
+import 'dart:math' show cos, pi, sin;
 
 class GaugeChart extends StatefulWidget {
   GaugeChart({
@@ -78,10 +77,16 @@ class _GaugeChart extends State<GaugeChart> {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
+                  color: darkBlue,
                 ),
               ),
             ),
-            IconButton(onPressed: onPressed, icon: const Icon(Icons.edit)),
+            IconButton(
+              onPressed: onPressed,
+              icon: const Icon(Icons.settings),
+              iconSize: 17,
+              color: darkBlue,
+            ),
           ],
         ),
         Row(
@@ -222,7 +227,10 @@ class GaugeChartPainter extends CustomPainter {
       ..color = Colors.white
       ..shader = SweepGradient(
         stops: const [0, 0.4],
-        colors: const [Colors.blue, Colors.deepPurple],
+        colors: const [
+          pink,
+          purple,
+        ],
         startAngle: radians(0),
         endAngle: radians(360),
         transform: GradientRotation(radians(startAngle - width)),

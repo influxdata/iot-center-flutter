@@ -55,61 +55,66 @@ class _ChartListView extends State<ChartListView> {
 
   Widget createChart(String measurement, String label, double startValue,
       double endValue, String unit, ChartType chartType) {
-    var getLast = chartType == ChartType.gauge;
+    var getMedian = chartType == ChartType.gauge;
 
-    return getLast
+    return getMedian
         ? Expanded(
-            child: Card(
-                child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: FutureBuilder<dynamic>(
-                        future:
-                            widget.con.getDataFromInflux(measurement, getLast),
-                        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(snapshot.error.toString());
-                          }
-                          if (snapshot.hasData) {
-                            return GaugeChart(
-                              notifyParent: refresh,
-                              data: snapshot.data,
-                              measurement: measurement,
-                              label: label,
-                              startValue: startValue,
-                              endValue: endValue,
-                              unit: unit,
-                              size: 120,
-                              decimalPlaces: 0,
-                            );
-                          } else {
-                            return const Text("loading...");
-                          }
-                        }))))
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Container(
+                decoration: boxDecor,
+                  child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: FutureBuilder<dynamic>(
+                          future:
+                              widget.con.getDataFromInflux(measurement, getMedian),
+                          builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                            if (snapshot.hasError) {
+                              return Text(snapshot.error.toString());
+                            }
+                            if (snapshot.hasData) {
+                              return GaugeChart(
+                                notifyParent: refresh,
+                                data: snapshot.data,
+                                measurement: measurement,
+                                label: label,
+                                startValue: startValue,
+                                endValue: endValue,
+                                unit: unit,
+                                size: 120,
+                                decimalPlaces: 0,
+                              );
+                            } else {
+                              return const Text("loading...");
+                            }
+                          }))),
+            ))
         : Expanded(
-            child: Card(
-                child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: FutureBuilder<dynamic>(
-                        future:
-                            widget.con.getDataFromInflux(measurement, getLast),
-                        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(snapshot.error.toString());
-                          }
-                          if (snapshot.hasData) {
-                            return SimpleChart(
-                              data: snapshot.data,
-                              measurement: measurement,
-                              label: label,
-                            );
-                          } else {
-                            return const Text("loading...");
-                          }
-                        }))));
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Container(
+                decoration: boxDecor,
+                  child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: FutureBuilder<dynamic>(
+                          future:
+                              widget.con.getDataFromInflux(measurement, getMedian),
+                          builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                            if (snapshot.hasError) {
+                              return Text(snapshot.error.toString());
+                            }
+                            if (snapshot.hasData) {
+                              return SimpleChart(
+                                data: snapshot.data,
+                                measurement: measurement,
+                                label: label,
+                              );
+                            } else {
+                              return const Text("loading...");
+                            }
+                          }))),
+            ));
   }
 }
 
-enum ChartType {
-  gauge,
-  simple,
-}
+

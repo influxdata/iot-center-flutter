@@ -45,7 +45,8 @@ class _HomePageState extends StateMVC<HomePage> {
             icon: const Icon(Icons.autorenew_rounded),
             color: Colors.white,
             onPressed: () {
-              con.refreshChartListView();
+              // con.refreshChartListView();
+              con.refresh();
             },
           ),
           IconButton(

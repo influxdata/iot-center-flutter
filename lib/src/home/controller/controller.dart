@@ -11,7 +11,7 @@ class Controller extends ControllerMVC {
   final Model _model;
 
   ChartListView getChartListView() {
-    _model.chartListView = ChartListView(con: this);
+    _model.chartListView = const ChartListView();
     return _model.chartListView;
   }
 
@@ -48,6 +48,14 @@ class Controller extends ControllerMVC {
             measurement,
             _model.selectedTimeOption,
             _model.iotCenterApi);
+  }
+
+  double checkDouble(dynamic value) {
+    if (value is String) {
+      return double.parse(value);
+    } else {
+      return value.toDouble();
+    }
   }
 
 }

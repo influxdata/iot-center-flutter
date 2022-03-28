@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class FormRow extends StatefulWidget {
@@ -6,6 +7,8 @@ class FormRow extends StatefulWidget {
       this.hint = '',
       this.value = '',
       required this.label,
+      this.inputType = TextInputType.none,
+      this.inputFormatters = const [],
       this.validator,
       this.onChanged,
       this.onSaved,
@@ -21,9 +24,14 @@ class FormRow extends StatefulWidget {
       this.value = '',
       this.value2 = '',
       required this.label,
+      this.inputType = TextInputType.none,
+      this.inputFormatters = const [],
+      this.inputType2 = TextInputType.none,
+      this.inputFormatters2 = const [],
       this.validator,
       this.onChanged,
       this.onSaved,
+      this.onSaved2,
       Key? key})
       : super(key: key) {
     _inputType = InputType.doubleTextField;
@@ -50,9 +58,8 @@ class FormRow extends StatefulWidget {
   String? hint;
   String? label;
   String? value;
-
-  String? value2;
-  String? hint2;
+  TextInputType? inputType;
+  List<TextInputFormatter> inputFormatters = [];
 
   List? items;
   String? mapValue;
@@ -61,6 +68,12 @@ class FormRow extends StatefulWidget {
   String? Function(String?)? validator;
   Function(String?)? onChanged;
   Function(String?)? onSaved;
+
+  String? value2;
+  String? hint2;
+  TextInputType? inputType2;
+  List<TextInputFormatter> inputFormatters2 = [];
+  Function(String?)? onSaved2;
 
   @override
   State<StatefulWidget> createState() {
@@ -91,6 +104,8 @@ class _FormRow extends State<FormRow> {
             decoration: boxDecor,
             child: TextFormField(
               initialValue: widget.value,
+              keyboardType: widget.inputType,
+              inputFormatters: widget.inputFormatters,
               decoration: inputDecor,
               validator: widget.validator,
               onChanged: widget.onChanged,
@@ -108,6 +123,8 @@ class _FormRow extends State<FormRow> {
                     decoration: boxDecor,
                     child: TextFormField(
                       initialValue: widget.value,
+                      keyboardType: widget.inputType,
+                      inputFormatters: widget.inputFormatters,
                       decoration: inputDecor,
                       validator: widget.validator,
                       onChanged: widget.onChanged,
@@ -123,10 +140,12 @@ class _FormRow extends State<FormRow> {
                     decoration: boxDecor,
                     child: TextFormField(
                       initialValue: widget.value2,
+                      keyboardType: widget.inputType2,
+                      inputFormatters: widget.inputFormatters2,
                       decoration: inputDecor,
                       validator: widget.validator,
                       onChanged: widget.onChanged,
-                      onSaved: widget.onSaved,
+                      onSaved: widget.onSaved2,
                     ),
                   )),
             )

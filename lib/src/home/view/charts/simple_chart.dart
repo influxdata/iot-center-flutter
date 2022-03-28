@@ -20,13 +20,14 @@ class SimpleChart extends StatefulWidget {
   }
 }
 
-class _SimpleChart extends State<SimpleChart> {
+class _SimpleChart extends StateMVC<SimpleChart> {
   void onPressed() {
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (c) => EditChartPage(
                   chart: widget,
+              chartRefresh: (){},
                 )));
   }
 

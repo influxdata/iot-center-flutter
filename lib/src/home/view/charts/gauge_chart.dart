@@ -8,23 +8,14 @@ class GaugeChart extends StatefulWidget {
   const GaugeChart({
     Key? key,
     required this.chartData,
-  })  : //con = Controller(),
-        super(key: key);
+  }) : super(key: key);
 
   final ChartData chartData;
 
   @override
-  State<StatefulWidget> createState() {
+  StateMVC<StatefulWidget> createState() {
     return _GaugeChart();
   }
-
-  // final Controller con;
-  //
-  // void onRefresh() {
-  //
-  //   final state = con.ofState<_GaugeChart>()!;
-  //   state.setState(() {});
-  // }
 }
 
 class _GaugeChart extends StateMVC<GaugeChart> {
@@ -46,8 +37,11 @@ class _GaugeChart extends StateMVC<GaugeChart> {
 
   @override
   void initState() {
-    // add(con);
+    add(con);
     super.initState();
+    widget.chartData.refreshChart = () {
+      refresh();
+    };
   }
 
   late Controller con;
@@ -147,15 +141,14 @@ class _GaugeChart extends StateMVC<GaugeChart> {
                                       top: widget.chartData.size / 3 + 10),
                                   child: Column(
                                     children: const [
-                                         SizedBox(
-                                           width: 20,
-                                           height: 20,
-                                           child:  CircularProgressIndicator(
-                                             color: pink,
-                                             strokeWidth: 3,
-                                           ),
-                                         ),
-
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: pink,
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ));

@@ -2,7 +2,9 @@ import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class NewChartPage extends StatefulWidget {
-  const NewChartPage({Key? key}) : super(key: key);
+  const NewChartPage({required this.refreshCharts, Key? key}) : super(key: key);
+
+  final Function() refreshCharts;
 
   @override
   _NewChartPageState createState() {
@@ -19,6 +21,15 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
   }
 
   late Controller con;
+
+  String measurement = '';
+  String label = '';
+  String unit = '';
+  double startValue = 0;
+  double endValue = 100;
+  double size = 120;
+  int? decimalPlaces;
+  String? chartType;
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +48,21 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
               children: [
                 FormRow.dropDownListRow(
                   label: "Type:",
-                  items: con.getChartTypeList(),
+                  items: con.chartTypeList,
+                  value: con.chartTypeList.first['value'].toString(),
                   mapValue: 'value',
                   mapLabel: 'label',
                   onChanged: (value) {},
+                  onSaved: (value) {
+                    chartType = value!;
+                  },
                 ),
-                FormRow.textBoxRow(label: "Label:"),
+                FormRow.textBoxRow(
+                  label: "Label:",
+                  onSaved: (value) {
+                    label = value!;
+                  },
+                ),
                 FutureBuilder<dynamic>(
                     future: con.loadFieldNames(),
                     builder: (context, AsyncSnapshot<dynamic> snapshot) {
@@ -51,27 +71,43 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                       }
                       if (snapshot.hasData) {
                         return FormRow.dropDownListRow(
-                          label: "Field:",
-                          items: snapshot.data,
-                          mapValue: '_value',
-                          mapLabel: '_value',
-                          onChanged: (value) {},
-                        );
+                            label: "Field:",
+                            items: snapshot.data,
+                            value: snapshot.data.first['_value'].toString(),
+                            mapValue: '_value',
+                            mapLabel: '_value',
+                            onChanged: (value) {},
+                            onSaved: (value) {
+                              measurement = value!;
+                            });
                       } else {
                         return const Text("loading...");
                       }
                     }),
-                FormRow.doubleTextBoxRow(label: "Range:"),
+                FormRow.doubleTextBoxRow(
+                    label: "Range:",
+                    onSaved: (value) {
+                      startValue = double.parse(value!);
+                    },
+                    onSaved2: (value) {
+                      endValue = double.parse(value!);
+                    }),
                 FormRow.textBoxRow(
-                  label: "Rounded:",
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '';
-                    }
-                    return null;
-                  },
-                ),
-                FormRow.textBoxRow(label: "Unit:"),
+                    label: "Rounded:",
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      decimalPlaces = int.parse(value!);
+                    }),
+                FormRow.textBoxRow(
+                    label: "Unit:",
+                    onSaved: (value) {
+                      unit = value!;
+                    }),
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
@@ -80,11 +116,52 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                       onPressed: () {
                         // Validate returns true if the form is valid, or false otherwise.
                         if (_formKey.currentState!.validate()) {
-                          // If the form is valid, display a snackbar. In the real world,
-                          // you'd often call a server or save the information in a database.
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
+                          _formKey.currentState!.save();
+
+                          var lastChart = con.chartsList.reduce(
+                              (currentChart, nextChart) =>
+                                  currentChart.row > nextChart.row ||
+                                          (currentChart.row == nextChart.row &&
+                                              currentChart.column >
+                                                  nextChart.column)
+                                      ? currentChart
+                                      : nextChart);
+
+                          int row, column = 0;
+
+                          if (chartType == 'ChartType.gauge' &&
+                              lastChart.data.chartType == ChartType.gauge &&
+                              lastChart.column == 1) {
+                            row = lastChart.row;
+                            column = 2;
+                          } else {
+                            row = lastChart.row + 1;
+                            column = 1;
+                          }
+
+                          if (chartType == 'ChartType.gauge') {
+                            con.addNewChart(Chart(
+                                row: row,
+                                column: column,
+                                data: ChartData.gauge(
+                                  measurement: measurement,
+                                  endValue: endValue,
+                                  label: label,
+                                  unit: unit,
+                                  startValue: startValue,
+                                  decimalPlaces: decimalPlaces,
+                                )));
+                          } else {
+                            con.addNewChart(Chart(
+                                row: row,
+                                column: column,
+                                data: ChartData.simple(
+                                  measurement: measurement,
+                                  label: label,
+                                )));
+                          }
+                          widget.refreshCharts();
+                          Navigator.pop(context);
                         }
                       }),
                 ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
@@ -14,7 +15,7 @@ class Model extends ModelMVC {
   static Model? _this;
 
   final DeviceConfig _config = DeviceConfig();
-  late ChartListView chartListView;
+
   String iotCenterApi = '';
   List fieldList = [];
   Map<String, dynamic>? selectedDevice;
@@ -35,8 +36,54 @@ class Model extends ModelMVC {
     {"label": 'Simple chart', "value": ChartType.simple},
   ];
 
+  List<Chart> chartsList = [
+    Chart(
+        row: 1,
+        column: 1,
+        data: ChartData.gauge(
+          measurement: "Temperature",
+          endValue: 40,
+          label: "Temperature",
+          unit: '°C',
+          startValue: 0,
+        )),
+    Chart(
+        row: 1,
+        column: 2,
+        data: ChartData.gauge(
+          measurement: "CO2",
+          endValue: 3000,
+          label: "CO2",
+          unit: 'ppm',
+          startValue: 400,
+        )),
+    Chart(
+        row: 2,
+        column: 1,
+        data: ChartData.simple(measurement: 'TVOC', label: 'TVOC')),
+    Chart(
+        row: 3,
+        column: 1,
+        data: ChartData.gauge(
+            measurement: "Humidity",
+            endValue: 100,
+            label: "Humidity",
+            unit: '%',
+            startValue: 0)),
+    Chart(
+        row: 3,
+        column: 2,
+        data: ChartData.gauge(
+            measurement: "Pressure",
+            endValue: 1100,
+            label: "Pressure",
+            unit: 'hPa',
+            startValue: 900))
+  ];
+
   void selectedDeviceOnChange(String value) {
-    selectedDevice = deviceList.firstWhere((device) => device.id == value);
+    selectedDevice =
+        deviceList.firstWhere((device) => device['deviceId'] == value);
     loadFieldNames();
   }
 
@@ -102,10 +149,22 @@ class Model extends ModelMVC {
     return url;
   }
 
-  Future<void> fetchDeviceConfig(String url) async {
+  Future<DeviceConfig> fetchDeviceConfig(String url) async {
     var response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       _config.fromJson(jsonDecode(response.body));
+      return _config;
+    } else {
+      throw Exception('Failed to load device config.');
+    }
+  }
+
+  Future<DeviceConfig> fetchDeviceConfig2(String url) async {
+    var response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      var config = DeviceConfig();
+      config.fromJson(jsonDecode(response.body));
+      return config;
     } else {
       throw Exception('Failed to load device config.');
     }
@@ -183,9 +242,8 @@ class Model extends ModelMVC {
     }
   }
 
-  Future<List<FluxRecord>> fetchMeasurements(
-      String deviceId, String iotCenterApi) async {
-    await fetchDeviceConfig(iotCenterApi + "/api/env/$deviceId");
+  Future<List<FluxRecord>> fetchMeasurements(String url) async {
+    await fetchDeviceConfig(url);
     var _client = createClient(_config);
     var queryApi = _client.getQueryService();
     var fluxQuery = '''
@@ -217,5 +275,94 @@ class Model extends ModelMVC {
     } finally {
       _client.close();
     }
+  }
+
+  Future writeEmulatedData(String deviceId, Function onProgress) async {
+    var config = await fetchDeviceConfig(deviceId);
+
+    var influxDBClient = createClient(config);
+
+// calculate window to emulate writes
+    var toTime =
+        (DateTime.now().toUtc().millisecondsSinceEpoch / 60000).truncate() *
+            60000;
+    var lastTime = toTime - 30 * 24 * 60 * 60 * 1000;
+
+// const getGPX = generateGPXData.bind(undefined, await fetchGPXData())
+    var totalPoints = ((toTime - lastTime) / 60000);
+    var pointsWritten = 0;
+
+    if (totalPoints > 0) {
+      var batchSize = 5000;
+
+      var writeApi = influxDBClient.getWriteService(WriteOptions()
+          .merge(batchSize: batchSize, precision: WritePrecision.ms
+              // defaultTags: {"clientId": deviceId}));
+              ));
+      try {
+        onProgress(0, 0, totalPoints);
+        while (lastTime < toTime) {
+          lastTime += 60000; // emulate next minute
+          var point = Point('environment');
+          point
+              .addTag('clientId', deviceId)
+              .addField('Temperature',
+                  _generate(period: 30, min: 0, max: 40, time: lastTime))
+              .addField('Humidity',
+                  _generate(period: 90, min: 0, max: 99, time: lastTime))
+              .addField('Pressure',
+                  _generate(period: 20, min: 970, max: 1050, time: lastTime))
+              //integer value
+              .addField(
+                  'CO2',
+                  _generate(period: 1, min: 400, max: 3000, time: lastTime)
+                      .toInt())
+              //integer value
+              .addField(
+                  'TVOC',
+                  _generate(period: 1, min: 250, max: 2000, time: lastTime)
+                      .toInt())
+              .addTag('TemperatureSensor', 'virtual_TemperatureSensor')
+              .addTag('HumiditySensor', 'virtual_HumiditySensor')
+              .addTag('PressureSensor', 'virtual_PressureSensor')
+              .addTag('CO2Sensor', 'virtual_CO2Sensor')
+              .addTag('TVOCSensor', 'virtual_TVOCSensor')
+              .addTag('GPSSensor', 'virtual_GPSSensor')
+              .time(lastTime);
+          writeApi.batchWrite(point);
+          pointsWritten++;
+          if (pointsWritten % batchSize == 0) {
+            await writeApi.flush();
+            onProgress((pointsWritten / totalPoints) * 100, pointsWritten,
+                totalPoints);
+          }
+        }
+      } catch (e) {
+        developer.log(e.toString(), level: 1000);
+      } finally {
+        await writeApi.flush();
+        await writeApi.close();
+        influxDBClient.close();
+      }
+      onProgress(100, pointsWritten, totalPoints);
+    }
+
+    return pointsWritten;
+  }
+
+  static const dayMillis = 24 * 60 * 60 * 1000;
+  final _rnd = Random();
+
+  num _generate(
+      {required num period, int min = 0, max = 40, required num time}) {
+    var dif = max - min;
+// generate main value
+    var periodValue =
+        (dif / 4) * sin((((time / dayMillis) % period) / period) * 2 * pi);
+// generate secondary value, which is lowest at noon
+    var dayValue =
+        (dif / 4) * sin(((time % dayMillis) / dayMillis) * 2 * pi - pi / 2);
+    return (((min + dif / 2 + periodValue + dayValue + _rnd.nextDouble() * 10) /
+        10));
   }
 }

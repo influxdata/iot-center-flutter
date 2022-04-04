@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, this.title = 'IoT Center Demo'}) : super(key: key);
@@ -16,11 +19,17 @@ class _HomePageState extends StateMVC<HomePage> {
 
   late Controller con;
   late AppStateMVC appState;
+  int? rowCount = 0;
 
   @override
   void initState() {
     super.initState();
     appState = rootState!;
+    rowCount = con.chartsList
+            .reduce((currentChart, nextChart) =>
+                currentChart.row > nextChart.row ? currentChart : nextChart)
+            .row +
+        1;
   }
 
   @override
@@ -37,8 +46,14 @@ class _HomePageState extends StateMVC<HomePage> {
           IconButton(
             icon: const Icon(Icons.lock),
             color: Colors.white,
-            onPressed: () {
-              onRefresh();
+            onPressed: () async {
+              SharedPreferences prefs =
+
+              await SharedPreferences.getInstance();
+              var tmp = jsonEncode(con.chartsList);
+              prefs.setString("charts", tmp);
+
+
             },
           ),
           IconButton(
@@ -46,7 +61,7 @@ class _HomePageState extends StateMVC<HomePage> {
             color: Colors.white,
             onPressed: () {
               // con.refreshChartListView();
-              con.refresh();
+              con.refreshChartListView();
             },
           ),
           IconButton(
@@ -67,24 +82,26 @@ class _HomePageState extends StateMVC<HomePage> {
                 child: MyDropDown(
                     padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
                     hint: 'Select device',
-                    items: con.getDeviceList(),
+                    items: con.deviceList,
                     mapValue: 'deviceId',
-                    label: 'deviceId', onChanged: (value) {
-                  con.setSelectedDevice(value!);
-                  con.refreshChartListView();
-                })),
+                    label: 'deviceId',
+                    onChanged: (value) {
+                      con.setSelectedDevice(value!);
+                      con.refreshChartListView();
+                    })),
             Expanded(
               flex: 2,
               child: MyDropDown(
                   padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
                   hint: 'Time Range',
-                  value: con.getSelectedTimeOption(),
-                  items: con.getTimeOptionsList(),
+                  value: con.selectedTimeOption,
+                  items: con.timeOptionsList,
                   mapValue: 'value',
-                  label: 'label', onChanged: (value) {
-                con.setSelectedTimeOption(value!);
-                con.refreshChartListView();
-              }),
+                  label: 'label',
+                  onChanged: (value) {
+                    con.setSelectedTimeOption(value!);
+                    con.refreshChartListView();
+                  }),
             ),
           ]),
         ),
@@ -94,22 +111,50 @@ class _HomePageState extends StateMVC<HomePage> {
         child: const Icon(Icons.add),
         onPressed: () {
           Navigator.push(
-              context, MaterialPageRoute(builder: (c) => const NewChartPage()));
+              context,
+              MaterialPageRoute(
+                  builder: (c) => NewChartPage(refreshCharts: () {
+                        setState(() {
+                          rowCount = con.chartsList
+                                  .reduce((currentChart, nextChart) =>
+                                      currentChart.row > nextChart.row
+                                          ? currentChart
+                                          : nextChart)
+                                  .row +
+                              1;
+                        });
+                      })));
         },
       ),
       body: Padding(
         padding: const EdgeInsets.all(10),
-        child: con.getChartListView(),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: ListView.builder(
+            itemCount: rowCount,
+            itemBuilder: (context, index) {
+              var chartRow =
+                  con.chartsList.where((e) => e.row == index).toList();
+              List<Widget> chartWidgets = [];
+
+              if (chartRow.isNotEmpty) {
+                chartRow.sort(((a, b) => a.column.compareTo(b.column)));
+                for (var chart in chartRow) {
+                  chartWidgets.add(chart.widget);
+                }
+              }
+              return Row(
+                children: chartWidgets,
+              );
+            },
+          ),
+        ),
       ),
     );
   }
 
-  /// Supply an error handler for Unit Testing.
   @override
   void onError(FlutterErrorDetails details) {
-    /// Error is now handled.
     super.onError(details);
   }
-
-  void onRefresh() {}
 }

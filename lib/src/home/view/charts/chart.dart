@@ -1,11 +1,61 @@
 import 'package:influxdb_client/api.dart';
-import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
+class Chart {
+  Chart({required this.data, required this.row, required this.column}) {
+    widget = ChartWidget(
+      data: data,
+    );
+  }
+
+  Chart.fromJson(Map<String, dynamic> json) {
+    var chartType = json['chartType'];
+
+    if (chartType == 'ChartType.gauge') {
+      data = ChartData.gauge(
+          measurement: json['measurement'],
+          endValue: json['endValue'],
+          label: json['label'],
+          unit: json['unit'],
+          startValue: json['startValue'],
+          decimalPlaces: json['decimalPlaces']);
+      row = json['row'];
+      column = json['column'];
+    } else {
+      data = ChartData.simple(
+        measurement: json['measurement'],
+        label: json['label'],
+      );
+      row = json['row'];
+      column = json['column'];
+    }
+
+    widget = ChartWidget(
+      data: data,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'measurement': data.measurement,
+        'label': data.label,
+        'unit': data.unit,
+        'startValue': data.startValue,
+        'endValue': data.endValue,
+        'decimalPlaces': data.decimalPlaces,
+        'chartType': data.chartType.toString(),
+        'row': row,
+        'column': column,
+      };
+
+  late ChartData data;
+  late ChartWidget widget;
+
+  int row = 0;
+  int column = 0;
+}
 
 class ChartData {
-  ChartData({
-    required this.data,
+  ChartData.gauge({
     required this.measurement,
     this.label = '',
     this.startValue = 0,
@@ -13,13 +63,28 @@ class ChartData {
     this.unit = '',
     this.size = 130,
     this.decimalPlaces = 0,
-  });
+  }) {
+    chartType = ChartType.gauge;
+  }
 
   ChartData.simple({
-    required this.data,
     required this.measurement,
     this.label = '',
-  });
+  }) {
+    chartType = ChartType.simple;
+  }
+
+  Map<String, dynamic> toJson() => {
+    'measurement': measurement,
+    'label': label,
+    'unit': unit,
+    'startValue': startValue,
+    'endValue': endValue,
+    'decimalPlaces': decimalPlaces,
+    'chartType': chartType.toString(),
+    // 'row': row,
+    // 'column': column,
+  };
 
   List<FluxRecord> data = [];
   String measurement = '';
@@ -29,56 +94,33 @@ class ChartData {
   double endValue = 100;
   double size = 120;
   int? decimalPlaces;
+
+  Function()? refreshChart;
+  Function()? removeChart;
+
+  ChartType chartType = ChartType.simple;
 }
 
-class Chart extends StatefulWidget {
-  Chart.simple({
-    required this.measurement,
-    required this.label,
-    Key? key,
-  }) : super(key: key) {
-    chartType = ChartType.simple;
-  }
+class ChartWidget extends StatefulWidget {
+  const ChartWidget({Key? key, required this.data}) : super(key: key);
 
-  Chart.gauge({
-    required this.measurement,
-    required this.endValue,
-    required this.label,
-    required this.unit,
-    required this.startValue,
-    Key? key,
-  }) : super(key: key) {
-    chartType = ChartType.gauge;
-  }
-
-  String measurement = '';
-  String label = '';
-  double startValue = 0;
-  double endValue = 100;
-  String unit = '';
-  ChartType chartType = ChartType.simple;
+  final ChartData data;
 
   @override
   State<StatefulWidget> createState() {
-    return _Chart();
+    return _ChartWidget();
   }
 }
 
-class _Chart extends StateMVC<Chart> {
-  _Chart() : super(Controller()) {
-    con = controller as Controller;
-  }
-
+class _ChartWidget extends StateMVC<ChartWidget> {
   @override
   void initState() {
     super.initState();
   }
 
-  late Controller con;
-
   @override
   Widget build(BuildContext context) {
-    var isGauge = widget.chartType == ChartType.gauge;
+    var isGauge = widget.data.chartType == ChartType.gauge;
 
     return isGauge
         ? Expanded(
@@ -89,16 +131,7 @@ class _Chart extends StateMVC<Chart> {
                 child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: GaugeChart(
-                      chartData: ChartData(
-                        data: [],
-                        measurement: widget.measurement,
-                        label: widget.label,
-                        startValue: widget.startValue,
-                        endValue: widget.endValue,
-                        unit: widget.unit,
-                        size: 120,
-                        decimalPlaces: 0,
-                      ),
+                      chartData: widget.data,
                     ))),
           ))
         : Expanded(
@@ -108,23 +141,9 @@ class _Chart extends StateMVC<Chart> {
                 decoration: boxDecor,
                 child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: FutureBuilder<dynamic>(
-                        future:
-                            con.getDataFromInflux(widget.measurement, isGauge),
-                        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(snapshot.error.toString());
-                          }
-                          if (snapshot.hasData) {
-                            return SimpleChart(
-                              data: snapshot.data,
-                              measurement: widget.measurement,
-                              label: widget.label,
-                            );
-                          } else {
-                            return const Text("loading...");
-                          }
-                        }))),
+                    child: SimpleChart(
+                      chartData: widget.data,
+                    ))),
           ));
   }
 }

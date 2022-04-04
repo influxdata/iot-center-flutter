@@ -11,6 +11,7 @@ class AppController extends ControllerMVC {
   Future<bool> initAsync() async {
     var con = Controller();
     await con.loadDevices();
+    con.loadSavedData();
     return Future.delayed(const Duration(seconds: 2), () {
       return true;
     });

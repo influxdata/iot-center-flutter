@@ -1,18 +1,14 @@
-import 'package:influxdb_client/api.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class SimpleChart extends StatefulWidget {
   const SimpleChart({
     Key? key,
-    required this.data,
-    required this.measurement,
-    required this.label,
+    required this.chartData
   }) : super(key: key);
 
-  final List<FluxRecord>? data;
-  final String measurement;
-  final String label;
+  final ChartData chartData;
 
   @override
   State<StatefulWidget> createState() {
@@ -31,47 +27,74 @@ class _SimpleChart extends StateMVC<SimpleChart> {
                 )));
   }
 
+  late Controller con;
+
+  _SimpleChart() : super(Controller()) {
+    con = controller as Controller;
+  }
+
+  @override
+  void initState() {
+    add(con);
+    super.initState();
+    widget.chartData.refreshChart = () { refresh();};
+  }
+
   @override
   Widget build(BuildContext context) {
-    var label = widget.data == null || widget.data!.isEmpty
-        ? widget.measurement + " - no data"
-        : widget.measurement;
 
-    var series = [
-      charts.Series<dynamic, DateTime>(
-        id: widget.measurement,
-        data: widget.data!,
-        seriesColor: charts.ColorUtil.fromDartColor(pink),
-        domainFn: (r, _) => DateTime.parse(r['_time']),
-        measureFn: (r, _) => r["_value"],
-      )
-    ];
+    return FutureBuilder<dynamic>(
+        future:
+        con.getDataFromInflux(widget.chartData.measurement, false),
+        builder: (context, AsyncSnapshot<dynamic> snapshot) {
+          if (snapshot.hasError) {
+            return Text(snapshot.error.toString());
+          }
+          if (snapshot.hasData) {
+            var label = snapshot.data == null || snapshot.data!.isEmpty
+                ? widget.chartData.measurement + " - no data"
+                : widget.chartData.measurement;
 
-    return Column(children: [
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: darkBlue),
-            ),
-          ),
-          IconButton(
-            onPressed: onPressed,
-            icon: const Icon(Icons.settings),
-            iconSize: 17,
-            color: darkBlue,
-          ),
-        ],
-      ),
-      SizedBox(
-        height: 130,
-        child: charts.TimeSeriesChart(
-          series,
-          animate: true,
-        ),
-      )
-    ]);
+            var series = [
+              charts.Series<dynamic, DateTime>(
+                id: widget.chartData.measurement,
+                data: snapshot.data!,
+                seriesColor: charts.ColorUtil.fromDartColor(pink),
+                domainFn: (r, _) => DateTime.parse(r['_time']),
+                measureFn: (r, _) => r["_value"],
+              )
+            ];
+
+            return Column(children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700, color: darkBlue),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onPressed,
+                    icon: const Icon(Icons.settings),
+                    iconSize: 17,
+                    color: darkBlue,
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 130,
+                child: charts.TimeSeriesChart(
+                  series,
+                  animate: true,
+                ),
+              )
+            ]);
+          } else {
+            return const Text("loading...");
+          }
+        });
+
   }
 }

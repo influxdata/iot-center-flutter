@@ -12,10 +12,10 @@ export 'package:iot_center_flutter_mvc/src/home/view/add_chart_page.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/edit_chart_page.dart';
 
+export 'package:iot_center_flutter_mvc/src/home/view/add_device_page.dart';
 
 
 
-export 'package:iot_center_flutter_mvc/src/home/view/charts/chart_list_view.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/charts/gauge_chart.dart';
 

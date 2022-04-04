@@ -7,7 +7,7 @@ class EditChartPage extends StatefulWidget {
       {Key? key, required this.chart, required this.chartRefresh})
       : super(key: key);
 
-  final StatefulWidget chart;
+  final Widget chart;
   final void Function() chartRefresh;
 
   @override
@@ -33,9 +33,17 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
 
       return Scaffold(
           appBar: AppBar(
-            backgroundColor: darkBlue,
-            title: const Text("Edit chart"),
-          ),
+              backgroundColor: darkBlue,
+              title: const Text("Edit chart"),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  color: Colors.white,
+                  onPressed: () {
+
+                  },
+                ),
+              ]),
           backgroundColor: lightGrey,
           body: Padding(
             padding:
@@ -125,7 +133,9 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
-                            widget.chartRefresh();
+
+                            gaugeChart.chartData.refreshChart!();
+
                             Navigator.pop(context);
                             // ScaffoldMessenger.of(context).showSnackBar(
                             //   const SnackBar(content: Text('Processing Data')),
@@ -161,7 +171,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   // ),
                   FormRow.textBoxRow(
                     label: "Label:",
-                    value: simpleChart.label,
+                    value: simpleChart.chartData.label,
                   ),
                   FutureBuilder<dynamic>(
                       future: con.loadFieldNames(),
@@ -173,7 +183,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           return FormRow.dropDownListRow(
                             label: "Field:",
                             items: snapshot.data,
-                            value: simpleChart.measurement,
+                            value: simpleChart.chartData.measurement,
                             mapValue: '_value',
                             mapLabel: '_value',
                             onChanged: (value) {},

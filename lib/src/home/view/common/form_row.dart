@@ -9,6 +9,7 @@ class FormRow extends StatefulWidget {
       required this.label,
       this.inputType = TextInputType.none,
       this.inputFormatters = const [],
+      this.controller,
       this.validator,
       this.onChanged,
       this.onSaved,
@@ -60,6 +61,7 @@ class FormRow extends StatefulWidget {
   String? value;
   TextInputType? inputType;
   List<TextInputFormatter> inputFormatters = [];
+  TextEditingController? controller;
 
   List? items;
   String? mapValue;
@@ -99,18 +101,34 @@ class _FormRow extends State<FormRow> {
 
     switch (widget._inputType) {
       case InputType.textField:
-        input = Container(
-            height: 50,
-            decoration: boxDecor,
-            child: TextFormField(
-              initialValue: widget.value,
-              keyboardType: widget.inputType,
-              inputFormatters: widget.inputFormatters,
-              decoration: inputDecor,
-              validator: widget.validator,
-              onChanged: widget.onChanged,
-              onSaved: widget.onSaved,
-            ));
+        if (widget.controller != null) {
+          input = Container(
+              height: 50,
+              decoration: boxDecor,
+              child: TextFormField(
+                keyboardType: widget.inputType,
+                inputFormatters: widget.inputFormatters,
+                decoration: inputDecor,
+                controller: widget.controller,
+                validator: widget.validator,
+                onChanged: widget.onChanged,
+                onSaved: widget.onSaved,
+              ));
+        } else {
+          input = Container(
+              height: 50,
+              decoration: boxDecor,
+              child: TextFormField(
+                initialValue: widget.value,
+                keyboardType: widget.inputType,
+                inputFormatters: widget.inputFormatters,
+                decoration: inputDecor,
+                validator: widget.validator,
+                onChanged: widget.onChanged,
+                onSaved: widget.onSaved,
+              ));
+        }
+
         break;
       case InputType.doubleTextField:
         input = Row(
@@ -167,26 +185,37 @@ class _FormRow extends State<FormRow> {
         break;
     }
 
-    return Padding(
-      padding: widget.padding,
-      child: Row(
-        children: [
-          Expanded(
-              flex: 1,
-              child: Text(
-                widget.label!,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
+    return widget.label!.isNotEmpty
+        ? Padding(
+            padding: widget.padding,
+            child: Row(
+              children: [
+                Expanded(
+                    flex: 1,
+                    child: Text(
+                      widget.label!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    )),
+                Expanded(
+                  flex: 3,
+                  child: input,
                 ),
-              )),
-          Expanded(
-            flex: 3,
-            child: input,
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+          )
+        : Padding(
+            padding: widget.padding,
+            child: Row(
+              children: [
+                Expanded(
+                  child: input,
+                ),
+              ],
+            ),
+          );
   }
 }

@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Controller extends ControllerMVC {
   factory Controller([StateMVC? state]) => _this ??= Controller._(state);
@@ -10,26 +13,60 @@ class Controller extends ControllerMVC {
   static Controller? _this;
   final Model _model;
 
-  ChartListView getChartListView() {
-    _model.chartListView = const ChartListView();
-    return _model.chartListView;
+  void loadSavedData(){
+    SharedPreferences.getInstance().then((prefs) {
+      var result = prefs.getString("charts");
+
+      if(result!.isNotEmpty){
+
+        Iterable l = json.decode(result);
+        List<Chart> charts = List<Chart>.from(l.map((model)=> Chart.fromJson(model)));
+
+        _model.chartsList = charts;
+      }
+    });
   }
 
-  List getDeviceList() => _model.deviceList;
-  List getTimeOptionsList() => _model.timeOptionList;
-  List getChartTypeList() => _model.chartTypeList;
-  List getFieldNames() => _model.fieldList;
+  void addNewChart(Chart chart){
+    _model.chartsList.add(chart);
+  }
 
-  String getSelectedDevice() => _model.selectedTimeOption;
-  String getSelectedTimeOption() => _model.selectedTimeOption;
+  List<Chart> get chartsList => _model.chartsList;
+
+  List get deviceList => _model.deviceList;
+  List get timeOptionsList => _model.timeOptionList;
+  List get chartTypeList => _model.chartTypeList;
+  List get fieldNames => _model.fieldList;
+
+  Map<String, dynamic>? get selectedDevice => _model.selectedDevice;
+  String get selectedTimeOption => _model.selectedTimeOption;
 
   void setSelectedTimeOption(String value) => _model.selectedTimeOption = value;
   void setSelectedDevice(String value) => _model.selectedDeviceOnChange(value);
 
   Future<void> loadDevices() => _model.loadDevices();
   Future<void> loadFieldNames() => _model.loadFieldNames();
+  Future<List<FluxRecord>> getMeasurements(String deviceId) async =>
+      _model.fetchMeasurements(_model.iotCenterApi + "/api/env/$deviceId");
 
-  void refreshChartListView() => setState(() {});
+  Future<DeviceConfig> getDeviceConfig(String? deviceId) async {
+    return _model.fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
+  }
+
+  Future writeEmulatedData(String deviceId, Function onProgress) async =>
+      _model.writeEmulatedData(deviceId, onProgress);
+
+  void refreshChartListView() async {
+    for (var chart in chartsList) {
+      if (chart.data.chartType == ChartType.gauge) {
+        await chart.data.refreshChart!();
+      } else {
+        Future.delayed(const Duration(seconds: 2), () {
+          chart.data.refreshChart!();
+        });
+      }
+    }
+  }
 
   Future<List<FluxRecord>> getDataFromInflux(
       String measurement, bool median) async {
@@ -57,5 +94,4 @@ class Controller extends ControllerMVC {
       return value.toDouble();
     }
   }
-
 }

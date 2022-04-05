@@ -1,10 +1,14 @@
 import 'package:influxdb_client/api.dart';
+import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class Chart {
   Chart({required this.data, required this.row, required this.column}) {
     widget = ChartWidget(
       data: data,
+      editChartPage: EditChartPage(
+        chart: this,
+      ),
     );
   }
 
@@ -25,6 +29,7 @@ class Chart {
       data = ChartData.simple(
         measurement: json['measurement'],
         label: json['label'],
+        unit: json['unit'],
       );
       row = json['row'];
       column = json['column'];
@@ -32,6 +37,9 @@ class Chart {
 
     widget = ChartWidget(
       data: data,
+      editChartPage: EditChartPage(
+        chart: this,
+      ),
     );
   }
 
@@ -70,21 +78,22 @@ class ChartData {
   ChartData.simple({
     required this.measurement,
     this.label = '',
+    this.unit = '',
   }) {
     chartType = ChartType.simple;
   }
 
   Map<String, dynamic> toJson() => {
-    'measurement': measurement,
-    'label': label,
-    'unit': unit,
-    'startValue': startValue,
-    'endValue': endValue,
-    'decimalPlaces': decimalPlaces,
-    'chartType': chartType.toString(),
-    // 'row': row,
-    // 'column': column,
-  };
+        'measurement': measurement,
+        'label': label,
+        'unit': unit,
+        'startValue': startValue,
+        'endValue': endValue,
+        'decimalPlaces': decimalPlaces,
+        'chartType': chartType.toString(),
+        // 'row': row,
+        // 'column': column,
+      };
 
   List<FluxRecord> data = [];
   String measurement = '';
@@ -97,14 +106,16 @@ class ChartData {
 
   Function()? refreshChart;
   Function()? removeChart;
+  Function()? editableChart;
 
   ChartType chartType = ChartType.simple;
 }
 
 class ChartWidget extends StatefulWidget {
-  const ChartWidget({Key? key, required this.data}) : super(key: key);
+  const ChartWidget({Key? key, required this.data, required this.editChartPage}) : super(key: key);
 
   final ChartData data;
+  final EditChartPage editChartPage;
 
   @override
   State<StatefulWidget> createState() {
@@ -113,37 +124,77 @@ class ChartWidget extends StatefulWidget {
 }
 
 class _ChartWidget extends StateMVC<ChartWidget> {
+  _ChartWidget() : super(Controller()) {
+    con = controller as Controller;
+  }
+
   @override
   void initState() {
+    add(con);
     super.initState();
+    widget.data.editableChart = () {
+      setState(() {con.editable;});
+    };
   }
+
+  late Controller con;
 
   @override
   Widget build(BuildContext context) {
     var isGauge = widget.data.chartType == ChartType.gauge;
 
-    return isGauge
-        ? Expanded(
-            child: Padding(
+    Widget chart = isGauge
+        ? GaugeChart(
+            chartData: widget.data,
+          )
+        : SimpleChart(
+            chartData: widget.data,
+          );
+
+    return Expanded(
+        child: Padding(
             padding: const EdgeInsets.all(5.0),
             child: Container(
                 decoration: boxDecor,
                 child: Padding(
                     padding: const EdgeInsets.all(10),
-                    child: GaugeChart(
-                      chartData: widget.data,
-                    ))),
-          ))
-        : Expanded(
-            child: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: Container(
-                decoration: boxDecor,
-                child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: SimpleChart(
-                      chartData: widget.data,
-                    ))),
-          ));
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: con.editable
+                              ? const EdgeInsets.only(bottom: 0)
+                              : const EdgeInsets.only(bottom: 15, top: 15),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.data.label,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: darkBlue,
+                                  ),
+                                ),
+                              ),
+                              Visibility(
+                                visible: con.editable,
+                                child: IconButton(
+                                  onPressed: (){
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (c) => widget.editChartPage));
+                                  },
+                                  icon: const Icon(Icons.settings),
+                                  iconSize: 17,
+                                  color: darkBlue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        chart
+                      ],
+                    )))));
   }
 }

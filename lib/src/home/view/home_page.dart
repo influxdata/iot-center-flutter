@@ -30,6 +30,18 @@ class _HomePageState extends StateMVC<HomePage> {
                 currentChart.row > nextChart.row ? currentChart : nextChart)
             .row +
         1;
+
+    con.removeItemFromListView = () {
+      setState(() {
+        rowCount = con.chartsList
+            .reduce((currentChart, nextChart) =>
+        currentChart.row > nextChart.row
+            ? currentChart
+            : nextChart)
+            .row +
+            1;
+      });
+    };
   }
 
   @override
@@ -44,16 +56,22 @@ class _HomePageState extends StateMVC<HomePage> {
         backgroundColor: darkBlue,
         actions: [
           IconButton(
-            icon: const Icon(Icons.lock),
+            icon: con.editable
+                ? const Icon(Icons.lock_open)
+                : const Icon(Icons.lock),
             color: Colors.white,
             onPressed: () async {
-              SharedPreferences prefs =
+              if (con.editable) {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                var tmp = jsonEncode(con.chartsList);
+                prefs.setString("charts", tmp);
 
-              await SharedPreferences.getInstance();
-              var tmp = jsonEncode(con.chartsList);
-              prefs.setString("charts", tmp);
-
-
+                setState(() { con.editable = false;});
+              }
+              else{
+                setState(() { con.editable = true;});
+              }
+              con.refreshChartEditable();
             },
           ),
           IconButton(

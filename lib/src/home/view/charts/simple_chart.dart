@@ -3,10 +3,7 @@ import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class SimpleChart extends StatefulWidget {
-  const SimpleChart({
-    Key? key,
-    required this.chartData
-  }) : super(key: key);
+  const SimpleChart({Key? key, required this.chartData}) : super(key: key);
 
   final ChartData chartData;
 
@@ -17,16 +14,6 @@ class SimpleChart extends StatefulWidget {
 }
 
 class _SimpleChart extends StateMVC<SimpleChart> {
-  void onPressed() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (c) => EditChartPage(
-                  chart: widget,
-              chartRefresh: (){},
-                )));
-  }
-
   late Controller con;
 
   _SimpleChart() : super(Controller()) {
@@ -37,24 +24,20 @@ class _SimpleChart extends StateMVC<SimpleChart> {
   void initState() {
     add(con);
     super.initState();
-    widget.chartData.refreshChart = () { refresh();};
+    widget.chartData.refreshChart = () {
+      refresh();
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-
     return FutureBuilder<dynamic>(
-        future:
-        con.getDataFromInflux(widget.chartData.measurement, false),
+        future: con.getDataFromInflux(widget.chartData.measurement, false),
         builder: (context, AsyncSnapshot<dynamic> snapshot) {
           if (snapshot.hasError) {
             return Text(snapshot.error.toString());
           }
           if (snapshot.hasData) {
-            var label = snapshot.data == null || snapshot.data!.isEmpty
-                ? widget.chartData.measurement + " - no data"
-                : widget.chartData.measurement;
-
             var series = [
               charts.Series<dynamic, DateTime>(
                 id: widget.chartData.measurement,
@@ -65,36 +48,29 @@ class _SimpleChart extends StateMVC<SimpleChart> {
               )
             ];
 
-            return Column(children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700, color: darkBlue),
+            return Stack(
+              children: [
+                SizedBox(
+                  height: 130,
+                  child: charts.TimeSeriesChart(
+                    series,
+                    animate: true,
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    widget.chartData.unit,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  IconButton(
-                    onPressed: onPressed,
-                    icon: const Icon(Icons.settings),
-                    iconSize: 17,
-                    color: darkBlue,
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 130,
-                child: charts.TimeSeriesChart(
-                  series,
-                  animate: true,
-                ),
-              )
-            ]);
+                )
+              ]
+            );
           } else {
             return const Text("loading...");
           }
         });
-
   }
 }

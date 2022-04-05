@@ -19,17 +19,6 @@ class GaugeChart extends StatefulWidget {
 }
 
 class _GaugeChart extends StateMVC<GaugeChart> {
-  void onPressed() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (c) => EditChartPage(
-                  chart: widget,
-                  chartRefresh: () {
-                    refresh();
-                  },
-                )));
-  }
 
   _GaugeChart() : super(Controller()) {
     con = controller as Controller;
@@ -50,26 +39,6 @@ class _GaugeChart extends StateMVC<GaugeChart> {
   Widget buildWidget(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.chartData.label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: darkBlue,
-                ),
-              ),
-            ),
-            IconButton(
-              onPressed: onPressed,
-              icon: const Icon(Icons.settings),
-              iconSize: 17,
-              color: darkBlue,
-            ),
-          ],
-        ),
         Row(
           children: [
             Expanded(

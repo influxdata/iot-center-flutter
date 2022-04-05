@@ -60,7 +60,8 @@ class Model extends ModelMVC {
     Chart(
         row: 2,
         column: 1,
-        data: ChartData.simple(measurement: 'TVOC', label: 'TVOC')),
+        data:
+            ChartData.simple(measurement: 'TVOC', label: 'TVOC', unit: 'ppm')),
     Chart(
         row: 3,
         column: 1,

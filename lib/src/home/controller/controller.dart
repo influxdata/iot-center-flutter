@@ -13,6 +13,17 @@ class Controller extends ControllerMVC {
   static Controller? _this;
   final Model _model;
 
+  bool editable = false;
+
+  void refreshChartEditable(){
+    for (var chart in _model.chartsList){
+      chart.data.editableChart!();
+    }
+  }
+
+ Function()? removeItemFromListView;
+
+
   void loadSavedData(){
     SharedPreferences.getInstance().then((prefs) {
       var result = prefs.getString("charts");

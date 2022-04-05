@@ -3,12 +3,9 @@ import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class EditChartPage extends StatefulWidget {
-  const EditChartPage(
-      {Key? key, required this.chart, required this.chartRefresh})
-      : super(key: key);
+  const EditChartPage({Key? key, required this.chart}) : super(key: key);
 
-  final Widget chart;
-  final void Function() chartRefresh;
+  final Chart chart;
 
   @override
   _EditChartPageState createState() {
@@ -26,11 +23,43 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
 
   late Controller con;
 
+  showAlertDialog(BuildContext context) {
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: const Text("Cancel"),
+      onPressed: () { Navigator.of(context).pop();},
+    );
+    Widget continueButton = TextButton(
+      child: const Text("Delete"),
+      onPressed: () {
+        con.chartsList.removeWhere((element) =>
+            element.row == widget.chart.row &&
+            element.column == widget.chart.column);
+        con.removeItemFromListView!();
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      },
+    );
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: const Text("Delete chart"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (widget.chart is GaugeChart) {
-      var gaugeChart = widget.chart as GaugeChart;
-
+    if (widget.chart.data.chartType == ChartType.gauge) {
       return Scaffold(
           appBar: AppBar(
               backgroundColor: darkBlue,
@@ -40,7 +69,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   icon: const Icon(Icons.delete),
                   color: Colors.white,
                   onPressed: () {
-
+                    showAlertDialog(context);
                   },
                 ),
               ]),
@@ -54,9 +83,9 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                 children: [
                   FormRow.textBoxRow(
                     label: "Label:",
-                    value: gaugeChart.chartData.label,
+                    value: widget.chart.data.label,
                     onSaved: (value) {
-                      gaugeChart.chartData.label = value!;
+                      widget.chart.data.label = value!;
                     },
                   ),
                   FutureBuilder<dynamic>(
@@ -69,12 +98,16 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           return FormRow.dropDownListRow(
                             label: "Field:",
                             items: snapshot.data,
-                            value: gaugeChart.chartData.measurement,
+                            value: widget.chart.data.measurement,
                             mapValue: '_value',
                             mapLabel: '_value',
-                            onChanged: (value) {},
+                            onChanged: (value) {
+                              setState(() {
+                                widget.chart.data.label = value!;
+                              });
+                            },
                             onSaved: (value) {
-                              gaugeChart.chartData.measurement = value!;
+                              widget.chart.data.measurement = value!;
                             },
                           );
                         } else {
@@ -83,27 +116,26 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       }),
                   FormRow.doubleTextBoxRow(
                     label: "Range:",
-                    value: gaugeChart.chartData.startValue.toStringAsFixed(0),
+                    value: widget.chart.data.startValue.toStringAsFixed(0),
                     inputType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                     ],
                     onSaved: (value) {
-                      gaugeChart.chartData.startValue = double.parse(value!);
+                      widget.chart.data.startValue = double.parse(value!);
                     },
-                    value2: gaugeChart.chartData.endValue.toStringAsFixed(0),
+                    value2: widget.chart.data.endValue.toStringAsFixed(0),
                     inputType2: TextInputType.number,
                     inputFormatters2: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                     ],
                     onSaved2: (value) {
-                      gaugeChart.chartData.endValue = double.parse(value!);
+                      widget.chart.data.endValue = double.parse(value!);
                     },
                   ),
                   FormRow.textBoxRow(
                     label: "Rounded:",
-                    value:
-                        gaugeChart.chartData.decimalPlaces!.toStringAsFixed(0),
+                    value: widget.chart.data.decimalPlaces!.toStringAsFixed(0),
                     inputType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -115,14 +147,14 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      gaugeChart.chartData.decimalPlaces = int.parse(value!);
+                      widget.chart.data.decimalPlaces = int.parse(value!);
                     },
                   ),
                   FormRow.textBoxRow(
                     label: "Unit:",
-                    value: gaugeChart.chartData.unit,
+                    value: widget.chart.data.unit,
                     onSaved: (value) {
-                      gaugeChart.chartData.unit = value!;
+                      widget.chart.data.unit = value!;
                     },
                   ),
                   Padding(
@@ -134,7 +166,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
 
-                            gaugeChart.chartData.refreshChart!();
+                            widget.chart.data.refreshChart!();
 
                             Navigator.pop(context);
                             // ScaffoldMessenger.of(context).showSnackBar(
@@ -147,12 +179,20 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
               ),
             ),
           ));
-    } else if (widget.chart is SimpleChart) {
-      var simpleChart = widget.chart as SimpleChart;
+    } else if (widget.chart.data.chartType == ChartType.simple) {
       return Scaffold(
           appBar: AppBar(
             backgroundColor: darkBlue,
             title: const Text("Edit chart"),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                color: Colors.white,
+                onPressed: () {
+                  showAlertDialog(context);
+                },
+              ),
+            ],
           ),
           backgroundColor: lightGrey,
           body: Padding(
@@ -171,7 +211,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   // ),
                   FormRow.textBoxRow(
                     label: "Label:",
-                    value: simpleChart.chartData.label,
+                    value: widget.chart.data.label,
                   ),
                   FutureBuilder<dynamic>(
                       future: con.loadFieldNames(),
@@ -183,15 +223,26 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           return FormRow.dropDownListRow(
                             label: "Field:",
                             items: snapshot.data,
-                            value: simpleChart.chartData.measurement,
+                            value: widget.chart.data.measurement,
                             mapValue: '_value',
                             mapLabel: '_value',
-                            onChanged: (value) {},
+                            onChanged: (value) {
+                              setState(() {
+                                widget.chart.data.label = value!;
+                              });
+                            },
                           );
                         } else {
                           return const Text("loading...");
                         }
                       }),
+                  FormRow.textBoxRow(
+                    label: "Unit:",
+                    value: widget.chart.data.unit,
+                    onSaved: (value) {
+                      widget.chart.data.unit = value!;
+                    },
+                  ),
                   Padding(
                     padding:
                         const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
@@ -200,11 +251,9 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         onPressed: () {
                           // Validate returns true if the form is valid, or false otherwise.
                           if (_formKey.currentState!.validate()) {
-                            // If the form is valid, display a snackbar. In the real world,
-                            // you'd often call a server or save the information in a database.
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Processing Data')),
-                            );
+                            _formKey.currentState!.save();
+                            widget.chart.data.refreshChart!();
+                            Navigator.pop(context);
                           }
                         }),
                   ),

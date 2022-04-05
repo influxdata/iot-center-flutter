@@ -108,7 +108,6 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                     onChanged: (value) {
                      setState(() { selectedDevice = con.deviceList
                          .firstWhere((device) => device['deviceId'] == value);
-                     // deviceDetail = con.getDeviceConfig(selectedDevice!['deviceId']) as DeviceConfig?;
                      });
                     }),
                 FormButton(

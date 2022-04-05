@@ -31,6 +31,8 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
   int? decimalPlaces;
   String? chartType;
 
+  bool isGauge = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +54,9 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                   value: con.chartTypeList.first['value'].toString(),
                   mapValue: 'value',
                   mapLabel: 'label',
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    setState(() {isGauge = value == 'ChartType.gauge';});
+                  },
                   onSaved: (value) {
                     chartType = value!;
                   },
@@ -84,25 +88,33 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return const Text("loading...");
                       }
                     }),
-                FormRow.doubleTextBoxRow(
-                    label: "Range:",
-                    onSaved: (value) {
-                      startValue = double.parse(value!);
-                    },
-                    onSaved2: (value) {
-                      endValue = double.parse(value!);
-                    }),
-                FormRow.textBoxRow(
-                    label: "Rounded:",
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      decimalPlaces = int.parse(value!);
-                    }),
+
+                Visibility(
+                  visible: isGauge,
+                  child: FormRow.doubleTextBoxRow(
+                      label: "Range:",
+                      onSaved: (value) {
+                        startValue = double.parse(value!);
+                      },
+                      onSaved2: (value) {
+                        endValue = double.parse(value!);
+                      }),
+                ),
+
+                Visibility(
+                  visible: isGauge,
+                  child: FormRow.textBoxRow(
+                      label: "Rounded:",
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        decimalPlaces = int.parse(value!);
+                      }),
+                ),
                 FormRow.textBoxRow(
                     label: "Unit:",
                     onSaved: (value) {
@@ -158,6 +170,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                                 data: ChartData.simple(
                                   measurement: measurement,
                                   label: label,
+                                  unit: unit,
                                 )));
                           }
                           widget.refreshCharts();

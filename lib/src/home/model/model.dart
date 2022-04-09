@@ -180,8 +180,11 @@ class Model extends ModelMVC {
         org: config.influxOrg);
   }
 
-  Future<List<FluxRecord>> fetchDeviceDataFieldMedian(String? deviceId,
-      String field, String maxPastTime, String iotCenterApi) async {
+  Future<List<FluxRecord>> fetchDeviceDataFieldMedian(
+      String field, bool median) async {
+    var deviceId = selectedDevice != null ? selectedDevice!['deviceId'] : null;
+    var maxPastTime = selectedTimeOption;
+
     if (deviceId == null) {
       return [];
     }
@@ -190,7 +193,8 @@ class Model extends ModelMVC {
     var _client = createClient(_config);
     var queryApi = _client.getQueryService();
 
-    var fluxQuery = '''
+    var fluxQuery = median
+        ? '''
           import "influxdata/influxdb/v1"
           from(bucket: "${_client.bucket}")
               |> range(start: $maxPastTime)
@@ -200,32 +204,8 @@ class Model extends ModelMVC {
               |> keep(columns: ["_value", "_time"])
               |> toFloat()
               |> median()
-          ''';
-
-    try {
-      var stream = await queryApi.query(fluxQuery);
-      return await stream.toList();
-    } catch (e) {
-      print(e);
-      return [];
-    } finally {
-      _client.close();
-    }
-  }
-
-  Future<List<FluxRecord>> fetchDeviceDataField(String? deviceId, String field,
-      String maxPastTime, String iotCenterApi) async {
-    if (deviceId == null) {
-      return [];
-    }
-    await fetchDeviceConfig(iotCenterApi + "/api/env/$deviceId");
-    var _client = createClient(_config);
-
-    // var queryPing = _client.getPingApi();
-    //var tmp = await queryPing.getPingWithHttpInfo();
-
-    var queryApi = _client.getQueryService();
-    var fluxQuery = '''
+          '''
+        : '''
           import "influxdata/influxdb/v1"
           from(bucket: "${_client.bucket}")
               |> range(start: $maxPastTime)
@@ -238,6 +218,9 @@ class Model extends ModelMVC {
     try {
       var stream = await queryApi.query(fluxQuery);
       return await stream.toList();
+    } catch (e) {
+      print(e);
+      return [];
     } finally {
       _client.close();
     }

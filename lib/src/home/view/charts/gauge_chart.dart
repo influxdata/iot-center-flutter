@@ -56,7 +56,7 @@ class _GaugeChart extends StateMVC<GaugeChart> {
                           if (snapshot.hasData) {
                             widget.chartData.data = snapshot.data;
                             final value = widget.chartData.data.isNotEmpty
-                                ? con.checkDouble(
+                                ? con.getDouble(
                                     widget.chartData.data.last["_value"])
                                 : widget.chartData.startValue;
 
@@ -129,31 +129,34 @@ class _GaugeChart extends StateMVC<GaugeChart> {
             )
           ],
         ),
-        Row(
-          children: [
-            Expanded(
-              child: Center(
-                child: Text(
-                  widget.chartData.startValue.toStringAsFixed(0),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+        SizedBox(
+          width: widget.chartData.size,
+          child: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Text(
+                    widget.chartData.startValue.toStringAsFixed(0),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: Center(
-                child: Text(
-                  widget.chartData.endValue.toStringAsFixed(0),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              Expanded(
+                child: Center(
+                  child: Text(
+                    widget.chartData.endValue.toStringAsFixed(0),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         )
       ],
     );

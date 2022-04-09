@@ -22,12 +22,16 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
   }
 
   late Controller con;
+  var isGauge = true;
+  var chartType = '';
 
   showAlertDialog(BuildContext context) {
     // set up the buttons
     Widget cancelButton = TextButton(
       child: const Text("Cancel"),
-      onPressed: () { Navigator.of(context).pop();},
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
     );
     Widget continueButton = TextButton(
       child: const Text("Delete"),
@@ -59,62 +63,74 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.chart.data.chartType == ChartType.gauge) {
-      return Scaffold(
-          appBar: AppBar(
-              backgroundColor: darkBlue,
-              title: const Text("Edit chart"),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  color: Colors.white,
-                  onPressed: () {
-                    showAlertDialog(context);
+    return Scaffold(
+        appBar: AppBar(
+            backgroundColor: darkBlue,
+            title: const Text("Edit chart"),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                color: Colors.white,
+                onPressed: () {
+                  showAlertDialog(context);
+                },
+              ),
+            ]),
+        backgroundColor: lightGrey,
+        body: Padding(
+          padding:
+              const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 10),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                FormRow.dropDownListRow(
+                  label: "Type:",
+                  items: con.chartTypeList,
+                  value: widget.chart.data.chartType.toString(),
+                  mapValue: 'value',
+                  mapLabel: 'label',
+                  onChanged: (value) {
+                    setState(() {
+                      isGauge = value == 'ChartType.gauge';
+                    });
+                  },
+                  onSaved: (value) {
+                    chartType = value!;
                   },
                 ),
-              ]),
-          backgroundColor: lightGrey,
-          body: Padding(
-            padding:
-                const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 10),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  FormRow.textBoxRow(
-                    label: "Label:",
-                    value: widget.chart.data.label,
-                    onSaved: (value) {
-                      widget.chart.data.label = value!;
-                    },
-                  ),
-                  FutureBuilder<dynamic>(
-                      future: con.loadFieldNames(),
-                      builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                        if (snapshot.hasError) {
-                          return Text(snapshot.error.toString());
-                        }
-                        if (snapshot.hasData) {
-                          return FormRow.dropDownListRow(
-                            label: "Field:",
-                            items: snapshot.data,
-                            value: widget.chart.data.measurement,
-                            mapValue: '_value',
-                            mapLabel: '_value',
-                            onChanged: (value) {
-                              setState(() {
-                                widget.chart.data.label = value!;
-                              });
-                            },
-                            onSaved: (value) {
-                              widget.chart.data.measurement = value!;
-                            },
-                          );
-                        } else {
-                          return const Text("loading...");
-                        }
-                      }),
-                  FormRow.doubleTextBoxRow(
+                FutureBuilder<dynamic>(
+                    future: con.loadFieldNames(),
+                    builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                      if (snapshot.hasError) {
+                        return Text(snapshot.error.toString());
+                      }
+                      if (snapshot.hasData) {
+                        return FormRow.dropDownListRow(
+                          label: "Field:",
+                          items: snapshot.data,
+                          value: widget.chart.data.measurement,
+                          mapValue: '_value',
+                          mapLabel: '_value',
+                          onChanged: (value) {},
+                          onSaved: (value) {
+                            widget.chart.data.measurement = value!;
+                          },
+                        );
+                      } else {
+                        return const Text("loading...");
+                      }
+                    }),
+                FormRow.textBoxRow(
+                  label: "Label:",
+                  value: widget.chart.data.label,
+                  onSaved: (value) {
+                    widget.chart.data.label = value!;
+                  },
+                ),
+                Visibility(
+                  visible: isGauge,
+                  child: FormRow.doubleTextBoxRow(
                     label: "Range:",
                     value: widget.chart.data.startValue.toStringAsFixed(0),
                     inputType: TextInputType.number,
@@ -122,7 +138,8 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                     ],
                     onSaved: (value) {
-                      widget.chart.data.startValue = double.parse(value!);
+                      widget.chart.data.startValue =
+                          isGauge ? double.parse(value!) : 0;
                     },
                     value2: widget.chart.data.endValue.toStringAsFixed(0),
                     inputType2: TextInputType.number,
@@ -130,12 +147,18 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                     ],
                     onSaved2: (value) {
-                      widget.chart.data.endValue = double.parse(value!);
+                      widget.chart.data.endValue =
+                          isGauge ? double.parse(value!) : 0;
                     },
                   ),
-                  FormRow.textBoxRow(
+                ),
+                Visibility(
+                  visible: isGauge,
+                  child: FormRow.textBoxRow(
                     label: "Rounded:",
-                    value: widget.chart.data.decimalPlaces!.toStringAsFixed(0),
+                    value: isGauge && widget.chart.data.decimalPlaces != null
+                        ? widget.chart.data.decimalPlaces!.toStringAsFixed(0)
+                        : '0',
                     inputType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -147,127 +170,50 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      widget.chart.data.decimalPlaces = int.parse(value!);
+                      widget.chart.data.decimalPlaces =
+                          isGauge ? int.parse(value!) : 0;
                     },
                   ),
-                  FormRow.textBoxRow(
-                    label: "Unit:",
-                    value: widget.chart.data.unit,
-                    onSaved: (value) {
-                      widget.chart.data.unit = value!;
-                    },
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
-                    child: FormButton(
-                        label: 'Update',
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
+                ),
+                FormRow.textBoxRow(
+                  label: "Unit:",
+                  value: widget.chart.data.unit,
+                  onSaved: (value) {
+                    widget.chart.data.unit = value!;
+                  },
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
+                  child: FormButton(
+                      label: 'Update',
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          _formKey.currentState!.save();
 
-                            widget.chart.data.refreshChart!();
+                          widget.chart.data.chartType =
+                              chartType == 'ChartType.gauge'
+                                  ? ChartType.gauge
+                                  : ChartType.simple;
 
-                            Navigator.pop(context);
-                            // ScaffoldMessenger.of(context).showSnackBar(
-                            //   const SnackBar(content: Text('Processing Data')),
-                            // );
-                          }
-                        }),
-                  ),
-                ],
-              ),
-            ),
-          ));
-    } else if (widget.chart.data.chartType == ChartType.simple) {
-      return Scaffold(
-          appBar: AppBar(
-            backgroundColor: darkBlue,
-            title: const Text("Edit chart"),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.delete),
-                color: Colors.white,
-                onPressed: () {
-                  showAlertDialog(context);
-                },
-              ),
-            ],
-          ),
-          backgroundColor: lightGrey,
-          body: Padding(
-            padding:
-                const EdgeInsets.only(top: 30, left: 15, right: 15, bottom: 10),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  // FormRow.dropDownListRow(
-                  //   label: "Type:",
-                  //   items: con.getChartTypeList(),
-                  //   mapValue: 'value',
-                  //   mapLabel: 'label',
-                  //   onChanged: (value) {},
-                  // ),
-                  FormRow.textBoxRow(
-                    label: "Label:",
-                    value: widget.chart.data.label,
-                  ),
-                  FutureBuilder<dynamic>(
-                      future: con.loadFieldNames(),
-                      builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                        if (snapshot.hasError) {
-                          return Text(snapshot.error.toString());
-                        }
-                        if (snapshot.hasData) {
-                          return FormRow.dropDownListRow(
-                            label: "Field:",
-                            items: snapshot.data,
-                            value: widget.chart.data.measurement,
-                            mapValue: '_value',
-                            mapLabel: '_value',
-                            onChanged: (value) {
-                              setState(() {
-                                widget.chart.data.label = value!;
-                              });
-                            },
-                          );
-                        } else {
-                          return const Text("loading...");
+                          widget.chart.data.refreshWidget!();
+
+                          Navigator.pop(context);
+                          // ScaffoldMessenger.of(context).showSnackBar(
+                          //   const SnackBar(content: Text('Processing Data')),
+                          // );
                         }
                       }),
-                  FormRow.textBoxRow(
-                    label: "Unit:",
-                    value: widget.chart.data.unit,
-                    onSaved: (value) {
-                      widget.chart.data.unit = value!;
-                    },
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
-                    child: FormButton(
-                        label: 'Update',
-                        onPressed: () {
-                          // Validate returns true if the form is valid, or false otherwise.
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            widget.chart.data.refreshChart!();
-                            Navigator.pop(context);
-                          }
-                        }),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ));
-    } else {
-      return const Scaffold();
-    }
+          ),
+        ));
   }
 
   @override
   void initState() {
     super.initState();
+    isGauge = widget.chart.data.chartType == ChartType.gauge;
   }
 }

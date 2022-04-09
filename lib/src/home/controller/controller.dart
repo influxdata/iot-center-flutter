@@ -15,30 +15,29 @@ class Controller extends ControllerMVC {
 
   bool editable = false;
 
-  void refreshChartEditable(){
-    for (var chart in _model.chartsList){
-      chart.data.editableChart!();
+  void refreshChartEditable() {
+    for (var chart in _model.chartsList) {
+      chart.data.refreshHeader!();
     }
   }
 
- Function()? removeItemFromListView;
+  Function()? removeItemFromListView;
 
-
-  void loadSavedData(){
+  void loadSavedData() {
     SharedPreferences.getInstance().then((prefs) {
       var result = prefs.getString("charts");
 
-      if(result!.isNotEmpty){
-
+      if (result!.isNotEmpty) {
         Iterable l = json.decode(result);
-        List<Chart> charts = List<Chart>.from(l.map((model)=> Chart.fromJson(model)));
+        List<Chart> charts =
+            List<Chart>.from(l.map((model) => Chart.fromJson(model)));
 
         _model.chartsList = charts;
       }
     });
   }
 
-  void addNewChart(Chart chart){
+  void addNewChart(Chart chart) {
     _model.chartsList.add(chart);
   }
 
@@ -56,18 +55,21 @@ class Controller extends ControllerMVC {
   void setSelectedDevice(String value) => _model.selectedDeviceOnChange(value);
 
   Future<void> loadDevices() => _model.loadDevices();
+
   Future<void> loadFieldNames() => _model.loadFieldNames();
+
   Future<List<FluxRecord>> getMeasurements(String deviceId) async =>
       _model.fetchMeasurements(_model.iotCenterApi + "/api/env/$deviceId");
 
   Future<DeviceConfig> getDeviceConfig(String? deviceId) async {
-    return _model.fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
+    return _model
+        .fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
   }
 
   Future writeEmulatedData(String deviceId, Function onProgress) async =>
       _model.writeEmulatedData(deviceId, onProgress);
 
-  void refreshChartListView() async {
+  Future<void> refreshChartListView() async {
     for (var chart in chartsList) {
       if (chart.data.chartType == ChartType.gauge) {
         await chart.data.refreshChart!();
@@ -81,28 +83,9 @@ class Controller extends ControllerMVC {
 
   Future<List<FluxRecord>> getDataFromInflux(
       String measurement, bool median) async {
-    return median
-        ? _model.fetchDeviceDataFieldMedian(
-            _model.selectedDevice != null
-                ? _model.selectedDevice!['deviceId']
-                : null,
-            measurement,
-            _model.selectedTimeOption,
-            _model.iotCenterApi)
-        : _model.fetchDeviceDataField(
-            _model.selectedDevice != null
-                ? _model.selectedDevice!['deviceId']
-                : null,
-            measurement,
-            _model.selectedTimeOption,
-            _model.iotCenterApi);
+    return _model.fetchDeviceDataFieldMedian(measurement, median);
   }
 
-  double checkDouble(dynamic value) {
-    if (value is String) {
-      return double.parse(value);
-    } else {
-      return value.toDouble();
-    }
-  }
+  double getDouble(dynamic value) =>
+      value is String ? double.parse(value) : value.toDouble();
 }

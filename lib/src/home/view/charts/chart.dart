@@ -83,18 +83,6 @@ class ChartData {
     chartType = ChartType.simple;
   }
 
-  Map<String, dynamic> toJson() => {
-        'measurement': measurement,
-        'label': label,
-        'unit': unit,
-        'startValue': startValue,
-        'endValue': endValue,
-        'decimalPlaces': decimalPlaces,
-        'chartType': chartType.toString(),
-        // 'row': row,
-        // 'column': column,
-      };
-
   List<FluxRecord> data = [];
   String measurement = '';
   String label = '';
@@ -104,15 +92,17 @@ class ChartData {
   double size = 120;
   int? decimalPlaces;
 
+  Function()? refreshHeader;
   Function()? refreshChart;
+  Function()? refreshWidget;
   Function()? removeChart;
-  Function()? editableChart;
 
   ChartType chartType = ChartType.simple;
 }
 
 class ChartWidget extends StatefulWidget {
-  const ChartWidget({Key? key, required this.data, required this.editChartPage}) : super(key: key);
+  const ChartWidget({Key? key, required this.data, required this.editChartPage})
+      : super(key: key);
 
   final ChartData data;
   final EditChartPage editChartPage;
@@ -124,25 +114,19 @@ class ChartWidget extends StatefulWidget {
 }
 
 class _ChartWidget extends StateMVC<ChartWidget> {
-  _ChartWidget() : super(Controller()) {
-    con = controller as Controller;
-  }
-
   @override
   void initState() {
-    add(con);
     super.initState();
-    widget.data.editableChart = () {
-      setState(() {con.editable;});
+    isGauge = widget.data.chartType == ChartType.gauge;
+    widget.data.refreshWidget = () {
+      setState(() { isGauge = widget.data.chartType == ChartType.gauge;});
     };
   }
 
-  late Controller con;
+  var isGauge = true;
 
   @override
   Widget build(BuildContext context) {
-    var isGauge = widget.data.chartType == ChartType.gauge;
-
     Widget chart = isGauge
         ? GaugeChart(
             chartData: widget.data,
@@ -160,41 +144,78 @@ class _ChartWidget extends StateMVC<ChartWidget> {
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       children: [
-                        Padding(
-                          padding: con.editable
-                              ? const EdgeInsets.only(bottom: 0)
-                              : const EdgeInsets.only(bottom: 15, top: 15),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  widget.data.label,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: darkBlue,
-                                  ),
-                                ),
-                              ),
-                              Visibility(
-                                visible: con.editable,
-                                child: IconButton(
-                                  onPressed: (){
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (c) => widget.editChartPage));
-                                  },
-                                  icon: const Icon(Icons.settings),
-                                  iconSize: 17,
-                                  color: darkBlue,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ChartHeader(
+                            data: widget.data,
+                            editChartPage: widget.editChartPage),
                         chart
                       ],
                     )))));
+  }
+}
+
+class ChartHeader extends StatefulWidget {
+  const ChartHeader({Key? key, required this.data, required this.editChartPage})
+      : super(key: key);
+
+  final ChartData data;
+  final EditChartPage editChartPage;
+
+  @override
+  State<StatefulWidget> createState() {
+    return _ChartHeader();
+  }
+}
+
+class _ChartHeader extends StateMVC<ChartHeader> {
+  _ChartHeader() : super(Controller()) {
+    con = controller as Controller;
+  }
+
+  @override
+  void initState() {
+    add(con);
+    super.initState();
+    widget.data.refreshHeader = () {
+      setState(() {
+        con.editable;
+      });
+    };
+  }
+
+  late Controller con;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: con.editable
+          ? const EdgeInsets.only(bottom: 0)
+          : const EdgeInsets.only(bottom: 15, top: 15),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.data.label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: darkBlue,
+              ),
+            ),
+          ),
+          Visibility(
+            visible: con.editable,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (c) => widget.editChartPage));
+              },
+              icon: const Icon(Icons.settings),
+              iconSize: 17,
+              color: darkBlue,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -34,11 +34,9 @@ class _HomePageState extends StateMVC<HomePage> {
     con.removeItemFromListView = () {
       setState(() {
         rowCount = con.chartsList
-            .reduce((currentChart, nextChart) =>
-        currentChart.row > nextChart.row
-            ? currentChart
-            : nextChart)
-            .row +
+                .reduce((currentChart, nextChart) =>
+                    currentChart.row > nextChart.row ? currentChart : nextChart)
+                .row +
             1;
       });
     };
@@ -66,10 +64,13 @@ class _HomePageState extends StateMVC<HomePage> {
                 var tmp = jsonEncode(con.chartsList);
                 prefs.setString("charts", tmp);
 
-                setState(() { con.editable = false;});
-              }
-              else{
-                setState(() { con.editable = true;});
+                setState(() {
+                  con.editable = false;
+                });
+              } else {
+                setState(() {
+                  con.editable = true;
+                });
               }
               con.refreshChartEditable();
             },

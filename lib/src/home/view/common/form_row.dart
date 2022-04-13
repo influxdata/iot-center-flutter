@@ -133,7 +133,6 @@ class _FormRow extends State<FormRow> {
     Widget input = const Text('');
 
     var inputDecor = InputDecoration(
-      isDense: true,
       border: OutlineInputBorder(
         borderSide: BorderSide.none,
         borderRadius: BorderRadius.circular(5),
@@ -146,7 +145,6 @@ class _FormRow extends State<FormRow> {
     switch (widget._inputType) {
       case InputType.textField:
         input = Container(
-            height: 50,
             decoration: boxDecor,
             child: TextFormField(
               keyboardType: widget.inputType,
@@ -165,7 +163,6 @@ class _FormRow extends State<FormRow> {
               child: Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: Container(
-                    height: 50,
                     decoration: boxDecor,
                     child: TextFormField(
                       controller: _controller,
@@ -182,7 +179,6 @@ class _FormRow extends State<FormRow> {
               child: Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Container(
-                    height: 50,
                     decoration: boxDecor,
                     child: TextFormField(
                       controller: _controller2,
@@ -205,7 +201,6 @@ class _FormRow extends State<FormRow> {
               child: Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: Container(
-                    height: 50,
                     decoration: boxDecor,
                     child: NumberTextField(
                       onSaved: widget.onSaved,
@@ -217,7 +212,6 @@ class _FormRow extends State<FormRow> {
               child: Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Container(
-                    height: 50,
                     decoration: boxDecor,
                     child: NumberTextField(
                       onSaved: widget.onSaved2,
@@ -230,7 +224,6 @@ class _FormRow extends State<FormRow> {
         break;
       case InputType.numberTextField:
         input = Container(
-          height: 50,
           decoration: boxDecor,
           child: NumberTextField(
             onSaved: widget.onSaved,
@@ -242,7 +235,6 @@ class _FormRow extends State<FormRow> {
         break;
       case InputType.dropDownList:
         input = Container(
-            height: 50,
             decoration: boxDecor,
             child: MyDropDown(
               value: widget.value!,
@@ -260,8 +252,8 @@ class _FormRow extends State<FormRow> {
             padding: widget.padding,
             child: Row(
               children: [
-                Expanded(
-                    flex: 1,
+                SizedBox(
+                    width: 110,
                     child: Text(
                       widget.label!,
                       style: const TextStyle(
@@ -271,8 +263,7 @@ class _FormRow extends State<FormRow> {
                       ),
                     )),
                 Expanded(
-                  flex: 3,
-                  child: input,
+                  child: SizedBox(child: input),
                 ),
               ],
             ),

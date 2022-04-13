@@ -84,15 +84,14 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
-                    child: FormRow.dropDownListRow(
+                    child: MyDropDown(
                         padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
-                        label: '',
                         items: con.deviceList,
                         value: _selectedDevice != null
                             ? _selectedDevice!['deviceId']
                             : '',
                         mapValue: 'deviceId',
-                        mapLabel: 'deviceId',
+                        label: 'deviceId',
                         hint: 'Select device',
                         onChanged: (value) {
                           setState(() {
@@ -104,7 +103,7 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                                 con.getMeasurements(_selectedDevice);
                           });
                         }),
-                  ),
+                  )
                 ]),
           ),
         ),

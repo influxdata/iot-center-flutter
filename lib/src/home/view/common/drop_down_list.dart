@@ -41,7 +41,6 @@ class _MyDropDown extends State<MyDropDown> {
       isExpanded: true,
       hint: Text(widget.hint),
       decoration: InputDecoration(
-        isDense: true,
         border: OutlineInputBorder(
           borderSide: BorderSide.none,
           borderRadius: BorderRadius.circular(5),

@@ -245,7 +245,7 @@ class Model extends ModelMVC {
     var fluxQuery = '''
           import "math"
           from(bucket: "${_client.bucket}")
-              |> range(start: -1d)
+              |> range(start: -7d)
               |> filter(fn: (r) => r._measurement == "environment")
               |> filter(fn: (r) => r.clientId == "${_config.id}")
               |> toFloat()

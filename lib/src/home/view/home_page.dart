@@ -125,25 +125,28 @@ class _HomePageState extends StateMVC<HomePage> {
           ]),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: darkBlue,
-        child: const Icon(Icons.add),
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (c) => NewChartPage(refreshCharts: () {
-                        setState(() {
-                          rowCount = con.chartsList
-                                  .reduce((currentChart, nextChart) =>
-                                      currentChart.row > nextChart.row
-                                          ? currentChart
-                                          : nextChart)
-                                  .row +
-                              1;
-                        });
-                      })));
-        },
+      floatingActionButton: Visibility(
+        visible: con.editable,
+        child: FloatingActionButton(
+          backgroundColor: darkBlue,
+          child: const Icon(Icons.add),
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (c) => NewChartPage(refreshCharts: () {
+                          setState(() {
+                            rowCount = con.chartsList
+                                    .reduce((currentChart, nextChart) =>
+                                        currentChart.row > nextChart.row
+                                            ? currentChart
+                                            : nextChart)
+                                    .row +
+                                1;
+                          });
+                        })));
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(10),

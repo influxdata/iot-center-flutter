@@ -38,6 +38,7 @@ class _MyDropDown extends State<MyDropDown> {
     }
 
     var dropDown = DropdownButtonFormField<String>(
+      isExpanded: true,
       hint: Text(widget.hint),
       decoration: InputDecoration(
         isDense: true,

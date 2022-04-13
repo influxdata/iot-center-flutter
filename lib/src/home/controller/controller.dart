@@ -25,14 +25,16 @@ class Controller extends ControllerMVC {
 
   void loadSavedData() {
     SharedPreferences.getInstance().then((prefs) {
-      var result = prefs.getString("charts");
+      if (prefs.containsKey("charts")) {
+        var result = prefs.getString("charts");
 
-      if (result!.isNotEmpty && result != '[]') {
-        Iterable l = json.decode(result);
-        List<Chart> charts =
-            List<Chart>.from(l.map((model) => Chart.fromJson(model)));
+        if (result!.isNotEmpty && result != '[]') {
+          Iterable l = json.decode(result);
+          List<Chart> charts =
+              List<Chart>.from(l.map((model) => Chart.fromJson(model)));
 
-        _model.chartsList = charts;
+          _model.chartsList = charts;
+        }
       }
     });
   }
@@ -58,10 +60,13 @@ class Controller extends ControllerMVC {
 
   Future<void> loadFieldNames() => _model.loadFieldNames();
 
-  Future<List<FluxRecord>> getMeasurements(String deviceId) async =>
-      _model.fetchMeasurements(_model.iotCenterApi + "/api/env/$deviceId");
+  Future<List<FluxRecord>> getMeasurements(Map<String, dynamic>? device) async {
+    var deviceId = device != null ? device['deviceId'] : '';
+    return _model.fetchMeasurements(_model.iotCenterApi + "/api/env/$deviceId");
+  }
 
-  Future<DeviceConfig> getDeviceConfig(String? deviceId) async {
+  Future<DeviceConfig> getDeviceConfig(Map<String, dynamic>? device) async {
+    var deviceId = device != null ? device['deviceId'] : '';
     return _model
         .fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
   }
@@ -72,13 +77,6 @@ class Controller extends ControllerMVC {
   Future<void> refreshChartListView() async {
     for (var chart in chartsList) {
       await chart.data.refreshChart!();
-      // if (chart.data.chartType == ChartType.gauge) {
-      //   await chart.data.refreshChart!();
-      // } else {
-      //   Future.delayed(const Duration(seconds: 2), () {
-      //     chart.data.refreshChart!();
-      //   });
-      // }
     }
   }
 

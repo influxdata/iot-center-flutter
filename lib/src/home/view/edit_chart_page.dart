@@ -199,9 +199,6 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           widget.chart.data.refreshWidget!();
 
                           Navigator.pop(context);
-                          // ScaffoldMessenger.of(context).showSnackBar(
-                          //   const SnackBar(content: Text('Processing Data')),
-                          // );
                         }
                       }),
                 ),

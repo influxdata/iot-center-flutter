@@ -12,7 +12,6 @@ export 'package:iot_center_flutter_mvc/src/home/view/add_chart_page.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/edit_chart_page.dart';
 
-export 'package:iot_center_flutter_mvc/src/home/view/add_device_page.dart';
 
 
 

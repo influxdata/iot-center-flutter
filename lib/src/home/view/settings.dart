@@ -18,22 +18,31 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends StateMVC<SettingsPage> {
-  final _formKey = GlobalKey<FormState>();
+  late Controller con;
+  late TextEditingController iotUrlController;
+
+  Map<String, dynamic>? _selectedDevice;
+  Future<DeviceConfig>? _deviceDetail;
+  Future<List<FluxRecord>>? _measurements;
+  bool _writeInProgress = false;
 
   _SettingsPageState() : super(Controller()) {
     con = controller as Controller;
-    textCon = TextEditingController();
+    iotUrlController = TextEditingController();
 
-    selectedDevice = con.deviceList.first;
-    deviceDetail = DeviceConfig();
+    _selectedDevice = con.deviceList.isNotEmpty ? con.deviceList.first : null;
+    _deviceDetail = con.getDeviceConfig(_selectedDevice);
+    _measurements = con.getMeasurements(_selectedDevice);
   }
 
-  late Controller con;
-  late TextEditingController textCon;
-  Map<String, dynamic>? selectedDevice;
-  DeviceConfig? deviceDetail;
-  bool _writeInProgress = false;
-
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      var val = prefs.getString("iot_center_url");
+      iotUrlController.text = val ?? "";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,115 +54,85 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
         appBar: AppBar(
           title: const Text('Settings'),
           backgroundColor: darkBlue,
+          actions: [
+            IconButton(
+                icon: const Icon(Icons.add),
+                color: Colors.white,
+                onPressed: (() {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return _newDeviceDialog(context);
+                    },
+                  );
+                })),
+            IconButton(
+                icon: const Icon(Icons.insert_link),
+                color: Colors.white,
+                onPressed: (() {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return _popupDialog(context);
+                    },
+                  );
+                })),
+          ],
           bottom: PreferredSize(
             preferredSize: Size(size.width, 80),
-            child: Form(
-              key: _formKey,
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                        child: FormRow.textBoxRow(
-                      hint: 'IoT Center URL:',
-                      label: '',
-                      controller: textCon,
-                      padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-                      inputType: TextInputType.url,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter valid URL';
-                        }
-                        return null;
-                      },
-                      onSaved: (value) async {
-                        SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        prefs.setString("iot_center_url", value.toString());
-                        developer.log("Saved: $value ",
-                            name: "SharedPreferences");
-                      },
-                    )),
-                    IconButton(
-                        icon: const Icon(Icons.insert_link),
-                        color: Colors.white,
-                        onPressed: (() async {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                          }
-                        })),
-                  ]),
-            ),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: FormRow.dropDownListRow(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
+                        label: '',
+                        items: con.deviceList,
+                        value: _selectedDevice != null
+                            ? _selectedDevice!['deviceId']
+                            : '',
+                        mapValue: 'deviceId',
+                        mapLabel: 'deviceId',
+                        hint: 'Select device',
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDevice = con.deviceList.firstWhere(
+                                (device) => device['deviceId'] == value);
+                            _deviceDetail =
+                                con.getDeviceConfig(_selectedDevice);
+                            _measurements =
+                                con.getMeasurements(_selectedDevice);
+                          });
+                        }),
+                  ),
+                ]),
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: darkBlue,
-          child: const Icon(Icons.add),
-          onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (c) => const NewDevicePage()));
-          },
         ),
         body: Padding(
             padding: const EdgeInsets.all(10),
             child: ListView(
               children: [
-                FormRow.dropDownListRow(
-                  padding: const EdgeInsets.only(bottom: 20, left: 5, right: 5, top: 5),
-                    label: 'Device',
-                    items: con.deviceList,
-                    value: selectedDevice!['deviceId'],
-                    mapValue: 'deviceId',
-                    mapLabel: 'deviceId',
-                    hint: 'Select device',
-                    onChanged: (value) {
-                     setState(() { selectedDevice = con.deviceList
-                         .firstWhere((device) => device['deviceId'] == value);
-                     });
-                    }),
-                FormButton(
-                  onPressed: () async {
-                    if (_writeInProgress) {
-                      return;
-                    }
-                    var x = await _writeSampleData(selectedDevice);
-                    developer.log("Points written $x");
-                  },
-                  label: _writeInProgress
-                      ? "Write in progress..."
-                      : "Write testing data",
-                ),
-
-                const Padding(
-                    padding:  EdgeInsets.only(bottom: 20, top: 35),
-                    child: Center(
-                        child: Text('Device Configuration',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: darkBlue,
-                            )))),
                 FutureBuilder<DeviceConfig>(
-                    future: con.getDeviceConfig(selectedDevice!['deviceId']),
+                    future: _deviceDetail,
                     builder: (context, AsyncSnapshot<DeviceConfig> snapshot) {
                       if (snapshot.hasError) {
                         return Text(snapshot.error.toString());
                       }
-                      if (snapshot.hasData) {
-                        deviceDetail = snapshot.data!;
+                      if (snapshot.hasData && _selectedDevice != null) {
                         return Column(
                           children: [
-                            tile(selectedDevice!['deviceId'], 'Device Id',
+                            tile(_selectedDevice!['deviceId'], 'Device Id',
                                 Icons.device_thermostat),
-                            tile(deviceDetail!.createdAt, 'Registration Time',
+                            tile(snapshot.data!.createdAt, 'Registration Time',
                                 Icons.lock_clock),
-                            tile(deviceDetail!.influxUrl, 'InfluxDB URL',
+                            tile(snapshot.data!.influxUrl, 'InfluxDB URL',
                                 Icons.cloud_done_outlined),
-                            tile(deviceDetail!.influxOrg,
+                            tile(snapshot.data!.influxOrg,
                                 'InfluxDB Organization', Icons.work),
-                            tile(deviceDetail!.influxBucket, 'InfluxDB Bucket',
+                            tile(snapshot.data!.influxBucket, 'InfluxDB Bucket',
                                 Icons.shopping_basket_rounded),
                             tile(
-                                deviceDetail!.influxToken
+                                snapshot.data!.influxToken
                                         .toString()
                                         .substring(0, 3) +
                                     "...",
@@ -165,8 +144,20 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                         return const Text("loading...");
                       }
                     }),
+                FormButton(
+                  onPressed: () async {
+                    if (_writeInProgress) {
+                      return;
+                    }
+                    var x = await _writeSampleData(_selectedDevice);
+                    developer.log("Points written $x");
+                  },
+                  label: _writeInProgress
+                      ? "Write in progress..."
+                      : "Write testing data",
+                ),
                 const Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: EdgeInsets.only(bottom: 20, top: 25),
                     child: Center(
                         child: Text('Device Measurements',
                             style: TextStyle(
@@ -175,13 +166,22 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                               color: darkBlue,
                             )))),
                 FutureBuilder<dynamic>(
-                    future: con.getMeasurements(selectedDevice!['deviceId']),
+                    future: _measurements,
                     builder: (context, AsyncSnapshot<dynamic> snapshot) {
                       if (snapshot.hasError) {
                         return Text(snapshot.error.toString());
                       }
-                      if (snapshot.hasData) {
-                        return _buildMeasurementList(snapshot.data);
+                      if (snapshot.hasData &&
+                          snapshot.connectionState == ConnectionState.done) {
+                        // return _buildMeasurementList(snapshot.data);
+                        List<Widget> rows = [];
+                        for (var record in snapshot.data) {
+                          rows.add(measurementContainer(record));
+                        }
+
+                        return Column(
+                          children: rows,
+                        );
                       } else {
                         return const Text("loading...");
                       }
@@ -190,12 +190,97 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             )));
   }
 
+  Widget _popupDialog(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("IoT URL"),
+      content: Form(
+        key: _formKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          Expanded(
+              child: FormRow.textBoxRow(
+            hint: 'IoT Center URL:',
+            label: '',
+            controller: iotUrlController,
+            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+            inputType: TextInputType.url,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter valid URL';
+              }
+              return null;
+            },
+            onSaved: (value) async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.setString("iot_center_url", value.toString());
+              developer.log("Saved: $value ", name: "SharedPreferences");
+            },
+          )),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Save"),
+            onPressed: (() async {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+              }
+            })),
+      ],
+    );
+  }
+
+  Widget _newDeviceDialog(BuildContext context) {
+    late TextEditingController newDeviceController = TextEditingController();
+    final _deviceFormKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("New Device"),
+      content: Form(
+        key: _deviceFormKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          Expanded(
+              child: FormRow.textBoxRow(
+            hint: 'Device ID',
+            label: '',
+            controller: newDeviceController,
+            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+            onSaved: (value) async {},
+          )),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Save"),
+            onPressed: (() async {
+              if (_deviceFormKey.currentState!.validate()) {
+                _deviceFormKey.currentState!.save();
+              }
+            })),
+      ],
+    );
+  }
+
   Future<num?> _writeSampleData(selectedDevice) async {
     setState(() {
       var device = selectedDevice['deviceId'];
       developer.log("write data.... $device");
       _writeInProgress = true;
-      con.writeEmulatedData(device, (progressPercent, writtenPoints, totalPoints) {
+      con.writeEmulatedData(device,
+          (progressPercent, writtenPoints, totalPoints) {
         developer.log(
             "$progressPercent%, $writtenPoints of $totalPoints points written");
       }).then((value) {
@@ -209,7 +294,6 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
     return null;
   }
 
-
   ListTile tile(String title, String subtitle, IconData icon) => ListTile(
         title: Text(title),
         subtitle: Text(subtitle),
@@ -218,47 +302,71 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
         ),
       );
 
-  final _bold = const TextStyle(fontWeight: FontWeight.bold);
-
-  Widget _buildMeasurementList(List<FluxRecord> records) {
-    List<TableRow> rows = [];
-    rows.add(TableRow(children: [
-      Text("Field", style: _bold),
-      Text("Count", style: _bold),
-      Text("max time", style: _bold),
-      Text("max", style: _bold),
-      Text("min", style: _bold),
-    ]));
-
+  Widget measurementContainer(FluxRecord record) {
     var format = NumberFormat.decimalPattern();
-    for (var r in records) {
-      rows.add(TableRow(children: [
-        Text(
-          r["_field"],
-          textScaleFactor: 0.7,
+    var textStyle = const TextStyle(
+      fontWeight: FontWeight.w600,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: Container(
+        decoration: boxDecor,
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            children: [
+              SizedBox(
+                  width: 130,
+                  child: Text(
+                    record["_field"],
+                    style: textStyle,
+                  )),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text("Count",
+                                style: textStyle, textScaleFactor: 0.8)),
+                        Text(record["count"].toString(), textScaleFactor: 0.8),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text("Max value",
+                                style: textStyle, textScaleFactor: 0.8)),
+                        Text(format.format(record["maxValue"]),
+                            textScaleFactor: 0.8),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text("Min value",
+                                style: textStyle, textScaleFactor: 0.8)),
+                        Text(format.format(record["minValue"]),
+                            textScaleFactor: 0.8),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text("Max time",
+                                style: textStyle, textScaleFactor: 0.8)),
+                        Text(record["maxTime"], textScaleFactor: 0.8),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        Text(r["count"].toString(), textScaleFactor: 0.7),
-        Text(r["maxTime"], textScaleFactor: 0.7),
-        Text(format.format(r["maxValue"]), textScaleFactor: 0.7),
-        Text(format.format(r["minValue"]), textScaleFactor: 0.7),
-      ]));
-    }
-
-    return Table(
-        border: const TableBorder(
-            top: BorderSide(),
-            bottom: BorderSide(),
-            horizontalInside: BorderSide(),
-            verticalInside: BorderSide()),
-        children: rows);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    SharedPreferences.getInstance().then((prefs) {
-      var val = prefs.getString("iot_center_url");
-      textCon.text = val ?? "";
-    });
+      ),
+    );
   }
 }

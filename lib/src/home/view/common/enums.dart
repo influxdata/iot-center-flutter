@@ -7,4 +7,6 @@ enum InputType{
   textField,
   doubleTextField,
   dropDownList,
+  numberTextField,
+  doubleNumberTextField,
 }

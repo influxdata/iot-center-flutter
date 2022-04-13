@@ -1,3 +1,4 @@
+import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
@@ -19,7 +20,6 @@ class GaugeChart extends StatefulWidget {
 }
 
 class _GaugeChart extends StateMVC<GaugeChart> {
-
   _GaugeChart() : super(Controller()) {
     con = controller as Controller;
   }
@@ -28,12 +28,16 @@ class _GaugeChart extends StateMVC<GaugeChart> {
   void initState() {
     add(con);
     super.initState();
+    _data = con.getDataFromInflux(widget.chartData.measurement, true);
+
     widget.chartData.refreshChart = () {
+      _data = con.getDataFromInflux(widget.chartData.measurement, true);
       refresh();
     };
   }
 
   late Controller con;
+  Future<List<FluxRecord>>? _data;
 
   @override
   Widget buildWidget(BuildContext context) {
@@ -47,13 +51,14 @@ class _GaugeChart extends StateMVC<GaugeChart> {
                     width: widget.chartData.size,
                     height: widget.chartData.size,
                     child: FutureBuilder<dynamic>(
-                        future: con.getDataFromInflux(
-                            widget.chartData.measurement, true),
+                        future: _data,
                         builder: (context, AsyncSnapshot<dynamic> snapshot) {
                           if (snapshot.hasError) {
                             return Text(snapshot.error.toString());
                           }
-                          if (snapshot.hasData) {
+                          if (snapshot.hasData &&
+                              snapshot.connectionState ==
+                                  ConnectionState.done) {
                             widget.chartData.data = snapshot.data;
                             final value = widget.chartData.data.isNotEmpty
                                 ? con.getDouble(
@@ -66,6 +71,7 @@ class _GaugeChart extends StateMVC<GaugeChart> {
                                         widget.chartData.startValue);
 
                             calcValue = calcValue > 1 ? 1 : calcValue;
+                            calcValue = calcValue < 0 ? 0 : calcValue;
 
                             final label = widget.chartData.data.isNotEmpty
                                 ? value.toStringAsFixed(

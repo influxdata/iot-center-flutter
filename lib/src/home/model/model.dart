@@ -193,6 +193,18 @@ class Model extends ModelMVC {
     var _client = createClient(_config);
     var queryApi = _client.getQueryService();
 
+    var aggregate = '1m';
+
+    switch (maxPastTime) {
+      case '-3d':
+      case '-7d':
+        aggregate = '30m';
+        break;
+      case '-30d':
+        aggregate = '2h';
+        break;
+    }
+
     var fluxQuery = median
         ? '''
           import "influxdata/influxdb/v1"
@@ -201,18 +213,18 @@ class Model extends ModelMVC {
               |> filter(fn: (r) => r.clientId == "${_config.id}")
               |> filter(fn: (r) => r._measurement == "environment")
               |> filter(fn: (r) => r["_field"] == "$field")
-              |> keep(columns: ["_value", "_time"])
               |> toFloat()
-              |> median()
+              |> mean()
           '''
         : '''
           import "influxdata/influxdb/v1"
           from(bucket: "${_client.bucket}")
               |> range(start: $maxPastTime)
-              |> filter(fn: (r) => r.clientId == "${_config.id}")
-              |> filter(fn: (r) => r._measurement == "environment")
-              |> filter(fn: (r) => r["_field"] == "$field")
+              |> filter(fn: (r) => r.clientId == "${_config.id}" 
+                               and r._measurement == "environment" 
+                               and r["_field"] == "$field")
               |> keep(columns: ["_value", "_time"])
+              |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
           ''';
 
     try {
@@ -227,13 +239,13 @@ class Model extends ModelMVC {
   }
 
   Future<List<FluxRecord>> fetchMeasurements(String url) async {
-    await fetchDeviceConfig(url);
+    await fetchDeviceConfig2(url);
     var _client = createClient(_config);
     var queryApi = _client.getQueryService();
     var fluxQuery = '''
           import "math"
           from(bucket: "${_client.bucket}")
-              |> range(start: -30d)
+              |> range(start: -1d)
               |> filter(fn: (r) => r._measurement == "environment")
               |> filter(fn: (r) => r.clientId == "${_config.id}")
               |> toFloat()
@@ -262,7 +274,7 @@ class Model extends ModelMVC {
   }
 
   Future writeEmulatedData(String deviceId, Function onProgress) async {
-    var config = await fetchDeviceConfig(deviceId);
+    var config = await fetchDeviceConfig2(iotCenterApi + "/api/env/$deviceId");
 
     var influxDBClient = createClient(config);
 

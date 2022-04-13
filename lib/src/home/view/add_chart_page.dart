@@ -61,12 +61,6 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                     chartType = value!;
                   },
                 ),
-                FormRow.textBoxRow(
-                  label: "Label:",
-                  onSaved: (value) {
-                    label = value!;
-                  },
-                ),
                 FutureBuilder<dynamic>(
                     future: con.loadFieldNames(),
                     builder: (context, AsyncSnapshot<dynamic> snapshot) {
@@ -88,14 +82,21 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return const Text("loading...");
                       }
                     }),
-
+                FormRow.textBoxRow(
+                  label: "Label:",
+                  onSaved: (value) {
+                    label = value!;
+                  },
+                ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.doubleTextBoxRow(
+                  child: FormRow.doubleNumberTextBoxRow(
                       label: "Range:",
+                      controller: TextEditingController(text: '0'),
                       onSaved: (value) {
                         startValue = double.parse(value!);
                       },
+                      controller2: TextEditingController(text: '100'),
                       onSaved2: (value) {
                         endValue = double.parse(value!);
                       }),
@@ -103,7 +104,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
 
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.textBoxRow(
+                  child: FormRow.numberTextBoxRow(
                       label: "Rounded:",
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -111,6 +112,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         }
                         return null;
                       },
+                      controller: TextEditingController(text: '0'),
                       onSaved: (value) {
                         decimalPlaces = int.parse(value!);
                       }),

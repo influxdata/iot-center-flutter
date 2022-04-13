@@ -33,11 +33,11 @@ class _HomePageState extends StateMVC<HomePage> {
 
     con.removeItemFromListView = () {
       setState(() {
-        rowCount = con.chartsList
+        rowCount = con.chartsList.isNotEmpty ? con.chartsList
                 .reduce((currentChart, nextChart) =>
                     currentChart.row > nextChart.row ? currentChart : nextChart)
                 .row +
-            1;
+            1 : 0;
       });
     };
   }

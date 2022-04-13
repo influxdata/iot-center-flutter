@@ -27,7 +27,7 @@ class Controller extends ControllerMVC {
     SharedPreferences.getInstance().then((prefs) {
       var result = prefs.getString("charts");
 
-      if (result!.isNotEmpty) {
+      if (result!.isNotEmpty && result != '[]') {
         Iterable l = json.decode(result);
         List<Chart> charts =
             List<Chart>.from(l.map((model) => Chart.fromJson(model)));
@@ -71,13 +71,14 @@ class Controller extends ControllerMVC {
 
   Future<void> refreshChartListView() async {
     for (var chart in chartsList) {
-      if (chart.data.chartType == ChartType.gauge) {
-        await chart.data.refreshChart!();
-      } else {
-        Future.delayed(const Duration(seconds: 2), () {
-          chart.data.refreshChart!();
-        });
-      }
+      await chart.data.refreshChart!();
+      // if (chart.data.chartType == ChartType.gauge) {
+      //   await chart.data.refreshChart!();
+      // } else {
+      //   Future.delayed(const Duration(seconds: 2), () {
+      //     chart.data.refreshChart!();
+      //   });
+      // }
     }
   }
 

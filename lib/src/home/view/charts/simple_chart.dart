@@ -1,4 +1,5 @@
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
@@ -15,6 +16,7 @@ class SimpleChart extends StatefulWidget {
 
 class _SimpleChart extends StateMVC<SimpleChart> {
   late Controller con;
+  Future<List<FluxRecord>>? _data;
 
   _SimpleChart() : super(Controller()) {
     con = controller as Controller;
@@ -24,7 +26,10 @@ class _SimpleChart extends StateMVC<SimpleChart> {
   void initState() {
     add(con);
     super.initState();
+    _data = con.getDataFromInflux(widget.chartData.measurement, false);
+
     widget.chartData.refreshChart = () {
+      _data = con.getDataFromInflux(widget.chartData.measurement, false);
       refresh();
     };
   }
@@ -32,12 +37,13 @@ class _SimpleChart extends StateMVC<SimpleChart> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<dynamic>(
-        future: con.getDataFromInflux(widget.chartData.measurement, false),
+        future: _data,
         builder: (context, AsyncSnapshot<dynamic> snapshot) {
           if (snapshot.hasError) {
             return Text(snapshot.error.toString());
           }
-          if (snapshot.hasData) {
+          if (snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.done) {
             var series = [
               charts.Series<dynamic, DateTime>(
                 id: widget.chartData.measurement,
@@ -48,28 +54,67 @@ class _SimpleChart extends StateMVC<SimpleChart> {
               )
             ];
 
-            return Stack(
-              children: [
-                SizedBox(
-                  height: 130,
-                  child: charts.TimeSeriesChart(
-                    series,
-                    animate: true,
+            return Stack(children: [
+              SizedBox(
+                height: 130,
+                child: charts.TimeSeriesChart(
+                  series,
+                  animate: true,
+                ),
+              ),
+              Center(
+                child: Text(
+                  widget.chartData.unit,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                Center(
-                  child: Text(
-                    widget.chartData.unit,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                )
-              ]
-            );
+              )
+            ]);
           } else {
-            return const Text("loading...");
+            var series = [
+              charts.Series<dynamic, DateTime>(
+                id: widget.chartData.measurement,
+                data: [],
+                seriesColor: charts.ColorUtil.fromDartColor(pink),
+                domainFn: (r, _) => DateTime.parse(r['_time']),
+                measureFn: (r, _) => r["_value"],
+              )
+            ];
+            return Stack(children: [
+              SizedBox(
+                height: 130,
+                child: charts.TimeSeriesChart(
+                  series,
+                  animate: true,
+                ),
+              ),
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      widget.chartData.unit,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: pink,
+                          strokeWidth: 3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ]);
           }
         });
   }

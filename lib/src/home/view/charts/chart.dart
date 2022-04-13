@@ -119,7 +119,9 @@ class _ChartWidget extends StateMVC<ChartWidget> {
     super.initState();
     isGauge = widget.data.chartType == ChartType.gauge;
     widget.data.refreshWidget = () {
-      setState(() { isGauge = widget.data.chartType == ChartType.gauge;});
+      setState(() {
+        isGauge = widget.data.chartType == ChartType.gauge;
+      });
     };
   }
 

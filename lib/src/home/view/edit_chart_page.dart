@@ -123,16 +123,16 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                     }),
                 FormRow.textBoxRow(
                   label: "Label:",
-                  value: widget.chart.data.label,
+                  controller: TextEditingController(text: widget.chart.data.label),
                   onSaved: (value) {
                     widget.chart.data.label = value!;
                   },
                 ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.doubleTextBoxRow(
+                  child: FormRow.doubleNumberTextBoxRow(
                     label: "Range:",
-                    value: widget.chart.data.startValue.toStringAsFixed(0),
+                    controller: TextEditingController(text: widget.chart.data.startValue.toStringAsFixed(0)),
                     inputType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -141,7 +141,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                       widget.chart.data.startValue =
                           isGauge ? double.parse(value!) : 0;
                     },
-                    value2: widget.chart.data.endValue.toStringAsFixed(0),
+                    controller2: TextEditingController(text: widget.chart.data.endValue.toStringAsFixed(0)),
                     inputType2: TextInputType.number,
                     inputFormatters2: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -154,11 +154,11 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                 ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.textBoxRow(
+                  child: FormRow.numberTextBoxRow(
                     label: "Rounded:",
-                    value: isGauge && widget.chart.data.decimalPlaces != null
+                    controller: TextEditingController(text: isGauge && widget.chart.data.decimalPlaces != null
                         ? widget.chart.data.decimalPlaces!.toStringAsFixed(0)
-                        : '0',
+                        : '0'),
                     inputType: TextInputType.number,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
@@ -177,7 +177,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                 ),
                 FormRow.textBoxRow(
                   label: "Unit:",
-                  value: widget.chart.data.unit,
+                  controller: TextEditingController(text: widget.chart.data.unit),
                   onSaved: (value) {
                     widget.chart.data.unit = value!;
                   },

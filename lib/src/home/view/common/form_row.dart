@@ -5,7 +5,6 @@ class FormRow extends StatefulWidget {
   FormRow.textBoxRow(
       {this.padding = const EdgeInsets.all(5),
       this.hint = '',
-      this.value = '',
       required this.label,
       this.inputType = TextInputType.none,
       this.inputFormatters = const [],
@@ -18,12 +17,27 @@ class FormRow extends StatefulWidget {
     _inputType = InputType.textField;
   }
 
+  FormRow.numberTextBoxRow(
+      {this.padding = const EdgeInsets.all(5),
+      this.hint = '',
+      required this.label,
+      this.inputType = TextInputType.none,
+      this.inputFormatters = const [],
+      this.controller,
+      this.validator,
+      this.onChanged,
+      this.onSaved,
+      Key? key})
+      : super(key: key) {
+    _inputType = InputType.numberTextField;
+  }
+
   FormRow.doubleTextBoxRow(
       {this.padding = const EdgeInsets.all(5),
       this.hint = '',
       this.hint2 = '',
-      this.value = '',
-      this.value2 = '',
+      this.controller,
+      this.controller2,
       required this.label,
       this.inputType = TextInputType.none,
       this.inputFormatters = const [],
@@ -36,6 +50,26 @@ class FormRow extends StatefulWidget {
       Key? key})
       : super(key: key) {
     _inputType = InputType.doubleTextField;
+  }
+
+  FormRow.doubleNumberTextBoxRow(
+      {this.padding = const EdgeInsets.all(5),
+      this.hint = '',
+      this.hint2 = '',
+      this.controller,
+      this.controller2,
+      required this.label,
+      this.inputType = TextInputType.none,
+      this.inputFormatters = const [],
+      this.inputType2 = TextInputType.none,
+      this.inputFormatters2 = const [],
+      this.validator,
+      this.onChanged,
+      this.onSaved,
+      this.onSaved2,
+      Key? key})
+      : super(key: key) {
+    _inputType = InputType.doubleNumberTextField;
   }
 
   FormRow.dropDownListRow(
@@ -57,8 +91,8 @@ class FormRow extends StatefulWidget {
 
   EdgeInsets padding;
   String? hint;
-  String? label;
   String? value;
+  String? label;
   TextInputType? inputType;
   List<TextInputFormatter> inputFormatters = [];
   TextEditingController? controller;
@@ -71,7 +105,7 @@ class FormRow extends StatefulWidget {
   Function(String?)? onChanged;
   Function(String?)? onSaved;
 
-  String? value2;
+  TextEditingController? controller2;
   String? hint2;
   TextInputType? inputType2;
   List<TextInputFormatter> inputFormatters2 = [];
@@ -84,6 +118,16 @@ class FormRow extends StatefulWidget {
 }
 
 class _FormRow extends State<FormRow> {
+  late TextEditingController _controller;
+  late TextEditingController _controller2;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? TextEditingController();
+    _controller2 = widget.controller2 ?? TextEditingController();
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget input = const Text('');
@@ -101,34 +145,18 @@ class _FormRow extends State<FormRow> {
 
     switch (widget._inputType) {
       case InputType.textField:
-        if (widget.controller != null) {
-          input = Container(
-              height: 50,
-              decoration: boxDecor,
-              child: TextFormField(
-                keyboardType: widget.inputType,
-                inputFormatters: widget.inputFormatters,
-                decoration: inputDecor,
-                controller: widget.controller,
-                validator: widget.validator,
-                onChanged: widget.onChanged,
-                onSaved: widget.onSaved,
-              ));
-        } else {
-          input = Container(
-              height: 50,
-              decoration: boxDecor,
-              child: TextFormField(
-                initialValue: widget.value,
-                keyboardType: widget.inputType,
-                inputFormatters: widget.inputFormatters,
-                decoration: inputDecor,
-                validator: widget.validator,
-                onChanged: widget.onChanged,
-                onSaved: widget.onSaved,
-              ));
-        }
-
+        input = Container(
+            height: 50,
+            decoration: boxDecor,
+            child: TextFormField(
+              keyboardType: widget.inputType,
+              inputFormatters: widget.inputFormatters,
+              decoration: inputDecor,
+              controller: _controller,
+              validator: widget.validator,
+              onChanged: widget.onChanged,
+              onSaved: widget.onSaved,
+            ));
         break;
       case InputType.doubleTextField:
         input = Row(
@@ -140,7 +168,7 @@ class _FormRow extends State<FormRow> {
                     height: 50,
                     decoration: boxDecor,
                     child: TextFormField(
-                      initialValue: widget.value,
+                      controller: _controller,
                       keyboardType: widget.inputType,
                       inputFormatters: widget.inputFormatters,
                       decoration: inputDecor,
@@ -157,7 +185,7 @@ class _FormRow extends State<FormRow> {
                     height: 50,
                     decoration: boxDecor,
                     child: TextFormField(
-                      initialValue: widget.value2,
+                      controller: _controller2,
                       keyboardType: widget.inputType2,
                       inputFormatters: widget.inputFormatters2,
                       decoration: inputDecor,
@@ -168,6 +196,48 @@ class _FormRow extends State<FormRow> {
                   )),
             )
           ],
+        );
+        break;
+      case InputType.doubleNumberTextField:
+        input = Row(
+          children: [
+            Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Container(
+                    height: 50,
+                    decoration: boxDecor,
+                    child: NumberTextField(
+                      onSaved: widget.onSaved,
+                      controller: _controller,
+                    ),
+                  )),
+            ),
+            Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Container(
+                    height: 50,
+                    decoration: boxDecor,
+                    child: NumberTextField(
+                      onSaved: widget.onSaved2,
+                      controller: _controller2,
+                    ),
+                  )),
+            )
+          ],
+        );
+        break;
+      case InputType.numberTextField:
+        input = Container(
+          height: 50,
+          decoration: boxDecor,
+          child: NumberTextField(
+            onSaved: widget.onSaved,
+            min: 0,
+            max: 10,
+            controller: _controller,
+          ),
         );
         break;
       case InputType.dropDownList:

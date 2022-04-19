@@ -213,7 +213,6 @@ class Model extends ModelMVC {
               |> filter(fn: (r) => r.clientId == "${_config.id}")
               |> filter(fn: (r) => r._measurement == "environment")
               |> filter(fn: (r) => r["_field"] == "$field")
-              |> toFloat()
               |> mean()
           '''
         : '''

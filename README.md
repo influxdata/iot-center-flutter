@@ -88,7 +88,7 @@ import "influxdata/influxdb/v1"
         |> keep(columns: ["_value", "_time"])
         |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
 ```
-<img align="right" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="right" src="assets/images/edit-chart.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 #### Edit Chart
 

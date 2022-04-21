@@ -43,7 +43,7 @@ to add a new device. Enter device id "virtual_device" and click to Register for 
  
 ## Run Application
 
-<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="250px" style="margin-left: 5px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="250px" style="margin-left: 15px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 ### Dashboard page
 

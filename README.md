@@ -1,4 +1,4 @@
-<div style="max-width: 1200px; min-width: 600px; font-size: 18px; background-color: #FAFAFAFF; color: #020A47FF; margin: auto; padding: 50px;">
+<div style="max-width: 1200px; min-width: 600px; font-size: 18px; margin: auto; padding: 50px; color: white;">
 
 
 # IoT Center <span style="color: #d30971;"> Demo.</span> Build on  <span style="color: #d30971;"> InfluxDB.</span>
@@ -8,8 +8,8 @@ the data, Telegraf, Iot Center Demo and MQTT.
 
 
 
-<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="25%" style="margin-left: 15px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px #A4A4A4FF);">
-<img align="right" src="assets/images/demo.png" alt="drawing" width="25%" style="margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px #A4A4A4FF);">
+<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="25%" style="margin-left: 15px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="right" src="assets/images/demo.png" alt="drawing" width="25%" style="margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 ## Features
 
@@ -42,23 +42,25 @@ open http://localhost:5000
 On [IoT Center](http://localhost:5000/) go to [Device Registrations](http://localhost:5000/devices) and click Register
 to add a new device. Enter device id "virtual_device" and click to Register for create.
 
-<img src="assets/images/iot-center-add-device.png" alt="drawing" style="border-radius: 10px; filter: drop-shadow(1px 5px 5px #A4A4A4FF);"/>
+<img src="assets/images/iot-center-add-device.png" alt="drawing" style="border-radius: 10px; filter: drop-shadow(1px 5px 5px black);"/>
 
  
 ## Run Application
 
-<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="250px" style="margin-left: 5px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px #A4A4A4FF);">
+<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="250px" style="margin-left: 5px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 ### Dashboard page
 
-####AppBar
+#### AppBar
 App bar on this screen contains basic functions:
 
-- <img src="assets/images/lock_white_24dp.svg"/>/<img src="assets/images/lock_open_white_24dp.svg"/>
+![Lock](assets/images/icons/settings_white_24dp.svg#gh-light-mode-only)
+
+- ![Lock](assets/images/icons/lock_white_24dp.svg#gh-dark-mode-only)/![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
 display/hide buttons for charts editing and add new chart button
-- <img src="assets/images/autorenew_white_24dp.svg"/>
+- ![Autorenew](assets/images/icons/autorenew_white_24dp.svg#gh-dark-mode-only)
     refresh all charts
-- <img src="assets/images/settings_white_24dp.svg"/> settings page with device info and IoT Center url settings 
+- ![Settings](assets/images/icons/settings_white_24dp.svg#gh-dark-mode-only) settings page with device info and IoT Center url settings 
 
 On appbar drop down lists you can change device and time range for displaying data. After select device/time range
 are data automatically refreshed.

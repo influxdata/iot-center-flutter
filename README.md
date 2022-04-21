@@ -1,4 +1,4 @@
-<div style="max-width: 1200px; min-width: 600px; font-size: 18px; margin: auto; padding: 50px; color: white;">
+<div style="max-width: 1200px; min-width: 600px; font-size: 18px; margin: auto; padding: 50px;">
 
 <h1>IoT Center <a style="color: #d30971 !important;"> Demo.</a> Build on <a style="color: #d30971 !important;"> InfluxDB.</a></h1>
 
@@ -88,7 +88,7 @@ import "influxdata/influxdb/v1"
         |> keep(columns: ["_value", "_time"])
         |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
 ```
-<img align="right" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="left" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-right: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 #### Edit Chart
 
@@ -107,12 +107,31 @@ import "influxdata/influxdb/schema"
         predicate: (r) => r["_measurement"] == "environment" 
                       and r["clientId"] == "${_config.id}")
 ```
+After updating chart are data automatically refreshed (only for updated chart).
 
 **All changes in dashboard** - like add, delete and edit charts, are saved to system preferences after finish editing by 
 clicking ![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
 ![Lock open](assets/images/icons/lock_open_dark_24dp.svg#gh-light-mode-only) on Dashboard Page AppBar.
 
+<img align="right" src="assets/images/demo-settings.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+
 ### Settings page
+
+#### AppBar
+App bar on this screen contains basic functions:
+
+- ![Lock](assets/images/icons/add_white_24dp.svg#gh-dark-mode-only)
+  ![Lock](assets/images/icons/add_dark_24dp.svg#gh-light-mode-only)
+  add new device
+- ![Autorenew](assets/images/icons/link_white_24dp.svg#gh-dark-mode-only)
+  ![Autorenew](assets/images/icons/link_dark_24dp.svg#gh-light-mode-only)
+  change IoT Center url (save to system preferences)
+
+On appbar drop down lists you can change device - device configuration and device Measurements 
+are automatically refreshed.
+
+#### Device Configuration
+
 
 
 ### Add chart page

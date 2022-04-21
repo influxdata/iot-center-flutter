@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "title": "Dynamic dashboard definition",
+  "type": "object",
+  "properties": {
+    "cells": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "field",
+                  "file"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "svg"
+                  },
+                  "field": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "file": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type",
+                  "latField",
+                  "lonField"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "geo"
+                  },
+                  "latField": {
+                    "type": "string"
+                  },
+                  "lonField": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "field",
+                      "label"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "plot"
+                      },
+                      "field": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "plotType"
+                        ],
+                        "properties": {
+                          "plotType": {
+                            "const": "line"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "plotType",
+                          "range",
+                          "unit",
+                          "decimalPlaces"
+                        ],
+                        "properties": {
+                          "plotType": {
+                            "const": "gauge"
+                          },
+                          "range": {
+                            "type": "object",
+                            "properties": {
+                              "min": {
+                                "type": "number"
+                              },
+                              "max": {
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "unit": {
+                            "type": "string"
+                          },
+                          "decimalPlaces": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "layout"
+            ],
+            "properties": {
+              "layout": {
+                "type": "object",
+                "required": [
+                  "x",
+                  "y",
+                  "w",
+                  "h"
+                ],
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "y": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "w": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "h": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

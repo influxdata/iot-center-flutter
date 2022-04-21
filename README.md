@@ -9,7 +9,7 @@ the data, Telegraf, Iot Center Demo and MQTT.
 
 
 
-<img align="right" src="assets/images/demo.png" alt="drawing" width="33%" style="margin-left: 30px;margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="right" src="assets/images/demo.png" alt="drawing" width="35%" style="margin-left: 30px;margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 ## Features
 

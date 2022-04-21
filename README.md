@@ -43,7 +43,7 @@ to add a new device. Enter device id "virtual_device" and click to Register for 
  
 ## Run Application
 
-<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="250px" style="margin-left: 15px; margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+<img align="right" src="assets/images/demo-editable.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 ### Dashboard page
 
@@ -66,8 +66,28 @@ On appbar drop down lists you can change device and time range for displaying da
 are data automatically refreshed.
 
 #### Charts ListView
-
-
+Charts ListView is scrollable and contains two different types of charts - gauge and simple.
+- Gauge chart display average of all values in selected time range
+```sql
+import "influxdata/influxdb/v1"
+    from(bucket: "${_client.bucket}")
+        |> range(start: $maxPastTime)
+        |> filter(fn: (r) => r.clientId == "${_config.id}" 
+                    and r._measurement == "environment" 
+                    and r["_field"] == "$field")
+        |> mean()
+```
+- Simple chart display average data for aggregate window
+```sql
+import "influxdata/influxdb/v1"
+    from(bucket: "${_client.bucket}")
+        |> range(start: $maxPastTime)
+        |> filter(fn: (r) => r.clientId == "${_config.id}" 
+                    and r._measurement == "environment" 
+                    and r["_field"] == "$field")
+        |> keep(columns: ["_value", "_time"])
+        |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
+```
 
 ### Settings page
 

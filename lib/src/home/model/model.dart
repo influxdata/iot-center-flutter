@@ -210,9 +210,9 @@ class Model extends ModelMVC {
           import "influxdata/influxdb/v1"
           from(bucket: "${_client.bucket}")
               |> range(start: $maxPastTime)
-              |> filter(fn: (r) => r.clientId == "${_config.id}")
-              |> filter(fn: (r) => r._measurement == "environment")
-              |> filter(fn: (r) => r["_field"] == "$field")
+              |> filter(fn: (r) => r.clientId == "${_config.id}" 
+                                and r._measurement == "environment" 
+                                and r["_field"] == "$field")
               |> mean()
           '''
         : '''

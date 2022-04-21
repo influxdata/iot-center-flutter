@@ -236,14 +236,15 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
     );
   }
 
+  // TODO: redundant code with _popupDialog
   Widget _newDeviceDialog(BuildContext context) {
     late TextEditingController newDeviceController = TextEditingController();
-    final _deviceFormKey = GlobalKey<FormState>();
+    final _formKey = GlobalKey<FormState>();
 
     return AlertDialog(
       title: const Text("New Device"),
       content: Form(
-        key: _deviceFormKey,
+        key: _formKey,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           Expanded(
               child: FormRow.textBoxRow(
@@ -251,7 +252,18 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             label: '',
             controller: newDeviceController,
             padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-            onSaved: (value) async {},
+            inputType: TextInputType.text,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Device ID cannot be empty';
+              }
+              return null;
+            },
+            onSaved: (value) async {
+              final deviceId = value.toString();
+              await con.getDeviceConfig({"deviceId": deviceId});
+              Navigator.of(context).pop();
+            },
           )),
         ]),
       ),
@@ -265,8 +277,8 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
         TextButton(
             child: const Text("Save"),
             onPressed: (() async {
-              if (_deviceFormKey.currentState!.validate()) {
-                _deviceFormKey.currentState!.save();
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
               }
             })),
       ],

@@ -54,13 +54,17 @@ to add a new device. Enter device id "virtual_device" and click to Register for 
 #### AppBar
 App bar on this screen contains basic functions:
 
-![Lock](assets/images/icons/settings_white_24dp.svg#gh-light-mode-only)
-
-- ![Lock](assets/images/icons/lock_white_24dp.svg#gh-dark-mode-only)/![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
+- ![Lock](assets/images/icons/lock_white_24dp.svg#gh-dark-mode-only)
+![Lock](assets/images/icons/lock_dark_24dp.svg#gh-light-mode-only)/
+![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
+![Lock open](assets/images/icons/lock_open_dark_24dp.svg#gh-light-mode-only)
 display/hide buttons for charts editing and add new chart button
 - ![Autorenew](assets/images/icons/autorenew_white_24dp.svg#gh-dark-mode-only)
-    refresh all charts
-- ![Settings](assets/images/icons/settings_white_24dp.svg#gh-dark-mode-only) settings page with device info and IoT Center url settings 
+  ![Autorenew](assets/images/icons/autorenew_dark_24dp.svg#gh-light-mode-only) 
+refresh all charts
+- ![Settings](assets/images/icons/settings_white_24dp.svg#gh-dark-mode-only)
+ ![Lock](assets/images/icons/settings_dark_24dp.svg#gh-light-mode-only) settings page with device info and 
+IoT Center url settings 
 
 On appbar drop down lists you can change device and time range for displaying data. After select device/time range
 are data automatically refreshed.

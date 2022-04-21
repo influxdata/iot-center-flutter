@@ -108,6 +108,10 @@ import "influxdata/influxdb/schema"
                       and r["clientId"] == "${_config.id}")
 ```
 
+**All changes in dashboard** - like add, delete and edit charts, are saved to system preferences after finish editing by 
+clicking ![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
+![Lock open](assets/images/icons/lock_open_dark_24dp.svg#gh-light-mode-only) on Dashboard Page AppBar.
+
 ### Settings page
 
 

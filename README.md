@@ -1,12 +1,9 @@
 <div style="max-width: 1200px; min-width: 600px; font-size: 18px; margin: auto; padding: 50px; color: white;">
 
-# IoT Center <a style="color: #d30971 !important;"> Demo.</a> Build on  <span style="color: #d30971;"> InfluxDB.</span> ![logo](assets/images/influxdata-icon.svg)
+<h1>IoT Center <a style="color: #d30971 !important;"> Demo.</a> Build on <a style="color: #d30971 !important;"> InfluxDB.</a></h1>
 
 This demo was designed to display data from Devices connected to IoT Center. Application is using InfluxDB v2 to store 
 the data, Telegraf, Iot Center Demo and MQTT.
-
-
-
 
 <img align="right" src="assets/images/demo.png" alt="drawing" width="35%" style="margin-left: 30px;margin-top: 30px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 

@@ -99,9 +99,14 @@ By clicking it, Edit Chart page is displayed.
 On this page chart can be deleted by clicking on ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)
 ![Lock](assets/images/icons/delete_dark_24dp.svg#gh-light-mode-only) in AppBar and after confirmation dialog.
 
-
-
-
+DropDown list `Field:` gets values from influx by following query:
+```sql
+import "influxdata/influxdb/schema"
+    schema.fieldKeys(
+        bucket: "${_client.bucket}",
+        predicate: (r) => r["_measurement"] == "environment" 
+                      and r["clientId"] == "${_config.id}")
+```
 
 
 ### Settings page

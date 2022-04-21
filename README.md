@@ -25,7 +25,7 @@ the data, Telegraf, Iot Center Demo and MQTT.
 - IoT Center v2 with following ports - [IotCenter on GitHub](https://github.com/bonitoo-io/iot-center-v2)
     - 1883 (mqtt broker)
     - 8086 (influxdb 2.0 OSS)
-    - 5000, 3000 nodejs server and UI app
+    - 5000 (IoT center)
     
 For start of the latest version IoT Center you can use:
 ```bash
@@ -88,6 +88,21 @@ import "influxdata/influxdb/v1"
         |> keep(columns: ["_value", "_time"])
         |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
 ```
+<img align="right" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+
+#### Edit Chart
+
+Each chart in Charts ListView contains ![Settings](assets/images/icons/settings_white_24dp.svg#gh-dark-mode-only)
+![Lock](assets/images/icons/settings_dark_24dp.svg#gh-light-mode-only) button (after unlock editing in AppBar). 
+By clicking it, Edit Chart page is displayed. 
+
+On this page chart can be deleted by clicking on ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)
+![Lock](assets/images/icons/delete_dark_24dp.svg#gh-light-mode-only) in AppBar and after confirmation dialog.
+
+
+
+
+
 
 ### Settings page
 

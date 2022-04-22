@@ -45,7 +45,7 @@ to add a new device. Enter device id "virtual_device" and click to Register for 
 
 <img align="right" src="assets/images/demo-editable.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
-### Dashboard page
+### Home page
 
 #### AppBar
 App bar on this screen contains basic functions:
@@ -90,13 +90,13 @@ import "influxdata/influxdb/v1"
 ```
 <img align="left" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-right: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
-#### Edit Chart
+#### Edit Chart & New Chart
 
 Each chart in Charts ListView contains ![Settings](assets/images/icons/settings_white_24dp.svg#gh-dark-mode-only)
 ![Lock](assets/images/icons/settings_dark_24dp.svg#gh-light-mode-only) button (after unlock editing in AppBar). 
-By clicking it, Edit Chart page is displayed. 
+By clicking it, Edit Chart page is displayed. New chart page is showed after clicking `floatingActionButton` on Home page.
 
-On this page chart can be deleted by clicking on ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)
+On Edit chart page, chart can be deleted by clicking on ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)
 ![Lock](assets/images/icons/delete_dark_24dp.svg#gh-light-mode-only) in AppBar and after confirmation dialog.
 
 DropDown list `Field:` gets values from influx by following query:
@@ -107,7 +107,8 @@ import "influxdata/influxdb/schema"
         predicate: (r) => r["_measurement"] == "environment" 
                       and r["clientId"] == "${_config.id}")
 ```
-After updating chart are data automatically refreshed (only for updated chart).
+After updating/creating chart are data automatically refreshed (only for updated/created chart, other charts 
+aren't affected).
 
 **All changes in dashboard** - like add, delete and edit charts, are saved to system preferences after finish editing by 
 clicking ![Lock open](assets/images/icons/lock_open_white_24dp.svg#gh-dark-mode-only)
@@ -127,14 +128,40 @@ App bar on this screen contains basic functions:
   ![Autorenew](assets/images/icons/link_dark_24dp.svg#gh-light-mode-only)
   change IoT Center url (save to system preferences)
 
-On appbar drop down lists you can change device - device configuration and device Measurements 
-are automatically refreshed.
-
 #### Device Configuration
 
+Device Configuration gets data from **IoT Center**. When selected device in AppBar DropDownList is changed, data is 
+automatically refreshed.
 
+Button **Write testing data** writes data to selected device for last 30 days. Data are generated for every minute.
 
-### Add chart page
+#### Device Measurements
+
+Device Measurements contains basic metrics for each field of selected Device for last 7 days. It's use following query:
+```sql
+import "math"
+    from(bucket: "${_client.bucket}")
+        |> range(start: -7d)
+        |> filter(fn: (r) => r._measurement == "environment")
+        |> filter(fn: (r) => r.clientId == "${_config.id}")
+        |> toFloat()
+        |> group(columns: ["_field"])
+        |> reduce(
+            fn: (r, accumulator) => ({
+                maxTime: (if r._time>accumulator.maxTime then r._time 
+                    else accumulator.maxTime),
+                maxValue: (if r._value>accumulator.maxValue then r._value 
+                    else accumulator.maxValue),
+                minValue: (if r._value<accumulator.minValue then r._value 
+                    else accumulator.minValue),
+                count: accumulator.count + 1.0
+            }),
+            identity: {maxTime: 1970-01-01, count: 0.0, 
+            minValue: math.mInf(sign: 1), 
+            maxValue: math.mInf(sign: -1)}
+        )
+```
+
 
 <br clear="right"/>
 

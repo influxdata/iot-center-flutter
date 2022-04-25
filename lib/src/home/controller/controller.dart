@@ -13,6 +13,10 @@ class Controller extends ControllerMVC {
   static Controller? _this;
   final Model _model;
 
+  Function()? refreshHomePageDevices;
+  Function()? removeItemFromListView;
+
+
   bool editable = false;
 
   void refreshChartEditable() {
@@ -21,7 +25,6 @@ class Controller extends ControllerMVC {
     }
   }
 
-  Function()? removeItemFromListView;
 
   void loadSavedData() {
     SharedPreferences.getInstance().then((prefs) {

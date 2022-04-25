@@ -64,7 +64,6 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: false,
         appBar: AppBar(
             backgroundColor: darkBlue,
             title: const Text("Edit chart"),

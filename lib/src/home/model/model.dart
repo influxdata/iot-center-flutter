@@ -346,7 +346,9 @@ class Model extends ModelMVC {
   }
 
   static const dayMillis = 24 * 60 * 60 * 1000;
+
   var _rnd = Random();
+
 
   num _generate(
       {required num period, int min = 0, max = 40, required num time}) {

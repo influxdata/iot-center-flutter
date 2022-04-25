@@ -1,5 +1,6 @@
 <div style="max-width: 1200px; min-width: 600px; font-size: 18px; margin: auto; padding: 50px;">
 
+
 <h1>IoT Center <a style="color: #d30971 !important;"> Demo.</a> Build on <a style="color: #d30971 !important;"> InfluxDB.</a></h1>
 
 This demo was designed to display data from Devices connected to IoT Center. Application is using InfluxDB v2 to store 
@@ -88,6 +89,7 @@ import "influxdata/influxdb/v1"
         |> keep(columns: ["_value", "_time"])
         |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
 ```
+
 <img align="left" src="assets/images/demo-edit-chart.png" alt="drawing" width="25%" style="margin-right: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 #### Edit Chart & New Chart
@@ -97,6 +99,7 @@ Each chart in Charts ListView contains ![Settings](assets/images/icons/settings_
 By clicking it, Edit Chart page is displayed. New chart page is showed after clicking `floatingActionButton` on Home page.
 
 On Edit chart page, chart can be deleted by clicking on ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)
+
 ![Lock](assets/images/icons/delete_dark_24dp.svg#gh-light-mode-only) in AppBar and after confirmation dialog.
 
 DropDown list `Field:` gets values from influx by following query:
@@ -106,6 +109,7 @@ import "influxdata/influxdb/schema"
         bucket: "${_client.bucket}",
         predicate: (r) => r["_measurement"] == "environment" 
                       and r["clientId"] == "${_config.id}")
+
 ```
 After updating/creating chart are data automatically refreshed (only for updated/created chart, other charts 
 aren't affected).
@@ -164,8 +168,6 @@ import "math"
 
 
 <br clear="right"/>
-
-
 
 
 </div>

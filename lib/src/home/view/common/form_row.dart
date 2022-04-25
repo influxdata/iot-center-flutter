@@ -142,8 +142,6 @@ class _FormRow extends State<FormRow> {
       hintText: widget.hint,
     );
 
-    var focusNode = FocusNode();
-
     switch (widget._inputType) {
       case InputType.textField:
         input = Container(

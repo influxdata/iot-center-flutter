@@ -133,7 +133,7 @@ class Model extends ModelMVC {
         fieldList = result;
         return result;
       } catch (e) {
-        print(e);
+        developer.log(e.toString());
       } finally {
         _client.close();
       }
@@ -238,7 +238,7 @@ class Model extends ModelMVC {
       var stream = await queryApi.query(fluxQuery);
       return await stream.toList();
     } catch (e) {
-      print(e);
+      developer.log(e.toString());
       return [];
     } finally {
       _client.close();
@@ -252,18 +252,17 @@ class Model extends ModelMVC {
     var fluxQuery = '''
           import "math"
           from(bucket: "${_client.bucket}")
-              |> range(start: -7d)
-              |> filter(fn: (r) => r._measurement == "environment")
-              |> filter(fn: (r) => r.clientId == "${_config.id}")
-              |> toFloat()
+              |> range(start: -30d)
+              |> filter(fn: (r) => r._measurement == "environment"
+                                and r.clientId == "${_config.id}")
               |> group(columns: ["_field"])
               |> reduce(
                   fn: (r, accumulator) => ({
                     maxTime: (if r._time>accumulator.maxTime then r._time 
                     else accumulator.maxTime),
-                    maxValue: (if r._value>accumulator.maxValue then r._value 
+                    maxValue: (if float(v: r._value)>accumulator.maxValue then float(v: r._value) 
                     else accumulator.maxValue),
-                    minValue: (if r._value<accumulator.minValue then r._value 
+                    minValue: (if float(v: r._value)<accumulator.minValue then float(v: r._value) 
                     else accumulator.minValue),
                     count: accumulator.count + 1.0
                   }),

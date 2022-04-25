@@ -147,7 +147,6 @@ class _FormRow extends State<FormRow> {
         input = Container(
             decoration: boxDecor,
             child: TextFormField(
-
               inputFormatters: widget.inputFormatters,
               decoration: inputDecor,
               controller: _controller,

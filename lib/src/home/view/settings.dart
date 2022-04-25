@@ -301,6 +301,9 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             onSaved: (value) async {
               final deviceId = value.toString();
               await con.getDeviceConfig({"deviceId": deviceId});
+              await con.loadDevices();
+              setState(() {con.deviceList;});
+              con.refreshHomePageDevices;
               Navigator.of(context).pop();
             },
           )),

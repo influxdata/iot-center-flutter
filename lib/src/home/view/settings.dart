@@ -56,6 +56,19 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
           backgroundColor: darkBlue,
           actions: [
             IconButton(
+                icon: const Icon(Icons.delete),
+                color: Colors.white,
+                onPressed: (() {
+                  final String deviceId = _selectedDevice?['deviceId'] ?? "";
+                  if (deviceId == "") return;
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return _removeDeviceDialog(context, deviceId);
+                    },
+                  );
+                })),
+            IconButton(
                 icon: const Icon(Icons.add),
                 color: Colors.white,
                 onPressed: (() {
@@ -84,26 +97,17 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
-                    child: MyDropDown(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
-                        items: con.deviceList,
-                        value: _selectedDevice != null
-                            ? _selectedDevice!['deviceId']
-                            : '',
-                        mapValue: 'deviceId',
-                        label: 'deviceId',
-                        hint: 'Select device',
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedDevice = con.deviceList.firstWhere(
-                                (device) => device['deviceId'] == value);
-                            _deviceDetail =
-                                con.getDeviceConfig(_selectedDevice);
-                            _measurements =
-                                con.getMeasurements(_selectedDevice);
-                          });
-                        }),
-                  )
+                      child: MyDropDown(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
+                    items: con.deviceList,
+                    value: _selectedDevice != null
+                        ? _selectedDevice!['deviceId']
+                        : '',
+                    mapValue: 'deviceId',
+                    label: 'deviceId',
+                    hint: 'Select device',
+                    onChanged: _selectDeviceById,
+                  ))
                 ]),
           ),
         ),
@@ -189,6 +193,19 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             )));
   }
 
+  _selectDeviceById(String? value) {
+    setState(() {
+      _selectedDevice = con.deviceList.firstWhere(
+        (device) => device['deviceId'] == value,
+        orElse: () {
+          return con.deviceList.first();
+        },
+      );
+      _deviceDetail = con.getDeviceConfig(_selectedDevice);
+      _measurements = con.getMeasurements(_selectedDevice);
+    });
+  }
+
   Widget _popupDialog(BuildContext context) {
     final _formKey = GlobalKey<FormState>();
 
@@ -231,6 +248,28 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
               if (_formKey.currentState!.validate()) {
                 _formKey.currentState!.save();
               }
+            })),
+      ],
+    );
+  }
+
+  Widget _removeDeviceDialog(BuildContext context, String deviceId) {
+    return AlertDialog(
+      title: Text("Confirm delete device $deviceId ?"),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            onPressed: (() async {
+              await con.removeDeviceConfig(deviceId);
+              await con.loadDevices();
+              _selectDeviceById(null);
+              // Navigator.of(context).pop();
             })),
       ],
     );

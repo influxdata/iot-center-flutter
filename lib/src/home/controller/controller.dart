@@ -71,6 +71,11 @@ class Controller extends ControllerMVC {
         .fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
   }
 
+  Future removeDeviceConfig(String deviceId) async {
+    await _model
+        .removeDeviceConfig(_model.iotCenterApi + "/api/devices/$deviceId");
+  }
+
   Future writeEmulatedData(String deviceId, Function onProgress) async =>
       _model.writeEmulatedData(deviceId, onProgress);
 

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
+import 'package:iot_center_flutter_mvc/src/util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'device_config.dart';
@@ -168,6 +169,13 @@ class Model extends ModelMVC {
       return config;
     } else {
       throw Exception('Failed to load device config.');
+    }
+  }
+
+  Future removeDeviceConfig(String url) async {
+    var response = await http.delete(Uri.parse(url));
+    if (!response.isSuccess()) {
+      throw Exception('Failed to remove device config!');
     }
   }
 

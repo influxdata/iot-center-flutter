@@ -246,30 +246,32 @@ class Model extends ModelMVC {
   }
 
   Future<List<FluxRecord>> fetchMeasurements(String url) async {
-    await fetchDeviceConfig2(url);
-    var _client = createClient(_config);
+    var config = await fetchDeviceConfig2(url);
+    var _client = createClient(config);
     var queryApi = _client.getQueryService();
+
     var fluxQuery = '''
-          import "math"
-          from(bucket: "${_client.bucket}")
-              |> range(start: -30d)
-              |> filter(fn: (r) => r._measurement == "environment"
-                                and r.clientId == "${_config.id}")
-              |> group(columns: ["_field"])
-              |> reduce(
-                  fn: (r, accumulator) => ({
-                    maxTime: (if r._time>accumulator.maxTime then r._time 
-                    else accumulator.maxTime),
-                    maxValue: (if float(v: r._value)>accumulator.maxValue then float(v: r._value) 
-                    else accumulator.maxValue),
-                    minValue: (if float(v: r._value)<accumulator.minValue then float(v: r._value) 
-                    else accumulator.minValue),
-                    count: accumulator.count + 1.0
-                  }),
-                identity: {maxTime: 1970-01-01, count: 0.0, 
-                  minValue: math.mInf(sign: 1), 
-                  maxValue: math.mInf(sign: -1)}
-        )
+      deviceData = from(bucket: "${_client.bucket}")
+        |> range(start: -30d)
+        |> filter(fn: (r) => r._measurement == "environment")
+        |> filter(fn: (r) => r.clientId == "${config.id}")
+
+      measurements = deviceData
+        |> keep(columns: ["_field", "_value", "_time"])
+        |> group(columns: ["_field"])
+
+      counts    = measurements |> count()                |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "count"   })
+      maxValues = measurements |> max  ()  |> toFloat()  |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "maxValue"})
+      minValues = measurements |> min  ()  |> toFloat()  |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "minValue"})
+      maxTimes  = measurements |> max  (column: "_time") |> keep(columns: ["_field", "_time" ]) |> rename(columns: {_time : "maxTime" })
+
+      j = (tables=<-, t) => join(tables: {tables, t}, on:["_field"])
+
+      counts
+        |> j(t: maxValues)
+        |> j(t: minValues)
+        |> j(t: maxTimes)
+        |> yield(name: "measurements")
   ''';
     try {
       var stream = await queryApi.query(fluxQuery);

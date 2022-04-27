@@ -123,7 +123,8 @@ class _HomePageState extends StateMVC<HomePage> {
               child: MyDropDown(
                   padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
                   hint: 'Time Range',
-                  value: con.selectedTimeOption,
+                  controller:
+                      TextEditingController(text: con.selectedTimeOption),
                   items: con.timeOptionsList,
                   mapValue: 'value',
                   label: 'label',

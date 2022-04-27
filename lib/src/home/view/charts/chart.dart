@@ -2,6 +2,11 @@ import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
+enum ChartType {
+  gauge,
+  simple,
+}
+
 class Chart {
   Chart({required this.data, required this.row, required this.column}) {
     widget = ChartWidget(

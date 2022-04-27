@@ -1,251 +1,211 @@
 import 'package:flutter/services.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
-class FormRow extends StatefulWidget {
-  FormRow.textBoxRow(
-      {this.padding = const EdgeInsets.all(5),
+class TextBoxRow extends FormRow {
+  TextBoxRow(
+      {Key? key,
+      padding = const EdgeInsets.all(5),
+      label,
       this.hint = '',
-      required this.label,
-      this.inputType = TextInputType.none,
       this.inputFormatters = const [],
       this.controller,
       this.validator,
       this.onChanged,
-      this.onSaved,
-      Key? key})
-      : super(key: key) {
-    _inputType = InputType.textField;
-  }
+      this.onSaved})
+      : super(
+          key: key,
+          label: label,
+          inputWidget: Container(
+              decoration: boxDecor,
+              child: TextFormField(
+                inputFormatters: inputFormatters,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  fillColor: Colors.white,
+                  filled: true,
+                  hintText: hint,
+                ),
+                controller: controller ?? TextEditingController(),
+                validator: validator,
+                onChanged: onChanged,
+                onSaved: onSaved,
+              )),
+        );
 
-  FormRow.numberTextBoxRow(
-      {this.padding = const EdgeInsets.all(5),
+  final String? hint;
+  final TextEditingController? controller;
+  final List<TextInputFormatter> inputFormatters;
+  final Function(String?)? onChanged;
+  final Function(String?)? onSaved;
+  final String? Function(String?)? validator;
+}
+
+class NumberBoxRow extends FormRow {
+  NumberBoxRow(
+      {Key? key,
+      padding = const EdgeInsets.all(5),
+      label,
       this.hint = '',
-      required this.label,
-      this.inputType = TextInputType.none,
-      this.inputFormatters = const [],
+      this.min = -99999,
+      this.max = 99999,
       this.controller,
-      this.validator,
       this.onChanged,
-      this.onSaved,
-      Key? key})
-      : super(key: key) {
-    _inputType = InputType.numberTextField;
-  }
+      this.onSaved})
+      : super(
+          key: key,
+          label: label,
+          inputWidget: Container(
+            decoration: boxDecor,
+            child: NumberTextField(
+              onSaved: onSaved,
+              min: min,
+              max: max,
+              controller: controller ?? TextEditingController(),
+            ),
+          ),
+        );
 
-  FormRow.doubleTextBoxRow(
-      {this.padding = const EdgeInsets.all(5),
-      this.hint = '',
-      this.hint2 = '',
-      this.controller,
-      this.controller2,
-      required this.label,
-      this.inputType = TextInputType.none,
-      this.inputFormatters = const [],
-      this.inputType2 = TextInputType.none,
-      this.inputFormatters2 = const [],
-      this.validator,
-      this.onChanged,
-      this.onSaved,
-      this.onSaved2,
-      Key? key})
-      : super(key: key) {
-    _inputType = InputType.doubleTextField;
-  }
+  final String? hint;
+  final TextEditingController? controller;
+  final int min;
+  final int max;
 
-  FormRow.doubleNumberTextBoxRow(
-      {this.padding = const EdgeInsets.all(5),
-      this.hint = '',
-      this.hint2 = '',
-      this.controller,
-      this.controller2,
-      required this.label,
-      this.inputType = TextInputType.none,
-      this.inputFormatters = const [],
-      this.inputType2 = TextInputType.none,
-      this.inputFormatters2 = const [],
-      this.validator,
-      this.onChanged,
-      this.onSaved,
-      this.onSaved2,
-      Key? key})
-      : super(key: key) {
-    _inputType = InputType.doubleNumberTextField;
-  }
+  final Function(String?)? onChanged;
+  final Function(String?)? onSaved;
+}
 
-  FormRow.dropDownListRow(
-      {this.padding = const EdgeInsets.all(5),
+class DropDownListRow extends FormRow {
+  DropDownListRow(
+      {Key? key,
+      padding = const EdgeInsets.all(5),
+      label,
       this.hint = '',
-      this.value = '',
-      required this.label,
-      required this.items,
+      this.mapLabel = '',
       required this.mapValue,
-      required this.mapLabel,
-      required this.onChanged,
-      this.onSaved,
+      required this.items,
+      this.controller,
+      this.onChanged,
+      this.onSaved})
+      : super(
+          key: key,
+          label: label,
+          inputWidget: Container(
+              decoration: boxDecor,
+              child: MyDropDown(
+                controller: controller ?? TextEditingController(),
+                items: items!,
+                mapValue: mapValue!,
+                label: mapLabel!,
+                onChanged: onChanged,
+                onSaved: onSaved,
+              )),
+        );
+
+  final String? hint;
+  final List? items;
+  final String? mapValue;
+  final String? mapLabel;
+  final TextEditingController? controller;
+  final Function(String?)? onChanged;
+  final Function(String?)? onSaved;
+}
+
+class DoubleNumberBoxRow extends FormRow {
+  DoubleNumberBoxRow({
+    Key? key,
+    padding = const EdgeInsets.all(5),
+    label,
+    this.firstHint = '',
+    this.firstController,
+    this.firstMin = -99999,
+    this.firstMax = 99999,
+    this.firstOnChanged,
+    this.firstOnSaved,
+    this.secondHint = '',
+    this.secondController,
+    this.secondMin = -99999,
+    this.secondMax = 99999,
+    this.secondOnChanged,
+    this.secondOnSaved,
+  }) : super(
+          key: key,
+          label: label,
+          inputWidget: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Container(
+                      decoration: boxDecor,
+                      child: NumberTextField(
+                        onSaved: firstOnSaved,
+                        controller: firstController ?? TextEditingController(),
+                        min: firstMin,
+                        max: firstMax,
+                      ),
+                    )),
+              ),
+              Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Container(
+                      decoration: boxDecor,
+                      child: NumberTextField(
+                        onSaved: secondOnSaved,
+                        controller: secondController ?? TextEditingController(),
+                        min: secondMin,
+                        max: secondMax,
+                      ),
+                    )),
+              )
+            ],
+          ),
+        );
+
+  final String? firstHint;
+  final TextEditingController? firstController;
+  final int firstMin;
+  final int firstMax;
+  final Function(String?)? firstOnChanged;
+  final Function(String?)? firstOnSaved;
+
+  final String? secondHint;
+  final TextEditingController? secondController;
+  final int secondMin;
+  final int secondMax;
+  final Function(String?)? secondOnChanged;
+  final Function(String?)? secondOnSaved;
+}
+
+class FormRow extends StatefulWidget {
+  const FormRow(
+      {this.padding = const EdgeInsets.all(5),
+      required this.label,
+      required this.inputWidget,
       Key? key})
-      : super(key: key) {
-    _inputType = InputType.dropDownList;
-  }
+      : super(key: key);
 
-  late InputType _inputType;
-
-  EdgeInsets padding;
-  String? hint;
-  String? value;
-  String? label;
-  TextInputType? inputType;
-  List<TextInputFormatter> inputFormatters = [];
-  TextEditingController? controller;
-
-  List? items;
-  String? mapValue;
-  String? mapLabel;
-
-  String? Function(String?)? validator;
-  Function(String?)? onChanged;
-  Function(String?)? onSaved;
-
-  TextEditingController? controller2;
-  String? hint2;
-  TextInputType? inputType2;
-  List<TextInputFormatter> inputFormatters2 = [];
-  Function(String?)? onSaved2;
+  final EdgeInsets padding;
+  final String? label;
+  final Widget inputWidget;
 
   @override
   State<StatefulWidget> createState() {
-    return _FormRow();
+    return _FormRowState();
   }
 }
 
-class _FormRow extends State<FormRow> {
-  late TextEditingController _controller;
-  late TextEditingController _controller2;
-
+class _FormRowState extends State<FormRow> {
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? TextEditingController();
-    _controller2 = widget.controller2 ?? TextEditingController();
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget input = const Text('');
-
-    var inputDecor = InputDecoration(
-      border: OutlineInputBorder(
-        borderSide: BorderSide.none,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      fillColor: Colors.white,
-      filled: true,
-      hintText: widget.hint,
-    );
-
-    switch (widget._inputType) {
-      case InputType.textField:
-        input = Container(
-            decoration: boxDecor,
-            child: TextFormField(
-              inputFormatters: widget.inputFormatters,
-              decoration: inputDecor,
-              controller: _controller,
-              validator: widget.validator,
-              onChanged: widget.onChanged,
-              onSaved: widget.onSaved,
-            ));
-        break;
-      case InputType.doubleTextField:
-        input = Row(
-          children: [
-            Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Container(
-                    decoration: boxDecor,
-                    child: TextFormField(
-                      controller: _controller,
-                      keyboardType: widget.inputType,
-                      inputFormatters: widget.inputFormatters,
-                      decoration: inputDecor,
-                      validator: widget.validator,
-                      onChanged: widget.onChanged,
-                      onSaved: widget.onSaved,
-                    ),
-                  )),
-            ),
-            Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Container(
-                    decoration: boxDecor,
-                    child: TextFormField(
-                      controller: _controller2,
-                      keyboardType: widget.inputType2,
-                      inputFormatters: widget.inputFormatters2,
-                      decoration: inputDecor,
-                      validator: widget.validator,
-                      onChanged: widget.onChanged,
-                      onSaved: widget.onSaved2,
-                    ),
-                  )),
-            )
-          ],
-        );
-        break;
-      case InputType.doubleNumberTextField:
-        input = Row(
-          children: [
-            Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Container(
-                    decoration: boxDecor,
-                    child: NumberTextField(
-                      onSaved: widget.onSaved,
-                      controller: _controller,
-                    ),
-                  )),
-            ),
-            Expanded(
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Container(
-                    decoration: boxDecor,
-                    child: NumberTextField(
-                      onSaved: widget.onSaved2,
-                      controller: _controller2,
-                    ),
-                  )),
-            )
-          ],
-        );
-        break;
-      case InputType.numberTextField:
-        input = Container(
-          decoration: boxDecor,
-          child: NumberTextField(
-            onSaved: widget.onSaved,
-            min: 0,
-            max: 10,
-            controller: _controller,
-          ),
-        );
-        break;
-      case InputType.dropDownList:
-        input = Container(
-            decoration: boxDecor,
-            child: MyDropDown(
-              value: widget.value!,
-              items: widget.items!,
-              mapValue: widget.mapValue!,
-              label: widget.mapLabel!,
-              onChanged: widget.onChanged,
-              onSaved: widget.onSaved,
-            ));
-        break;
-    }
-
     return widget.label!.isNotEmpty
         ? Padding(
             padding: widget.padding,
@@ -262,7 +222,7 @@ class _FormRow extends State<FormRow> {
                       ),
                     )),
                 Expanded(
-                  child: SizedBox(child: input),
+                  child: SizedBox(child: widget.inputWidget),
                 ),
               ],
             ),
@@ -272,7 +232,7 @@ class _FormRow extends State<FormRow> {
             child: Row(
               children: [
                 Expanded(
-                  child: input,
+                  child: widget.inputWidget,
                 ),
               ],
             ),

@@ -252,10 +252,20 @@ class Model extends ModelMVC {
         |> keep(columns: ["_field", "_value", "_time"])
         |> group(columns: ["_field"])
 
-      counts    = measurements |> count()                |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "count"   })
-      maxValues = measurements |> max  ()  |> toFloat()  |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "maxValue"})
-      minValues = measurements |> min  ()  |> toFloat()  |> keep(columns: ["_field", "_value"]) |> rename(columns: {_value: "minValue"})
-      maxTimes  = measurements |> max  (column: "_time") |> keep(columns: ["_field", "_time" ]) |> rename(columns: {_time : "maxTime" })
+      counts    = measurements |> count()                
+                               |> keep(columns: ["_field", "_value"]) 
+                               |> rename(columns: {_value: "count"   })
+      maxValues = measurements |> max  ()  
+                               |> toFloat()  
+                               |> keep(columns: ["_field", "_value"]) 
+                               |> rename(columns: {_value: "maxValue"})
+      minValues = measurements |> min  ()  
+                               |> toFloat()  
+                               |> keep(columns: ["_field", "_value"]) 
+                               |> rename(columns: {_value: "minValue"})
+      maxTimes  = measurements |> max  (column: "_time") 
+                               |> keep(columns: ["_field", "_time" ]) 
+                               |> rename(columns: {_time : "maxTime" })
 
       j = (tables=<-, t) => join(tables: {tables, t}, on:["_field"])
 
@@ -349,7 +359,6 @@ class Model extends ModelMVC {
   static const dayMillis = 24 * 60 * 60 * 1000;
 
   var _rnd = Random();
-
 
   num _generate(
       {required num period, int min = 0, max = 40, required num time}) {

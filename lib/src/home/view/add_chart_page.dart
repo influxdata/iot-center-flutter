@@ -48,14 +48,17 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
             key: _formKey,
             child: ListView(
               children: [
-                FormRow.dropDownListRow(
+                DropDownListRow(
                   label: "Type:",
                   items: con.chartTypeList,
-                  value: con.chartTypeList.first['value'].toString(),
+                  controller: TextEditingController(
+                      text: con.chartTypeList.first['value'].toString()),
                   mapValue: 'value',
                   mapLabel: 'label',
                   onChanged: (value) {
-                    setState(() {isGauge = value == 'ChartType.gauge';});
+                    setState(() {
+                      isGauge = value == 'ChartType.gauge';
+                    });
                   },
                   onSaved: (value) {
                     chartType = value!;
@@ -68,10 +71,11 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return Text(snapshot.error.toString());
                       }
                       if (snapshot.hasData) {
-                        return FormRow.dropDownListRow(
+                        return DropDownListRow(
                             label: "Field:",
                             items: snapshot.data,
-                            value: snapshot.data.first['_value'].toString(),
+                            controller: TextEditingController(
+                                text: snapshot.data.first['_value'].toString()),
                             mapValue: '_value',
                             mapLabel: '_value',
                             onChanged: (value) {},
@@ -82,7 +86,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return const Text("loading...");
                       }
                     }),
-                FormRow.textBoxRow(
+                TextBoxRow(
                   label: "Label:",
                   onSaved: (value) {
                     label = value!;
@@ -90,34 +94,27 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                 ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.doubleNumberTextBoxRow(
+                  child: DoubleNumberBoxRow(
                       label: "Range:",
-                      controller: TextEditingController(text: '0'),
-                      onSaved: (value) {
+                      firstController: TextEditingController(text: '0'),
+                      firstOnSaved: (value) {
                         startValue = double.parse(value!);
                       },
-                      controller2: TextEditingController(text: '100'),
-                      onSaved2: (value) {
+                      secondController: TextEditingController(text: '100'),
+                      secondOnChanged: (value) {
                         endValue = double.parse(value!);
                       }),
                 ),
-
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.numberTextBoxRow(
+                  child: NumberBoxRow(
                       label: "Rounded:",
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '';
-                        }
-                        return null;
-                      },
                       controller: TextEditingController(text: '0'),
                       onSaved: (value) {
                         decimalPlaces = int.parse(value!);
                       }),
                 ),
-                FormRow.textBoxRow(
+                TextBoxRow(
                     label: "Unit:",
                     onSaved: (value) {
                       unit = value!;

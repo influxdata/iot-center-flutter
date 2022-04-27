@@ -97,6 +97,27 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
+                    child: MyDropDown(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
+                        items: con.deviceList,
+                        controller: TextEditingController(
+                            text: _selectedDevice != null
+                                ? _selectedDevice!['deviceId']
+                                : ''),
+                        mapValue: 'deviceId',
+                        label: 'deviceId',
+                        hint: 'Select device',
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedDevice = con.deviceList.firstWhere(
+                                (device) => device['deviceId'] == value);
+                            _deviceDetail =
+                                con.getDeviceConfig(_selectedDevice);
+                            _measurements =
+                                con.getMeasurements(_selectedDevice);
+                          });
+                        }),
+                  )
                       child: MyDropDown(
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
                     items: con.deviceList,
@@ -215,12 +236,11 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
         key: _formKey,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           Expanded(
-              child: FormRow.textBoxRow(
+              child: TextBoxRow(
             hint: 'IoT Center URL:',
             label: '',
             controller: iotUrlController,
             padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-            inputType: TextInputType.url,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter valid URL';
@@ -286,12 +306,11 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
         key: _formKey,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           Expanded(
-              child: FormRow.textBoxRow(
+              child: TextBoxRow(
             hint: 'Device ID',
             label: '',
             controller: newDeviceController,
             padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-            inputType: TextInputType.text,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Device ID cannot be empty';
@@ -302,7 +321,9 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
               final deviceId = value.toString();
               await con.getDeviceConfig({"deviceId": deviceId});
               await con.loadDevices();
-              setState(() {con.deviceList;});
+              setState(() {
+                con.deviceList;
+              });
               con.refreshHomePageDevices;
               Navigator.of(context).pop();
             },

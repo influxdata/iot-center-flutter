@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class MyDropDown extends StatefulWidget {
-  MyDropDown(
+  const MyDropDown(
       {this.padding = EdgeInsets.zero,
       this.hint = '',
-      this.value = '',
+      this.controller,
       required this.items,
       required this.mapValue,
       required this.label,
@@ -14,14 +14,14 @@ class MyDropDown extends StatefulWidget {
       Key? key})
       : super(key: key);
 
-  EdgeInsets padding;
-  String hint;
-  String value;
-  List items;
-  String mapValue;
-  String label;
-  Function(String?)? onChanged;
-  Function(String?)? onSaved;
+  final EdgeInsets padding;
+  final String hint;
+  final TextEditingController? controller;
+  final List items;
+  final String mapValue;
+  final String label;
+  final Function(String?)? onChanged;
+  final Function(String?)? onSaved;
 
   @override
   State<StatefulWidget> createState() {
@@ -30,9 +30,17 @@ class MyDropDown extends StatefulWidget {
 }
 
 class _MyDropDown extends State<MyDropDown> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? TextEditingController();
+  }
+
   @override
   Widget build(BuildContext context) {
-    var val = widget.value;
+    var val = _controller.text;
     if (widget.items.isNotEmpty && val.isEmpty) {
       val = widget.items.first[widget.mapValue].toString();
     }

@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
@@ -84,10 +83,11 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
             key: _formKey,
             child: ListView(
               children: [
-                FormRow.dropDownListRow(
+                DropDownListRow(
                   label: "Type:",
                   items: con.chartTypeList,
-                  value: widget.chart.data.chartType.toString(),
+                  controller: TextEditingController(
+                      text: widget.chart.data.chartType.toString()),
                   mapValue: 'value',
                   mapLabel: 'label',
                   onChanged: (value) {
@@ -106,10 +106,11 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         return Text(snapshot.error.toString());
                       }
                       if (snapshot.hasData) {
-                        return FormRow.dropDownListRow(
+                        return DropDownListRow(
                           label: "Field:",
                           items: snapshot.data,
-                          value: widget.chart.data.measurement,
+                          controller: TextEditingController(
+                              text: widget.chart.data.measurement),
                           mapValue: '_value',
                           mapLabel: '_value',
                           onChanged: (value) {},
@@ -121,32 +122,27 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         return const Text("loading...");
                       }
                     }),
-                FormRow.textBoxRow(
+                TextBoxRow(
                   label: "Label:",
-                  controller: TextEditingController(text: widget.chart.data.label),
+                  controller:
+                      TextEditingController(text: widget.chart.data.label),
                   onSaved: (value) {
                     widget.chart.data.label = value!;
                   },
                 ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.doubleNumberTextBoxRow(
+                  child: DoubleNumberBoxRow(
                     label: "Range:",
-                    controller: TextEditingController(text: widget.chart.data.startValue.toStringAsFixed(0)),
-                    inputType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                    ],
-                    onSaved: (value) {
+                    firstController: TextEditingController(
+                        text: widget.chart.data.startValue.toStringAsFixed(0)),
+                    firstOnSaved: (value) {
                       widget.chart.data.startValue =
                           isGauge ? double.parse(value!) : 0;
                     },
-                    controller2: TextEditingController(text: widget.chart.data.endValue.toStringAsFixed(0)),
-                    inputType2: TextInputType.number,
-                    inputFormatters2: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                    ],
-                    onSaved2: (value) {
+                    secondController: TextEditingController(
+                        text: widget.chart.data.endValue.toStringAsFixed(0)),
+                    secondOnChanged: (value) {
                       widget.chart.data.endValue =
                           isGauge ? double.parse(value!) : 0;
                     },
@@ -154,30 +150,23 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                 ),
                 Visibility(
                   visible: isGauge,
-                  child: FormRow.numberTextBoxRow(
+                  child: NumberBoxRow(
                     label: "Rounded:",
-                    controller: TextEditingController(text: isGauge && widget.chart.data.decimalPlaces != null
-                        ? widget.chart.data.decimalPlaces!.toStringAsFixed(0)
-                        : '0'),
-                    inputType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                    ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '';
-                      }
-                      return null;
-                    },
+                    controller: TextEditingController(
+                        text: isGauge && widget.chart.data.decimalPlaces != null
+                            ? widget.chart.data.decimalPlaces!
+                                .toStringAsFixed(0)
+                            : '0'),
                     onSaved: (value) {
                       widget.chart.data.decimalPlaces =
                           isGauge ? int.parse(value!) : 0;
                     },
                   ),
                 ),
-                FormRow.textBoxRow(
+                TextBoxRow(
                   label: "Unit:",
-                  controller: TextEditingController(text: widget.chart.data.unit),
+                  controller:
+                      TextEditingController(text: widget.chart.data.unit),
                   onSaved: (value) {
                     widget.chart.data.unit = value!;
                   },

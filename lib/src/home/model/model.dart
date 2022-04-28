@@ -285,7 +285,6 @@ class Model extends ModelMVC {
 
   Future writeEmulatedData(String deviceId, Function onProgress) async {
     var config = await fetchDeviceConfig2(iotCenterApi + "/api/env/$deviceId");
-
     var influxDBClient = createClient(config);
 
 // calculate window to emulate writes
@@ -357,8 +356,7 @@ class Model extends ModelMVC {
   }
 
   static const dayMillis = 24 * 60 * 60 * 1000;
-
-  var _rnd = Random();
+  final _rnd = Random();
 
   num _generate(
       {required num period, int min = 0, max = 40, required num time}) {
@@ -369,7 +367,10 @@ class Model extends ModelMVC {
 // generate secondary value, which is lowest at noon
     var dayValue =
         (dif / 4) * sin(((time % dayMillis) / dayMillis) * 2 * pi - pi / 2);
-    return (((min + dif / 2 + periodValue + dayValue + _rnd.nextDouble() * 10) /
-        10));
+    return (((min +
+        dif / 2 +
+        periodValue +
+        dayValue +
+        _rnd.nextDouble() * 10)));
   }
 }

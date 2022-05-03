@@ -16,7 +16,6 @@ class Controller extends ControllerMVC {
   Function()? refreshHomePageDevices;
   Function()? removeItemFromListView;
 
-
   bool editable = false;
 
   void refreshChartEditable() {
@@ -24,7 +23,6 @@ class Controller extends ControllerMVC {
       chart.data.refreshHeader!();
     }
   }
-
 
   void loadSavedData() {
     SharedPreferences.getInstance().then((prefs) {
@@ -74,9 +72,8 @@ class Controller extends ControllerMVC {
         .fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
   }
 
-  Future removeDeviceConfig(String deviceId) async {
-    await _model
-        .removeDeviceConfig(_model.iotCenterApi + "/api/devices/$deviceId");
+  Future removeDeviceConfig(Map<String, dynamic>? device) async {
+    await _model.removeDeviceConfig(device);
   }
 
   Future writeEmulatedData(String deviceId, Function onProgress) async =>

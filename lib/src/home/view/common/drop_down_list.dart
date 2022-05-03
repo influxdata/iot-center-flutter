@@ -54,7 +54,7 @@ class _MyDropDown extends State<MyDropDown> {
           borderRadius: BorderRadius.circular(5),
           gapPadding: 0,
         ),
-        focusedBorder:  OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
           borderSide: BorderSide.none,
           borderRadius: BorderRadius.circular(5),
           gapPadding: 0,
@@ -62,9 +62,11 @@ class _MyDropDown extends State<MyDropDown> {
         filled: true,
         fillColor: Colors.white,
       ),
-
       value: val,
-      items: widget.items.map((dynamic map) {
+      items: widget.items
+          .where((e) => e != null) //removes null items
+          .toSet()
+          .map((dynamic map) {
         return DropdownMenuItem<String>(
             value: map[widget.mapValue].toString(),
             child: Text(

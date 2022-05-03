@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
-import 'package:iot_center_flutter_mvc/src/util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'device_config.dart';
@@ -172,9 +171,13 @@ class Model extends ModelMVC {
     }
   }
 
-  Future removeDeviceConfig(String url) async {
-    var response = await http.delete(Uri.parse(url));
-    if (!response.isSuccess()) {
+  Future removeDeviceConfig(Map<String, dynamic>? device) async {
+    var deviceId = device != null ? device['deviceId'] : '';
+    var response =
+        await http.delete(Uri.parse(iotCenterApi + "/api/devices/$deviceId"));
+    if (response.statusCode <= 300) {
+      deviceList.removeWhere((element) => element['deviceId'] == deviceId);
+    } else {
       throw Exception('Failed to remove device config!');
     }
   }

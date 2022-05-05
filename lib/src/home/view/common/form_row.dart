@@ -88,7 +88,8 @@ class DropDownListRow extends FormRow {
       required this.items,
       this.controller,
       this.onChanged,
-      this.onSaved})
+      this.onSaved,
+      bool? addIfMissing})
       : super(
           key: key,
           label: label,
@@ -101,6 +102,7 @@ class DropDownListRow extends FormRow {
                 label: mapLabel!,
                 onChanged: onChanged,
                 onSaved: onSaved,
+                addIfMissing: addIfMissing,
               )),
         );
 

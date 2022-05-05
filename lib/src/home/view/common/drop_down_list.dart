@@ -11,6 +11,7 @@ class MyDropDown extends StatefulWidget {
       required this.label,
       this.onChanged,
       this.onSaved,
+      this.addIfMissing,
       Key? key})
       : super(key: key);
 
@@ -22,6 +23,8 @@ class MyDropDown extends StatefulWidget {
   final String label;
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;
+/// If current value is missing in items, then it's added so it won't fail
+  final bool? addIfMissing;
 
   @override
   State<StatefulWidget> createState() {
@@ -45,6 +48,28 @@ class _MyDropDown extends State<MyDropDown> {
       val = widget.items.first[widget.mapValue].toString();
     }
 
+    final List<DropdownMenuItem<String>> items = widget.items
+        .where((e) => e != null) //removes null items
+        .toSet()
+        .map((dynamic map) {
+      return DropdownMenuItem<String>(
+          value: map[widget.mapValue].toString(),
+          child: Text(
+            map[widget.label],
+            style: const TextStyle(fontSize: 16),
+          ));
+    }).toList();
+
+    if (widget.addIfMissing == true &&
+        items.where((element) => element.value == val).isEmpty) {
+      items.add(DropdownMenuItem<String>(
+          value: val,
+          child: Text(
+            val,
+            style: const TextStyle(fontSize: 16),
+          )));
+    }
+
     var dropDown = DropdownButtonFormField<String>(
       isExpanded: true,
       hint: Text(widget.hint),
@@ -63,17 +88,7 @@ class _MyDropDown extends State<MyDropDown> {
         fillColor: Colors.white,
       ),
       value: val,
-      items: widget.items
-          .where((e) => e != null) //removes null items
-          .toSet()
-          .map((dynamic map) {
-        return DropdownMenuItem<String>(
-            value: map[widget.mapValue].toString(),
-            child: Text(
-              map[widget.label],
-              style: const TextStyle(fontSize: 16),
-            ));
-      }).toList(),
+      items: items,
       onChanged: widget.onChanged,
       onSaved: widget.onSaved,
     );

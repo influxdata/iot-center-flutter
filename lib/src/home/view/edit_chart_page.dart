@@ -117,6 +117,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           onSaved: (value) {
                             widget.chart.data.measurement = value!;
                           },
+                          addIfMissing: true,
                         );
                       } else {
                         return const Text("loading...");

@@ -81,7 +81,9 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                             onChanged: (value) {},
                             onSaved: (value) {
                               measurement = value!;
-                            });
+                          },
+                          addIfMissing: true,
+                        );
                       } else {
                         return const Text("loading...");
                       }

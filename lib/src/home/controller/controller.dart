@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:influxdb_client/api.dart';
@@ -92,4 +93,24 @@ class Controller extends ControllerMVC {
 
   double getDouble(dynamic value) =>
       value is String ? double.parse(value) : value.toDouble();
+
+  StreamSubscription? _sensorsSubscription;
+
+  // TODO(sensors): set each sensor separately
+  bool get sensorsIsWriting {
+    return _sensorsSubscription != null;
+  }
+
+  set sensorsIsWriting(bool val) {
+    if (val == sensorsIsWriting) return;
+    if (val) {
+      // TODO(sensors): use other isolate
+      _sensorsSubscription = _model.accelerometer.listen((event) {
+        _model.writeSensor("Accelerometer", event);
+      });
+    } else if (_sensorsSubscription != null) {
+      _sensorsSubscription!.cancel();
+      _sensorsSubscription = null;
+    }
+  }
 }

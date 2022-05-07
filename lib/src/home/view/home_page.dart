@@ -64,6 +64,14 @@ class _HomePageState extends StateMVC<HomePage> {
         backgroundColor: darkBlue,
         actions: [
           IconButton(
+            icon: const Icon(Icons.screen_rotation),
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (c) => const SensorsPage()));
+            },
+          ),
+          IconButton(
             icon: con.editable
                 ? const Icon(Icons.lock_open)
                 : const Icon(Icons.lock),

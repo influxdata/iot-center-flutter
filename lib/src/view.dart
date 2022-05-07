@@ -6,6 +6,8 @@ export 'package:iot_center_flutter_mvc/src/app/view/my_app.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/home_page.dart';
 
+export 'package:iot_center_flutter_mvc/src/home/view/sensors.dart';
+
 export 'package:iot_center_flutter_mvc/src/home/view/settings.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/add_chart_page.dart';

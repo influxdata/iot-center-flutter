@@ -6,6 +6,9 @@ import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:battery_plus/battery_plus.dart';
+
 import 'device_config.dart';
 import 'dart:developer' as developer;
 
@@ -384,4 +387,46 @@ class Model extends ModelMVC {
         dayValue +
         _rnd.nextDouble() * 10)));
   }
+
+  Future writeSensor(
+      String sensorName, Map<String, double> fieldValueMap) async {
+    final config = await fetchDeviceConfig2(iotCenterApi + "/api/env/mobile");
+    final influxDBClient = createClient(config);
+
+    final writeApi = influxDBClient.getWriteService();
+
+    final point = Point('environment')
+        // TODO(sensors): mobile name/id/type
+        .addTag('clientId', "mobile");
+    // TODO(sensors): sensor types as tags
+    fieldValueMap.forEach((key, value) {
+      point.addField("${sensorName}_$key", value);
+    });
+
+    // TODO(sensors): batch write
+    writeApi.write(point);
+  }
+
+  Stream<Map<String, double>> get accelerometer =>
+      SensorsPlatform.instance.accelerometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get userAccelerometer =>
+      SensorsPlatform.instance.userAccelerometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get gyroscope =>
+      SensorsPlatform.instance.gyroscopeEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get magnetometer =>
+      SensorsPlatform.instance.magnetometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  // TODO(sensors): send only when battery changed
+  Stream<Future<Map<String, double>>> get battery =>
+      Stream.periodic(const Duration(minutes: 1)).map((event) async =>
+          {"level": (await Battery().batteryLevel).toDouble()});
+
+  // TODO(sensors): add geo
 }

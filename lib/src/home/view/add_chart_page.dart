@@ -51,8 +51,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                 DropDownListRow(
                   label: "Type:",
                   items: con.chartTypeList,
-                  controller: TextEditingController(
-                      text: con.chartTypeList.first['value'].toString()),
+                  value: con.chartTypeList.first['value'].toString(),
                   mapValue: 'value',
                   mapLabel: 'label',
                   onChanged: (value) {
@@ -74,8 +73,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return DropDownListRow(
                             label: "Field:",
                             items: snapshot.data,
-                            controller: TextEditingController(
-                                text: snapshot.data.first['_value'].toString()),
+                            value: snapshot.data.first['_value'].toString(),
                             mapValue: '_value',
                             mapLabel: '_value',
                             onChanged: (value) {},

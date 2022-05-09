@@ -14,7 +14,6 @@ class Controller extends ControllerMVC {
   static Controller? _this;
   final Model _model;
 
-  Function()? refreshHomePageDevices;
   Function()? removeItemFromListView;
 
   bool editable = false;
@@ -56,7 +55,8 @@ class Controller extends ControllerMVC {
   String get selectedTimeOption => _model.selectedTimeOption;
 
   void setSelectedTimeOption(String value) => _model.selectedTimeOption = value;
-  void setSelectedDevice(String value) => _model.selectedDeviceOnChange(value);
+  Map<String, dynamic>? setSelectedDevice(String? value, bool setNull) =>
+      _model.selectedDeviceOnChange(value, setNull);
 
   Future<void> loadDevices() => _model.loadDevices();
 

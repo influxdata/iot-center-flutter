@@ -18,13 +18,18 @@ class _HomePageState extends StateMVC<HomePage> {
   }
 
   late Controller con;
-  late AppStateMVC appState;
+  String _selectedDevice = '';
+  Future<void>? _deviceList;
+
   int? rowCount = 0;
 
   @override
   void initState() {
     super.initState();
-    appState = rootState!;
+
+    _deviceList = con.loadDevices().whenComplete(() => _selectedDevice =
+        con.selectedDevice != null ? con.selectedDevice!['deviceId'] : '');
+
     rowCount = con.chartsList
             .reduce((currentChart, nextChart) =>
                 currentChart.row > nextChart.row ? currentChart : nextChart)
@@ -44,12 +49,14 @@ class _HomePageState extends StateMVC<HomePage> {
             : 0;
       });
     };
+  }
 
-    con.refreshHomePageDevices = () {
-      setState(() {
-        con.deviceList;
-      });
-    };
+  @override
+  void refresh() async {
+    setState(() {
+      _deviceList =
+          con.loadDevices().whenComplete(() => con.refreshChartListView());
+    });
   }
 
   @override
@@ -97,16 +104,16 @@ class _HomePageState extends StateMVC<HomePage> {
             icon: const Icon(Icons.autorenew_rounded),
             color: Colors.white,
             onPressed: () {
-              // con.refreshChartListView();
-              con.refreshChartListView();
+              refresh();
             },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             color: Colors.white,
-            onPressed: () {
-              Navigator.push(context,
+            onPressed: () async {
+              await Navigator.push(context,
                   MaterialPageRoute(builder: (c) => const SettingsPage()));
+              refresh();
             },
           ),
         ],
@@ -115,31 +122,52 @@ class _HomePageState extends StateMVC<HomePage> {
           child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
             Expanded(
-                flex: 3,
-                child: MyDropDown(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
-                    hint: 'Select device',
-                    items: con.deviceList,
-                    mapValue: 'deviceId',
-                    label: 'deviceId',
-                    onChanged: (value) {
-                      con.setSelectedDevice(value!);
-                      con.refreshChartListView();
-                    })),
+              flex: 3,
+              child: FutureBuilder<dynamic>(
+                  future: _deviceList,
+                  builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                    if (snapshot.hasData &&
+                        snapshot.connectionState == ConnectionState.done) {
+                      return MyDropDown(
+                          padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
+                          hint: 'Select device',
+                          value: _selectedDevice,
+                          items: snapshot.data,
+                          mapValue: 'deviceId',
+                          label: 'deviceId',
+                          onChanged: (value) {
+                            con.setSelectedDevice(value, false);
+                            _selectedDevice = con.selectedDevice != null
+                                ? con.selectedDevice!['deviceId']
+                                : '';
+                            con.refreshChartListView();
+                          });
+                    } else {
+                      return MyDropDown(
+                          padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
+                          hint: 'Select device',
+                          items: List.empty(),
+                          mapValue: 'deviceId',
+                          label: 'deviceId',
+                          onChanged: (value) {});
+                    }
+                  }),
+            ),
             Expanded(
               flex: 2,
               child: MyDropDown(
-                  padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
-                  hint: 'Time Range',
-                  controller:
-                      TextEditingController(text: con.selectedTimeOption),
-                  items: con.timeOptionsList,
-                  mapValue: 'value',
-                  label: 'label',
-                  onChanged: (value) {
-                    con.setSelectedTimeOption(value!);
-                    con.refreshChartListView();
-                  }),
+                padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
+                hint: 'Time Range',
+                value: con.selectedTimeOption,
+                items: con.timeOptionsList,
+                mapValue: 'value',
+                label: 'label',
+                onChanged: (value) {
+                  con.setSelectedTimeOption(value!);
+                  con.refreshChartListView();
+                },
+                addIfMissing: true,
+              ),
             ),
           ]),
         ),

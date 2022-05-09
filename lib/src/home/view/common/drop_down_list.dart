@@ -5,7 +5,7 @@ class MyDropDown extends StatefulWidget {
   const MyDropDown(
       {this.padding = EdgeInsets.zero,
       this.hint = '',
-      this.controller,
+      this.value,
       required this.items,
       required this.mapValue,
       required this.label,
@@ -17,13 +17,14 @@ class MyDropDown extends StatefulWidget {
 
   final EdgeInsets padding;
   final String hint;
-  final TextEditingController? controller;
+  final String? value;
   final List items;
   final String mapValue;
   final String label;
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;
-/// If current value is missing in items, then it's added so it won't fail
+
+  /// If current value is missing in items, then it's added so it won't fail
   final bool? addIfMissing;
 
   @override
@@ -33,17 +34,14 @@ class MyDropDown extends StatefulWidget {
 }
 
 class _MyDropDown extends State<MyDropDown> {
-  late TextEditingController _controller;
-
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? TextEditingController();
   }
 
   @override
   Widget build(BuildContext context) {
-    var val = _controller.text;
+    var val = widget.value ?? "";
     if (widget.items.isNotEmpty && val.isEmpty) {
       val = widget.items.first[widget.mapValue].toString();
     }
@@ -68,6 +66,9 @@ class _MyDropDown extends State<MyDropDown> {
             val,
             style: const TextStyle(fontSize: 16),
           )));
+    } else if (items.where((element) => element.value == val).isEmpty &&
+        widget.items.isNotEmpty) {
+      val = widget.items.first[widget.mapValue].toString();
     }
 
     var dropDown = DropdownButtonFormField<String>(

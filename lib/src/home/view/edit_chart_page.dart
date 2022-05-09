@@ -86,8 +86,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                 DropDownListRow(
                   label: "Type:",
                   items: con.chartTypeList,
-                  controller: TextEditingController(
-                      text: widget.chart.data.chartType.toString()),
+                  value: widget.chart.data.chartType.toString(),
                   mapValue: 'value',
                   mapLabel: 'label',
                   onChanged: (value) {
@@ -109,8 +108,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         return DropDownListRow(
                           label: "Field:",
                           items: snapshot.data,
-                          controller: TextEditingController(
-                              text: widget.chart.data.measurement),
+                          value: widget.chart.data.measurement,
                           mapValue: '_value',
                           mapLabel: '_value',
                           onChanged: (value) {},

@@ -20,8 +20,8 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends StateMVC<SettingsPage> {
   late Controller con;
   late TextEditingController iotUrlController;
-  late TextEditingController _deviceController;
 
+  List deviceList = [];
   Map<String, dynamic>? _selectedDevice;
   Future<DeviceConfig>? _deviceDetail;
   Future<List<FluxRecord>>? _measurements;
@@ -33,9 +33,18 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
     con = controller as Controller;
     iotUrlController = TextEditingController();
 
-    _selectedDevice = con.deviceList.isNotEmpty ? con.deviceList.first : null;
-    _deviceController = TextEditingController(
-        text: _selectedDevice != null ? _selectedDevice!['deviceId'] : '');
+    deviceList = List.from(con.deviceList);
+    if (con.selectedDevice != null ||
+        deviceList
+            .where((element) =>
+                element['deviceId'] == con.selectedDevice!['deviceId'])
+            .isNotEmpty) {
+      _selectedDevice = con.selectedDevice;
+    } else if (deviceList.isNotEmpty) {
+      _selectedDevice = deviceList.first;
+    } else {
+      _selectedDevice = null;
+    }
 
     if (_selectedDevice != null) {
       _deviceDetail = con.getDeviceConfig(_selectedDevice);
@@ -107,8 +116,10 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                   Expanded(
                       child: MyDropDown(
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
-                    items: con.deviceList,
-                    controller: _deviceController,
+                    items: deviceList,
+                    value: _selectedDevice != null
+                        ? _selectedDevice!['deviceId']
+                        : '',
                     mapValue: 'deviceId',
                     label: 'deviceId',
                     hint: 'Select device',
@@ -206,15 +217,13 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
 
   _selectDeviceById(String? value) {
     setState(() {
-      if (con.deviceList.isNotEmpty) {
-        _selectedDevice = con.deviceList.firstWhere(
+      if (deviceList.isNotEmpty) {
+        _selectedDevice = deviceList.firstWhere(
           (device) => device['deviceId'] == value,
           orElse: () {
-            return con.deviceList.first;
+            return deviceList.first;
           },
         );
-        _deviceController.text =
-            _selectedDevice != null ? _selectedDevice!['deviceId'] : '';
 
         if (_selectedDevice != null) {
           _deviceDetail = con.getDeviceConfig(_selectedDevice);
@@ -223,6 +232,8 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
       } else {
         _selectedDevice = null;
       }
+      con.setSelectedDevice(value, false);
+
       _deviceInfoVisible = _selectedDevice != null;
     });
   }
@@ -267,6 +278,7 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             onPressed: (() async {
               if (_formKey.currentState!.validate()) {
                 _formKey.currentState!.save();
+                Navigator.of(context).pop();
               }
             })),
       ],
@@ -290,10 +302,12 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
             onPressed: (() async {
               await con.removeDeviceConfig(deviceToDelete);
-
+              deviceList
+                  .removeWhere((element) => element['deviceId'] == deviceId);
               setState(() {
-                con.deviceList;
+                deviceList;
               });
+
               _selectDeviceById(null);
 
               Navigator.of(context).pop();
@@ -326,12 +340,11 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
             onSaved: (value) async {
               final deviceId = value.toString();
               await con.getDeviceConfig({"deviceId": deviceId});
-              await con.loadDevices();
+              deviceList = await con.loadDevices() as List;
               setState(() {
-                con.deviceList;
+                deviceList;
               });
               _selectDeviceById(deviceId);
-              con.refreshHomePageDevices;
               Navigator.of(context).pop();
             },
           )),

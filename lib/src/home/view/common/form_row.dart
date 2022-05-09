@@ -86,7 +86,7 @@ class DropDownListRow extends FormRow {
       this.mapLabel = '',
       required this.mapValue,
       required this.items,
-      this.controller,
+      this.value,
       this.onChanged,
       this.onSaved,
       bool? addIfMissing})
@@ -96,7 +96,7 @@ class DropDownListRow extends FormRow {
           inputWidget: Container(
               decoration: boxDecor,
               child: MyDropDown(
-                controller: controller ?? TextEditingController(),
+                value: value,
                 items: items!,
                 mapValue: mapValue!,
                 label: mapLabel!,
@@ -110,7 +110,7 @@ class DropDownListRow extends FormRow {
   final List? items;
   final String? mapValue;
   final String? mapLabel;
-  final TextEditingController? controller;
+  final String? value;
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;
 }

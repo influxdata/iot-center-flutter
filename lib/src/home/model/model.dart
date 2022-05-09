@@ -88,10 +88,19 @@ class Model extends ModelMVC {
             startValue: 900))
   ];
 
-  void selectedDeviceOnChange(String value) {
-    selectedDevice =
-        deviceList.firstWhere((device) => device['deviceId'] == value);
+  Map<String, dynamic>? selectedDeviceOnChange(String? value, bool setNull) {
+    if (deviceList.isNotEmpty && !setNull) {
+      selectedDevice = deviceList.firstWhere(
+        (device) => device['deviceId'] == value,
+        orElse: () {
+          return deviceList.first;
+        },
+      );
+    } else {
+      selectedDevice = null;
+    }
     loadFieldNames();
+    return selectedDevice;
   }
 
   Future<void> _getIotCenterApi() async {
@@ -105,7 +114,12 @@ class Model extends ModelMVC {
       var response = await http.get(Uri.parse(iotCenterApi + "/api/devices"));
       if (response.statusCode == 200) {
         deviceList = jsonDecode(response.body);
-        if (deviceList.isNotEmpty) selectedDevice = deviceList.first;
+        if (deviceList.isNotEmpty &&
+            (selectedDevice == null ||
+                deviceList
+                    .where((element) =>
+                        element['deviceId'] == selectedDevice!['deviceId'])
+                    .isEmpty)) selectedDevice = deviceList.first;
         return deviceList;
       } else {
         throw Exception('Failed to load devices.');
@@ -117,6 +131,7 @@ class Model extends ModelMVC {
   }
 
   Future<List<dynamic>> loadFieldNames() async {
+    if (selectedDevice == null) return [];
     var deviceId = selectedDevice!['deviceId'];
 
     if (deviceId != null) {
@@ -182,7 +197,7 @@ class Model extends ModelMVC {
     var response =
         await http.delete(Uri.parse(iotCenterApi + "/api/devices/$deviceId"));
     if (response.statusCode <= 300) {
-      deviceList.removeWhere((element) => element['deviceId'] == deviceId);
+      // deviceList.removeWhere((element) => element['deviceId'] == deviceId);
     } else {
       throw Exception('Failed to remove device config!');
     }

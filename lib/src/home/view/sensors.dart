@@ -25,6 +25,13 @@ class _SensorsPageState extends StateMVC<SensorsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: find better way of initializating sensors
+    if (!con.sensorsInitialized) {
+      con.initSensors().then((value) => setState(
+            () {},
+          ));
+    }
+
     onChanged(String sensor) => (bool value) {
           setState(() {
             con.setSensorIsWriting(sensor, value);

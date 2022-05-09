@@ -9,6 +9,8 @@ import 'dart:async';
 
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'package:environment_sensors/environment_sensors.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'device_config.dart';
 import 'dart:developer' as developer;
@@ -399,9 +401,9 @@ class Model extends ModelMVC {
     final point = Point('environment')
         // TODO(sensors): mobile name/id/type
         .addTag('clientId', "mobile");
-    // TODO(sensors): sensor types as tags
     fieldValueMap.forEach((key, value) {
-      point.addField("${sensorName}_$key", value);
+      final name = key != "" ? "${sensorName}_$key" : sensorName;
+      point.addField(name, value);
     });
 
     // TODO(sensors): batch write
@@ -452,5 +454,56 @@ class Model extends ModelMVC {
     }
   }
 
-  // TODO(sensors): add geo
+  Stream<Map<String, double>> get temperature =>
+      EnvironmentSensors().temperature.map((x) => {"": x});
+
+  Stream<Map<String, double>> get humidity =>
+      EnvironmentSensors().humidity.map((x) => {"": x});
+
+  Stream<Map<String, double>> get light =>
+      EnvironmentSensors().light.map((x) => {"": x});
+
+  Stream<Map<String, double>> get pressure =>
+      EnvironmentSensors().pressure.map((x) => {"": x});
+
+  Stream<Map<String, double>> get geo =>
+      Geolocator.getPositionStream().map((pos) {
+        // TODO: more metrics
+        return {"lat": pos.latitude, "lon": pos.longitude, "acc": pos.accuracy};
+      });
+
+  Future<Map<String, Stream<Map<String, double>>>> availebleSensors() async {
+    final Map<String, Stream<Map<String, double>>> senosors = {};
+    senosors["Accelerometer"] = accelerometer;
+    senosors["UserAccelerometer"] = userAccelerometer;
+    senosors["Magnetometer"] = magnetometer;
+    senosors["Battery"] = battery;
+
+    final es = EnvironmentSensors();
+    if (await es.getSensorAvailable(SensorType.AmbientTemperature)) {
+      senosors["Temperature"] = temperature;
+    }
+    if (await es.getSensorAvailable(SensorType.Humidity)) {
+      senosors["Humidity"] = humidity;
+    }
+    if (await es.getSensorAvailable(SensorType.Light)) {
+      senosors["Light"] = light;
+    }
+    if (await es.getSensorAvailable(SensorType.Pressure)) {
+      senosors["Pressure"] = pressure;
+    }
+    if (await Geolocator.isLocationServiceEnabled()) {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // TODO: ask when clicked on switch instead
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        senosors["Geo"] = geo;
+      }
+    }
+
+    return senosors;
+  }
 }

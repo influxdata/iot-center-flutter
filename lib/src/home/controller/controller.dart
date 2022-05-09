@@ -94,14 +94,16 @@ class Controller extends ControllerMVC {
   double getDouble(dynamic value) =>
       value is String ? double.parse(value) : value.toDouble();
 
-  Map<String, Stream<Map<String, double>>> get _senosors {
-    return {
-      "Accelerometer": _model.accelerometer,
-      "UserAccelerometer": _model.userAccelerometer,
-      "Magnetometer": _model.magnetometer,
-      "Battery": _model.battery,
-    };
+  // TODO: create specific controller for sensors
+
+  var _sensorsInitialized = false;
+  get sensorsInitialized => _sensorsInitialized;
+  Future initSensors() async {
+    _sensorsInitialized = true;
+    _senosors = await _model.availebleSensors();
   }
+
+  Map<String, Stream<Map<String, double>>> _senosors = {};
 
   List<String> get sensors => _senosors.keys.toList();
 

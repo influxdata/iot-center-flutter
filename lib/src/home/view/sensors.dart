@@ -25,24 +25,25 @@ class _SensorsPageState extends StateMVC<SensorsPage> {
 
   @override
   Widget build(BuildContext context) {
-    onChanged(bool value) {
-      setState(() {
-        con.sensorsIsWriting = value;
-      });
-    }
+    onChanged(String sensor) => (bool value) {
+          setState(() {
+            con.setSensorIsWriting(sensor, value);
+          });
+        };
 
-    // TODO(sensors): implement view
     return Scaffold(
       appBar: AppBar(
-        title: const Text(''),
+        title: const Text('Subscribe sensors'),
         backgroundColor: darkBlue,
       ),
-      body: ListView(children: [
-        Switch(
-          value: con.sensorsIsWriting,
-          onChanged: onChanged,
-        )
-      ]),
+      body: ListView(
+          children: con.sensors
+              .map((String sensor) => SwitchListTile(
+                    value: con.sensorIsWriting(sensor),
+                    onChanged: onChanged(sensor),
+                    title: Text(sensor),
+                  ))
+              .toList()),
     );
   }
 }

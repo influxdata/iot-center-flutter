@@ -94,23 +94,34 @@ class Controller extends ControllerMVC {
   double getDouble(dynamic value) =>
       value is String ? double.parse(value) : value.toDouble();
 
-  StreamSubscription? _sensorsSubscription;
-
-  // TODO(sensors): set each sensor separately
-  bool get sensorsIsWriting {
-    return _sensorsSubscription != null;
+  Map<String, Stream<Map<String, double>>> get _senosors {
+    return {
+      "Accelerometer": _model.accelerometer,
+      "UserAccelerometer": _model.userAccelerometer,
+      "Magnetometer": _model.magnetometer,
+      "Battery": _model.battery,
+    };
   }
 
-  set sensorsIsWriting(bool val) {
-    if (val == sensorsIsWriting) return;
+  List<String> get sensors => _senosors.keys.toList();
+
+  final Map<String, StreamSubscription> _sensorSubscriptions = {};
+
+  bool sensorIsWriting(String sensor) =>
+      _sensorSubscriptions.containsKey(sensor);
+
+  setSensorIsWriting(String sensor, bool val) {
+    if (val == sensorIsWriting(sensor)) return;
+    final sensorStream = _senosors[sensor];
+    if (sensorStream == null) throw Error();
     if (val) {
-      // TODO(sensors): use other isolate
-      _sensorsSubscription = _model.accelerometer.listen((event) {
-        _model.writeSensor("Accelerometer", event);
+      // TODO(sensors): use other isolate for smooth ui ?
+      _sensorSubscriptions[sensor] = sensorStream.listen((event) {
+        _model.writeSensor(sensor, event);
       });
-    } else if (_sensorsSubscription != null) {
-      _sensorsSubscription!.cancel();
-      _sensorsSubscription = null;
+    } else if (_sensorSubscriptions[sensor] != null) {
+      _sensorSubscriptions[sensor]!.cancel();
+      _sensorSubscriptions.remove(sensor);
     }
   }
 }

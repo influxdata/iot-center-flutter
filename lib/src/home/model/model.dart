@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -423,10 +424,33 @@ class Model extends ModelMVC {
       SensorsPlatform.instance.magnetometerEvents
           .map((event) => {"x": event.x, "y": event.y, "z": event.z});
 
-  // TODO(sensors): send only when battery changed
-  Stream<Future<Map<String, double>>> get battery =>
-      Stream.periodic(const Duration(minutes: 1)).map((event) async =>
-          {"level": (await Battery().batteryLevel).toDouble()});
+  Stream<Map<String, double>> get battery async* {
+    final battery = Battery();
+    final Map<String, double> batteryLastState = {};
+    bool changed = true;
+
+    setField(String name, double value) {
+      if (batteryLastState[name] != value) {
+        changed = true;
+        batteryLastState[name] = value;
+      }
+    }
+
+    await for (var _ in Stream.periodic(const Duration(seconds: 1))) {
+      final level = (await battery.batteryLevel).toDouble();
+      setField("level", level);
+
+      final state = (await battery.batteryState);
+      if (state != BatteryState.unknown) {
+        setField("charging", state == BatteryState.charging ? 1 : 0);
+      }
+
+      if (changed) {
+        changed = false;
+        yield Map.from(batteryLastState);
+      }
+    }
+  }
 
   // TODO(sensors): add geo
 }

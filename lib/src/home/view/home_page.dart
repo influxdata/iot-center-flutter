@@ -168,7 +168,7 @@ class _HomePageState extends StateMVC<HomePage> {
                 value: con.selectedTimeOption,
                 items: con.timeOptionsList,
                 onChanged: (value) {
-                  con.setSelectedTimeOption(value!);
+                  con.selectedTimeOption = value!;
                   con.refreshChartListView();
                 },
                 addIfMissing: true,

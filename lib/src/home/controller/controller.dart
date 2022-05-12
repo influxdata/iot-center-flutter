@@ -52,9 +52,10 @@ class Controller extends ControllerMVC {
   List get fieldNames => _model.fieldList;
 
   Map<String, dynamic>? get selectedDevice => _model.selectedDevice;
-  String get selectedTimeOption => _model.selectedTimeOption;
 
-  void setSelectedTimeOption(String value) => _model.selectedTimeOption = value;
+  String get selectedTimeOption => _model.selectedTimeOption;
+  set selectedTimeOption(String value) => _model.selectedTimeOption = value;
+
   Map<String, dynamic>? setSelectedDevice(String? value, bool setNull) =>
       _model.selectedDeviceOnChange(value, setNull);
 

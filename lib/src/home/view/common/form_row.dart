@@ -83,8 +83,6 @@ class DropDownListRow extends FormRow {
       padding = const EdgeInsets.all(5),
       label,
       this.hint = '',
-      this.mapLabel = '',
-      required this.mapValue,
       required this.items,
       this.value,
       this.onChanged,
@@ -98,8 +96,6 @@ class DropDownListRow extends FormRow {
               child: MyDropDown(
                 value: value,
                 items: items!,
-                mapValue: mapValue!,
-                label: mapLabel!,
                 onChanged: onChanged,
                 onSaved: onSaved,
                 addIfMissing: addIfMissing,
@@ -107,9 +103,7 @@ class DropDownListRow extends FormRow {
         );
 
   final String? hint;
-  final List? items;
-  final String? mapValue;
-  final String? mapLabel;
+  final List<DropDownItem>? items;
   final String? value;
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;

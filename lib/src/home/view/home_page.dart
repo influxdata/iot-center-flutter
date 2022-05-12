@@ -126,15 +126,24 @@ class _HomePageState extends StateMVC<HomePage> {
               child: FutureBuilder<dynamic>(
                   future: _deviceList,
                   builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                    const padding = EdgeInsets.fromLTRB(10, 10, 5, 20);
+
                     if (snapshot.hasData &&
                         snapshot.connectionState == ConnectionState.done) {
+                      final data = snapshot.data;
+                      late List<DropDownItem> devicesOptions = List.empty();
+                      if (data is List) {
+                        devicesOptions = data
+                            .map((d) => DropDownItem(
+                                label: d['deviceId'], value: d['deviceId']))
+                            .toList();
+                      }
+
                       return MyDropDown(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
+                          padding: padding,
                           hint: 'Select device',
                           value: _selectedDevice,
-                          items: snapshot.data,
-                          mapValue: 'deviceId',
-                          label: 'deviceId',
+                          items: devicesOptions,
                           onChanged: (value) {
                             con.setSelectedDevice(value, false);
                             _selectedDevice = con.selectedDevice != null
@@ -144,11 +153,9 @@ class _HomePageState extends StateMVC<HomePage> {
                           });
                     } else {
                       return MyDropDown(
-                          padding: const EdgeInsets.fromLTRB(10, 10, 5, 20),
+                          padding: padding,
                           hint: 'Select device',
                           items: List.empty(),
-                          mapValue: 'deviceId',
-                          label: 'deviceId',
                           onChanged: (value) {});
                     }
                   }),
@@ -160,8 +167,6 @@ class _HomePageState extends StateMVC<HomePage> {
                 hint: 'Time Range',
                 value: con.selectedTimeOption,
                 items: con.timeOptionsList,
-                mapValue: 'value',
-                label: 'label',
                 onChanged: (value) {
                   con.setSelectedTimeOption(value!);
                   con.refreshChartListView();

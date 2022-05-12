@@ -27,19 +27,19 @@ class Model extends ModelMVC {
   Map<String, dynamic>? selectedDevice;
   String selectedTimeOption = "-1h";
   List deviceList = [];
-  List timeOptionList = [
-    {"label": 'Past 5m', "value": '-5m'},
-    {"label": 'Past 15m', "value": '-15m'},
-    {"label": 'Past 1h', "value": '-1h'},
-    {"label": 'Past 6h', "value": '-6h'},
-    {"label": 'Past 1d', "value": '-1d'},
-    {"label": 'Past 3d', "value": '-3d'},
-    {"label": 'Past 7d', "value": '-7d'},
-    {"label": 'Past 30d', "value": '-30d'},
+  List<DropDownItem> timeOptionList = [
+    DropDownItem(label: 'Past 5m', value: '-5m'),
+    DropDownItem(label: 'Past 15m', value: '-15m'),
+    DropDownItem(label: 'Past 1h', value: '-1h'),
+    DropDownItem(label: 'Past 6h', value: '-6h'),
+    DropDownItem(label: 'Past 1d', value: '-1d'),
+    DropDownItem(label: 'Past 3d', value: '-3d'),
+    DropDownItem(label: 'Past 7d', value: '-7d'),
+    DropDownItem(label: 'Past 30d', value: '-30d'),
   ];
-  List chartTypeList = [
-    {"label": 'Gauge chart', "value": ChartType.gauge},
-    {"label": 'Simple chart', "value": ChartType.simple},
+  List<DropDownItem> chartTypeList = [
+    DropDownItem(label: 'Gauge chart', value: ChartType.gauge.toString()),
+    DropDownItem(label: 'Simple chart', value: ChartType.simple.toString()),
   ];
 
   List<Chart> chartsList = [

@@ -87,8 +87,6 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   label: "Type:",
                   items: con.chartTypeList,
                   value: widget.chart.data.chartType.toString(),
-                  mapValue: 'value',
-                  mapLabel: 'label',
                   onChanged: (value) {
                     setState(() {
                       isGauge = value == 'ChartType.gauge';
@@ -109,8 +107,6 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                           label: "Field:",
                           items: snapshot.data,
                           value: widget.chart.data.measurement,
-                          mapValue: '_value',
-                          mapLabel: '_value',
                           onChanged: (value) {},
                           onSaved: (value) {
                             widget.chart.data.measurement = value!;

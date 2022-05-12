@@ -47,8 +47,8 @@ class Controller extends ControllerMVC {
   List<Chart> get chartsList => _model.chartsList;
 
   List get deviceList => _model.deviceList;
-  List get timeOptionsList => _model.timeOptionList;
-  List get chartTypeList => _model.chartTypeList;
+  List<DropDownItem> get timeOptionsList => _model.timeOptionList;
+  List<DropDownItem> get chartTypeList => _model.chartTypeList;
   List get fieldNames => _model.fieldList;
 
   Map<String, dynamic>? get selectedDevice => _model.selectedDevice;

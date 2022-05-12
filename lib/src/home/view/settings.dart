@@ -116,12 +116,13 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                   Expanded(
                       child: MyDropDown(
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 20),
-                    items: deviceList,
+                    items: deviceList
+                        .map((d) => DropDownItem(
+                            label: d["deviceId"], value: d["deviceId"]))
+                        .toList(),
                     value: _selectedDevice != null
                         ? _selectedDevice!['deviceId']
                         : '',
-                    mapValue: 'deviceId',
-                    label: 'deviceId',
                     hint: 'Select device',
                     onChanged: _selectDeviceById,
                   ))

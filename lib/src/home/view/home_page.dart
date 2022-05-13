@@ -1,8 +1,6 @@
-import 'dart:convert';
-
+import 'package:iot_center_flutter_mvc/src/home/model/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, this.title = 'IoT Center Demo'}) : super(key: key);
@@ -11,6 +9,15 @@ class HomePage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _HomePageState();
 }
+
+// TODO: move into some Dashboard utils file
+int getRowCount(Dashboard dashboard) => dashboard.isNotEmpty
+    ? dashboard
+            .reduce((currentChart, nextChart) =>
+                currentChart.row > nextChart.row ? currentChart : nextChart)
+            .row +
+        1
+    : 0;
 
 class _HomePageState extends StateMVC<HomePage> {
   _HomePageState() : super(Controller()) {
@@ -22,6 +29,11 @@ class _HomePageState extends StateMVC<HomePage> {
   Future<void>? _deviceList;
 
   int? rowCount = 0;
+  updateRowCount() {
+    setState(() {
+      rowCount = getRowCount(con.dashboard);
+    });
+  }
 
   @override
   void initState() {
@@ -29,26 +41,9 @@ class _HomePageState extends StateMVC<HomePage> {
 
     _deviceList = con.loadDevices().whenComplete(() => _selectedDevice =
         con.selectedDevice != null ? con.selectedDevice!['deviceId'] : '');
+    updateRowCount();
 
-    rowCount = con.chartsList
-            .reduce((currentChart, nextChart) =>
-                currentChart.row > nextChart.row ? currentChart : nextChart)
-            .row +
-        1;
-
-    con.removeItemFromListView = () {
-      setState(() {
-        rowCount = con.chartsList.isNotEmpty
-            ? con.chartsList
-                    .reduce((currentChart, nextChart) =>
-                        currentChart.row > nextChart.row
-                            ? currentChart
-                            : nextChart)
-                    .row +
-                1
-            : 0;
-      });
-    };
+    con.removeItemFromListView = updateRowCount;
   }
 
   @override
@@ -85,10 +80,7 @@ class _HomePageState extends StateMVC<HomePage> {
             color: Colors.white,
             onPressed: () async {
               if (con.editable) {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                var tmp = jsonEncode(con.chartsList);
-                prefs.setString("charts", tmp);
-
+                con.saveDashboard();
                 setState(() {
                   con.editable = false;
                 });
@@ -186,17 +178,8 @@ class _HomePageState extends StateMVC<HomePage> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (c) => NewChartPage(refreshCharts: () {
-                          setState(() {
-                            rowCount = con.chartsList
-                                    .reduce((currentChart, nextChart) =>
-                                        currentChart.row > nextChart.row
-                                            ? currentChart
-                                            : nextChart)
-                                    .row +
-                                1;
-                          });
-                        })));
+                    builder: (c) =>
+                        NewChartPage(refreshCharts: updateRowCount)));
           },
         ),
       ),
@@ -208,7 +191,7 @@ class _HomePageState extends StateMVC<HomePage> {
             itemCount: rowCount,
             itemBuilder: (context, index) {
               var chartRow =
-                  con.chartsList.where((e) => e.row == index).toList();
+                  con.dashboard.where((e) => e.row == index).toList();
               List<Widget> chartWidgets = [];
 
               if (chartRow.isNotEmpty) {

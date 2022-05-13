@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
+import 'package:iot_center_flutter_mvc/src/home/model/default_dashboard.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,8 +14,12 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:environment_sensors/environment_sensors.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'device_config.dart';
 import 'dart:developer' as developer;
+
+const measurementDashboardFlutter = "dashboard-flutter";
+const defaultDashboardKey = "default";
+
+typedef Dashboard = List<Chart>;
 
 class Model extends ModelMVC {
   factory Model([StateMVC? state]) => _this ??= Model._(state);
@@ -22,6 +27,10 @@ class Model extends ModelMVC {
   static Model? _this;
 
   final DeviceConfig _config = DeviceConfig();
+
+  initAsync() async {
+    await _getIotCenterApi();
+  }
 
   String iotCenterApi = '';
   List fieldList = [];
@@ -43,51 +52,10 @@ class Model extends ModelMVC {
     DropDownItem(label: 'Simple chart', value: ChartType.simple.toString()),
   ];
 
-  List<Chart> chartsList = [
-    Chart(
-        row: 1,
-        column: 1,
-        data: ChartData.gauge(
-          measurement: "Temperature",
-          endValue: 40,
-          label: "Temperature",
-          unit: '°C',
-          startValue: 0,
-        )),
-    Chart(
-        row: 1,
-        column: 2,
-        data: ChartData.gauge(
-          measurement: "CO2",
-          endValue: 3000,
-          label: "CO2",
-          unit: 'ppm',
-          startValue: 400,
-        )),
-    Chart(
-        row: 2,
-        column: 1,
-        data:
-            ChartData.simple(measurement: 'TVOC', label: 'TVOC', unit: 'ppm')),
-    Chart(
-        row: 3,
-        column: 1,
-        data: ChartData.gauge(
-            measurement: "Humidity",
-            endValue: 100,
-            label: "Humidity",
-            unit: '%',
-            startValue: 0)),
-    Chart(
-        row: 3,
-        column: 2,
-        data: ChartData.gauge(
-            measurement: "Pressure",
-            endValue: 1100,
-            label: "Pressure",
-            unit: 'hPa',
-            startValue: 900))
-  ];
+  List<Chart> dashboard = [];
+
+  /// contains list of availeble dasboard keys
+  List<String> dashboardList = [];
 
   Map<String, dynamic>? selectedDeviceOnChange(String? value, bool setNull) {
     if (deviceList.isNotEmpty && !setNull) {
@@ -110,7 +78,6 @@ class Model extends ModelMVC {
   }
 
   Future<List<dynamic>> loadDevices() async {
-    await _getIotCenterApi();
     try {
       var response = await http.get(Uri.parse(iotCenterApi + "/api/devices"));
       if (response.statusCode == 200) {
@@ -192,6 +159,9 @@ class Model extends ModelMVC {
       throw Exception('Failed to load device config.');
     }
   }
+
+  Future<DeviceConfig> get influxConfig =>
+      fetchDeviceConfig2(iotCenterApi + "/api/env/mobile");
 
   Future removeDeviceConfig(Map<String, dynamic>? device) async {
     var deviceId = device != null ? device['deviceId'] : '';
@@ -316,6 +286,121 @@ class Model extends ModelMVC {
     }
   }
 
+  // TODO: remove when https://github.com/influxdata/influxdb-client-dart/issues/45 fixed
+  _fixStringIssue(String str, bool isWrite) {
+    return isWrite
+        ? str.replaceAllMapped("\"", (match) => "'''")
+        : str.replaceAllMapped("'''", (match) => "\"");
+  }
+
+  //#region dasboard store influx
+
+  Future<String?> _fetchDashboardInflux(String dashboardKey) async {
+    var config = await influxConfig;
+    var _client = createClient(config);
+    var queryApi = _client.getQueryService();
+
+    var fluxQuery = '''
+      from(bucket: "${_client.bucket}") 
+        |> range(start: 0) 
+        |> filter(fn: (r) => r._measurement == "$measurementDashboardFlutter")
+        |> filter(fn: (r) => r.key == "$dashboardKey")
+        |> filter(fn: (r) => r._field == "data")
+        |> last()
+        |> filter(fn: (r) => r._value != "")
+    ''';
+    try {
+      final stream = await queryApi.query(fluxQuery);
+      final rows = await stream.toList();
+      if (rows.isEmpty) return null;
+      final dashboardEntry = rows.first;
+      final dashboard = dashboardEntry["_value"];
+
+      return _fixStringIssue(dashboard, false);
+    } finally {
+      _client.close();
+    }
+  }
+
+  Future<void> _writeDshboardInflux(
+      String dahboardKey, String dashboardData) async {
+    final config = await influxConfig;
+    final influxDBClient = createClient(config);
+    final writeApi = influxDBClient.getWriteService();
+    final point = Point(measurementDashboardFlutter)
+        .addTag("key", dahboardKey)
+        .addField("data", _fixStringIssue(dashboardData, true));
+    await writeApi.write(point);
+  }
+
+  /// list of all dashboards
+  Future<List<String>> _fetchDashboardKeysInflux() async {
+    /*
+    var config = await influxConfig;
+    var _client = createClient(config);
+    var queryApi = _client.getQueryService();
+
+    var fluxQuery = '''
+      from(bucket:${_client.bucket}) 
+        |> range(start: 0) 
+        |> filter(fn: (r) => r._measurement == ${measurementDashboardFlutter})
+        |> last()
+        |> filter(fn: (r) => r._value != "")
+        |> keep(columns: ["key"])
+    ''';
+    try {
+      final stream = await queryApi.query(fluxQuery);
+      final rows = await stream.toList();
+
+      // TODO: return
+    } finally {
+      _client.close();
+    }
+    */
+    return Future.error("not implemented");
+  }
+
+  //#endregion dasboard store influx
+
+  Future<Dashboard> _fetchDashboard(String dashboardKey) async {
+    final stringDashboard = await _fetchDashboardInflux(dashboardKey);
+    if (stringDashboard != null) {
+      Iterable l = json.decode(stringDashboard);
+      Dashboard dashboard =
+          List<Chart>.from(l.map((model) => Chart.fromJson(model)));
+      return dashboard;
+    } else {
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchDashboardList() => _fetchDashboardKeysInflux();
+
+  Future<void> loadDashboard(String dashboardKey) async {
+    final dashboardLoaded = await _fetchDashboard(dashboardKey);
+
+    if (dashboardKey != defaultDashboardKey || dashboardLoaded.isNotEmpty) {
+      dashboard = dashboardLoaded;
+    } else {
+      await storeDashboard(defaultDashboardKey, defaultDashboard);
+      final dashboardLoaded = await _fetchDashboard(dashboardKey);
+      dashboard = dashboardLoaded;
+    }
+  }
+
+  /// updates dasboardList property
+  Future<void> loadDashboardList() async {
+    dashboardList = await fetchDashboardList();
+  }
+
+  Future<void> storeDashboard(
+    String dashboardKey,
+    Dashboard? dashboard,
+  ) async {
+    final dashboardData = dashboard != null ? jsonEncode(dashboard) : "";
+    await _writeDshboardInflux(dashboardKey, dashboardData);
+  }
+
   Future writeEmulatedData(String deviceId, Function onProgress) async {
     var config = await fetchDeviceConfig2(iotCenterApi + "/api/env/$deviceId");
     var influxDBClient = createClient(config);
@@ -409,7 +494,7 @@ class Model extends ModelMVC {
 
   Future writeSensor(
       String sensorName, Map<String, double> fieldValueMap) async {
-    final config = await fetchDeviceConfig2(iotCenterApi + "/api/env/mobile");
+    final config = await influxConfig;
     final influxDBClient = createClient(config);
 
     final writeApi = influxDBClient.getWriteService();

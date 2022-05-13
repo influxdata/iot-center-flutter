@@ -1,3 +1,4 @@
+import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
@@ -36,7 +37,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
     Widget continueButton = TextButton(
       child: const Text("Delete"),
       onPressed: () {
-        con.chartsList.removeWhere((element) =>
+        con.dashboard.removeWhere((element) =>
             element.row == widget.chart.row &&
             element.column == widget.chart.column);
         con.removeItemFromListView!();
@@ -104,9 +105,15 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                         return Text(snapshot.error.toString());
                       }
                       if (snapshot.hasData) {
+                        final List<FluxRecord> data = snapshot.data;
+                        final items = data
+                            .map((x) => DropDownItem(
+                                label: x["_value"], value: x["_value"]))
+                            .toList();
+
                         return DropDownListRow(
                           label: "Field:",
-                          items: snapshot.data,
+                          items: items,
                           value: widget.chart.data.measurement,
                           onChanged: (value) {},
                           onSaved: (value) {

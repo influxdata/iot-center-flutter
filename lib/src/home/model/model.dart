@@ -286,13 +286,6 @@ class Model extends ModelMVC {
     }
   }
 
-  // TODO: remove when https://github.com/influxdata/influxdb-client-dart/issues/45 fixed
-  _fixStringIssue(String str, bool isWrite) {
-    return isWrite
-        ? str.replaceAllMapped("\"", (match) => "'''")
-        : str.replaceAllMapped("'''", (match) => "\"");
-  }
-
   //#region dasboard store influx
 
   Future<String?> _fetchDashboardInflux(String dashboardKey) async {
@@ -316,7 +309,7 @@ class Model extends ModelMVC {
       final dashboardEntry = rows.first;
       final dashboard = dashboardEntry["_value"];
 
-      return _fixStringIssue(dashboard, false);
+      return dashboard;
     } finally {
       _client.close();
     }
@@ -329,7 +322,7 @@ class Model extends ModelMVC {
     final writeApi = influxDBClient.getWriteService();
     final point = Point(measurementDashboardFlutter)
         .addTag("key", dahboardKey)
-        .addField("data", _fixStringIssue(dashboardData, true));
+        .addField("data", dashboardData);
     await writeApi.write(point);
   }
 

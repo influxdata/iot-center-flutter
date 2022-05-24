@@ -1,6 +1,9 @@
-import 'package:iot_center_flutter_mvc/src/home/model/model.dart';
+import 'dart:convert';
+
+import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, this.title = 'IoT Center Demo'}) : super(key: key);
@@ -61,24 +64,12 @@ class _HomePageState extends StateMVC<HomePage> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (c) => NewChartPage(refreshCharts: () {
-                      setState(() {
-                        rowCount = con.chartsList
-                                .reduce((currentChart, nextChart) =>
-                                    currentChart.row > nextChart.row
-                                        ? currentChart
-                                        : nextChart)
-                                .row +
-                            1;
-                      });
-                    })));
+                builder: (c) =>
+                    NewChartPage(refreshCharts: updateRowCount)));
         break;
       case 1:
         if (con.editable) {
-          // SharedPreferences prefs = await SharedPreferences.getInstance();
-          // var tmp = jsonEncode(con.chartsList);
-          // prefs.setString("charts", tmp);
-
+          con.saveDashboard();
           setState(() {
             con.editable = false;
           });
@@ -108,51 +99,13 @@ class _HomePageState extends StateMVC<HomePage> {
         title: const Text('IoT Center Demo'),
         backgroundColor: darkBlue,
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.screen_rotation),
-          //   color: Colors.white,
-          //   onPressed: () {
-          //     Navigator.push(context,
-          //         MaterialPageRoute(builder: (c) => const SensorsPage()));
-          //   },
-          // ),
           IconButton(
             icon: Icon(expandAppBar
                 ? Icons.keyboard_arrow_up_rounded
                 : Icons.keyboard_arrow_down_rounded),
             color: Colors.white,
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (c) => const SensorsPage()));
-            },
-          ),
-          IconButton(
-            icon: con.editable
-                ? const Icon(Icons.lock_open)
-                : const Icon(Icons.lock),
-            color: Colors.white,
-            onPressed: () async {
-              if (con.editable) {
-                con.saveDashboard();
-                setState(() {
-                  con.editable = false;
-                });
-              } else {
-                setState(() {
-                  con.editable = true;
-                });
-              }
-              con.refreshChartEditable();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.autorenew_rounded),
-            color: Colors.white,
-            onPressed: () {
-              refresh();
-              setState(() {
-                expandAppBar = !expandAppBar;
-              });
+              expandAppBar = !expandAppBar;
             },
           ),
           IconButton(
@@ -166,66 +119,6 @@ class _HomePageState extends StateMVC<HomePage> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize:
-              expandAppBar ? Size(size.width, 80) : Size(size.width, 0),
-          child: Visibility(
-            visible: expandAppBar,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: FutureBuilder<dynamic>(
-                        future: _deviceList,
-                        builder: (context, AsyncSnapshot<dynamic> snapshot) {
-                          if (snapshot.hasData &&
-                              snapshot.connectionState ==
-                                  ConnectionState.done) {
-                            return MyDropDown(
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 10, 5, 20),
-                                hint: 'Select device',
-                                value: _selectedDevice,
-                                items: snapshot.data,
-                                mapValue: 'deviceId',
-                                label: 'deviceId',
-                                onChanged: (value) {
-                                  con.setSelectedDevice(value, false);
-                                  _selectedDevice = con.selectedDevice != null
-                                      ? con.selectedDevice!['deviceId']
-                                      : '';
-                                  con.refreshChartListView();
-                                });
-                          } else {
-                            return MyDropDown(
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 10, 5, 20),
-                                hint: 'Select device',
-                                items: List.empty(),
-                                mapValue: 'deviceId',
-                                label: 'deviceId',
-                                onChanged: (value) {});
-                          }
-                        }),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: MyDropDown(
-                      padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
-                      hint: 'Time Range',
-                      value: con.selectedTimeOption,
-                      items: con.timeOptionsList,
-                      mapValue: 'value',
-                      label: 'label',
-                      onChanged: (value) {
-                        con.setSelectedTimeOption(value!);
-                        con.refreshChartListView();
-                      },
-                      addIfMissing: true,
-                    ),
-                  ),
-                ]),
-          ),
           preferredSize: Size(size.width, 80),
           child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
@@ -285,19 +178,6 @@ class _HomePageState extends StateMVC<HomePage> {
           ]),
         ),
       ),
-      floatingActionButton: Visibility(
-        visible: con.editable,
-        child: FloatingActionButton(
-          backgroundColor: darkBlue,
-          child: const Icon(Icons.add),
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (c) =>
-                        NewChartPage(refreshCharts: updateRowCount)));
-          },
-        ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: darkBlue,
@@ -312,7 +192,8 @@ class _HomePageState extends StateMVC<HomePage> {
             label: 'Add chart',
           ),
           BottomNavigationBarItem(
-            icon: Icon(con.editable ? Icons.lock_open : Icons.lock_outline_rounded),
+            icon: Icon(
+                con.editable ? Icons.lock_open : Icons.lock_outline_rounded),
             label: 'Edit charts',
           ),
           const BottomNavigationBarItem(

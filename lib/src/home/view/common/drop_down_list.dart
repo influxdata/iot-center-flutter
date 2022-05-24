@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
+class DropDownItem {
+  DropDownItem({required this.label, required this.value});
+
+  String label;
+  String value;
+}
+
 class MyDropDown extends StatefulWidget {
   const MyDropDown(
       {this.padding = EdgeInsets.zero,
       this.hint = '',
       this.value,
       required this.items,
-      required this.mapValue,
-      required this.label,
       this.onChanged,
       this.onSaved,
       this.addIfMissing,
@@ -18,9 +23,7 @@ class MyDropDown extends StatefulWidget {
   final EdgeInsets padding;
   final String hint;
   final String? value;
-  final List items;
-  final String mapValue;
-  final String label;
+  final List<DropDownItem> items;
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;
 
@@ -33,7 +36,7 @@ class MyDropDown extends StatefulWidget {
   }
 }
 
-class _MyDropDown extends State<MyDropDown> {
+class _MyDropDown<T> extends State<MyDropDown> {
   @override
   void initState() {
     super.initState();
@@ -43,17 +46,17 @@ class _MyDropDown extends State<MyDropDown> {
   Widget build(BuildContext context) {
     var val = widget.value ?? "";
     if (widget.items.isNotEmpty && val.isEmpty) {
-      val = widget.items.first[widget.mapValue].toString();
+      val = widget.items.first.value.toString();
     }
 
-    final List<DropdownMenuItem<String>> items = widget.items
-        .where((e) => e != null) //removes null items
+    final List<DropdownMenuItem<String>> items =
+        widget.items
         .toSet()
-        .map((dynamic map) {
+        .map((DropDownItem map) {
       return DropdownMenuItem<String>(
-          value: map[widget.mapValue].toString(),
+          value: map.value.toString(),
           child: Text(
-            map[widget.label],
+            map.label,
             style: const TextStyle(fontSize: 16),
           ));
     }).toList();
@@ -68,7 +71,7 @@ class _MyDropDown extends State<MyDropDown> {
           )));
     } else if (items.where((element) => element.value == val).isEmpty &&
         widget.items.isNotEmpty) {
-      val = widget.items.first[widget.mapValue].toString();
+      val = widget.items.first.value.toString();
     }
 
     var dropDown = DropdownButtonFormField<String>(

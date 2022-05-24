@@ -1,8 +1,6 @@
-import 'dart:convert';
-
+import 'package:iot_center_flutter_mvc/src/home/model/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, this.title = 'IoT Center Demo'}) : super(key: key);
@@ -11,6 +9,15 @@ class HomePage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _HomePageState();
 }
+
+// TODO: move into some Dashboard utils file
+int getRowCount(Dashboard dashboard) => dashboard.isNotEmpty
+    ? dashboard
+            .reduce((currentChart, nextChart) =>
+                currentChart.row > nextChart.row ? currentChart : nextChart)
+            .row +
+        1
+    : 0;
 
 class _HomePageState extends StateMVC<HomePage> {
   _HomePageState() : super(Controller()) {
@@ -23,6 +30,11 @@ class _HomePageState extends StateMVC<HomePage> {
 
   int? rowCount = 0;
   bool expandAppBar = false;
+  updateRowCount() {
+    setState(() {
+      rowCount = getRowCount(con.dashboard);
+    });
+  }
 
   @override
   void initState() {
@@ -30,26 +42,9 @@ class _HomePageState extends StateMVC<HomePage> {
 
     _deviceList = con.loadDevices().whenComplete(() => _selectedDevice =
         con.selectedDevice != null ? con.selectedDevice!['deviceId'] : '');
+    updateRowCount();
 
-    rowCount = con.chartsList
-            .reduce((currentChart, nextChart) =>
-                currentChart.row > nextChart.row ? currentChart : nextChart)
-            .row +
-        1;
-
-    con.removeItemFromListView = () {
-      setState(() {
-        rowCount = con.chartsList.isNotEmpty
-            ? con.chartsList
-                    .reduce((currentChart, nextChart) =>
-                        currentChart.row > nextChart.row
-                            ? currentChart
-                            : nextChart)
-                    .row +
-                1
-            : 0;
-      });
-    };
+    con.removeItemFromListView = updateRowCount;
   }
 
   @override
@@ -127,6 +122,34 @@ class _HomePageState extends StateMVC<HomePage> {
                 : Icons.keyboard_arrow_down_rounded),
             color: Colors.white,
             onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (c) => const SensorsPage()));
+            },
+          ),
+          IconButton(
+            icon: con.editable
+                ? const Icon(Icons.lock_open)
+                : const Icon(Icons.lock),
+            color: Colors.white,
+            onPressed: () async {
+              if (con.editable) {
+                con.saveDashboard();
+                setState(() {
+                  con.editable = false;
+                });
+              } else {
+                setState(() {
+                  con.editable = true;
+                });
+              }
+              con.refreshChartEditable();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.autorenew_rounded),
+            color: Colors.white,
+            onPressed: () {
+              refresh();
               setState(() {
                 expandAppBar = !expandAppBar;
               });
@@ -203,8 +226,78 @@ class _HomePageState extends StateMVC<HomePage> {
                   ),
                 ]),
           ),
+          preferredSize: Size(size.width, 80),
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            Expanded(
+              flex: 3,
+              child: FutureBuilder<dynamic>(
+                  future: _deviceList,
+                  builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                    const padding = EdgeInsets.fromLTRB(10, 10, 5, 20);
+
+                    if (snapshot.hasData &&
+                        snapshot.connectionState == ConnectionState.done) {
+                      final data = snapshot.data;
+                      late List<DropDownItem> devicesOptions = List.empty();
+                      if (data is List) {
+                        devicesOptions = data
+                            .map((d) => DropDownItem(
+                                label: d['deviceId'], value: d['deviceId']))
+                            .toList();
+                      }
+
+                      return MyDropDown(
+                          padding: padding,
+                          hint: 'Select device',
+                          value: _selectedDevice,
+                          items: devicesOptions,
+                          onChanged: (value) {
+                            con.setSelectedDevice(value, false);
+                            _selectedDevice = con.selectedDevice != null
+                                ? con.selectedDevice!['deviceId']
+                                : '';
+                            con.refreshChartListView();
+                          });
+                    } else {
+                      return MyDropDown(
+                          padding: padding,
+                          hint: 'Select device',
+                          items: List.empty(),
+                          onChanged: (value) {});
+                    }
+                  }),
+            ),
+            Expanded(
+              flex: 2,
+              child: MyDropDown(
+                padding: const EdgeInsets.fromLTRB(5, 10, 10, 20),
+                hint: 'Time Range',
+                value: con.selectedTimeOption,
+                items: con.timeOptionsList,
+                onChanged: (value) {
+                  con.selectedTimeOption = value!;
+                  con.refreshChartListView();
+                },
+                addIfMissing: true,
+              ),
+            ),
+          ]),
         ),
       ),
+      floatingActionButton: Visibility(
+        visible: con.editable,
+        child: FloatingActionButton(
+          backgroundColor: darkBlue,
+          child: const Icon(Icons.add),
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (c) =>
+                        NewChartPage(refreshCharts: updateRowCount)));
+          },
+        ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: darkBlue,
@@ -237,7 +330,7 @@ class _HomePageState extends StateMVC<HomePage> {
             itemCount: rowCount,
             itemBuilder: (context, index) {
               var chartRow =
-                  con.chartsList.where((e) => e.row == index).toList();
+                  con.dashboard.where((e) => e.row == index).toList();
               List<Widget> chartWidgets = [];
 
               if (chartRow.isNotEmpty) {

@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Controller extends ControllerMVC {
   factory Controller([StateMVC? state]) => _this ??= Controller._(state);
@@ -16,50 +14,55 @@ class Controller extends ControllerMVC {
 
   Function()? removeItemFromListView;
 
+  @override
+  Future<bool> initAsync() async {
+    await super.initAsync();
+    await _model.initAsync();
+    return true;
+  }
+
   bool editable = false;
 
   void refreshChartEditable() {
-    for (var chart in _model.chartsList) {
+    for (var chart in _model.dashboard) {
       chart.data.refreshHeader!();
     }
   }
 
-  void loadSavedData() {
-    SharedPreferences.getInstance().then((prefs) {
-      if (prefs.containsKey("charts")) {
-        var result = prefs.getString("charts");
+  Future<void> loadSavedData() async {
+    await loadDashboard(defaultDashboardKey);
+  }
 
-        if (result!.isNotEmpty && result != '[]') {
-          Iterable l = json.decode(result);
-          List<Chart> charts =
-              List<Chart>.from(l.map((model) => Chart.fromJson(model)));
+  Future<void> loadDashboard(String dashboardKey) async {
+    await _model.loadDashboard(dashboardKey);
+  }
 
-          _model.chartsList = charts;
-        }
-      }
-    });
+  Future<void> saveDashboard() async {
+    await _model.storeDashboard(defaultDashboardKey, dashboard);
   }
 
   void addNewChart(Chart chart) {
-    _model.chartsList.add(chart);
+    _model.dashboard.add(chart);
   }
 
-  List<Chart> get chartsList => _model.chartsList;
+  Dashboard get dashboard => _model.dashboard;
 
   List get deviceList => _model.deviceList;
-  List get timeOptionsList => _model.timeOptionList;
-  List get chartTypeList => _model.chartTypeList;
+  List<DropDownItem> get timeOptionsList => _model.timeOptionList;
+  List<DropDownItem> get chartTypeList => _model.chartTypeList;
   List get fieldNames => _model.fieldList;
 
   Map<String, dynamic>? get selectedDevice => _model.selectedDevice;
-  String get selectedTimeOption => _model.selectedTimeOption;
 
-  void setSelectedTimeOption(String value) => _model.selectedTimeOption = value;
+  String get selectedTimeOption => _model.selectedTimeOption;
+  set selectedTimeOption(String value) => _model.selectedTimeOption = value;
+
   Map<String, dynamic>? setSelectedDevice(String? value, bool setNull) =>
       _model.selectedDeviceOnChange(value, setNull);
 
   Future<void> loadDevices() => _model.loadDevices();
 
+  // TODO: should return typed data already instead of List of dynamics
   Future<void> loadFieldNames() => _model.loadFieldNames();
 
   Future<List<FluxRecord>> getMeasurements(Map<String, dynamic>? device) async {
@@ -81,7 +84,7 @@ class Controller extends ControllerMVC {
       _model.writeEmulatedData(deviceId, onProgress);
 
   Future<void> refreshChartListView() async {
-    for (var chart in chartsList) {
+    for (var chart in dashboard) {
       await chart.data.refreshChart!();
     }
   }

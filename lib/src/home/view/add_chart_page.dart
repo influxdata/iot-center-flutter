@@ -1,3 +1,5 @@
+import 'package:influxdb_client/api.dart';
+import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
@@ -51,9 +53,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                 DropDownListRow(
                   label: "Type:",
                   items: con.chartTypeList,
-                  value: con.chartTypeList.first['value'].toString(),
-                  mapValue: 'value',
-                  mapLabel: 'label',
+                  value: con.chartTypeList.first.value.toString(),
                   onChanged: (value) {
                     setState(() {
                       isGauge = value == 'ChartType.gauge';
@@ -70,12 +70,16 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         return Text(snapshot.error.toString());
                       }
                       if (snapshot.hasData) {
+                        final List<FluxRecord> data = snapshot.data;
+                        final items = data
+                            .map((x) => DropDownItem(
+                                label: x["_value"], value: x["_value"]))
+                            .toList();
+
                         return DropDownListRow(
-                            label: "Field:",
-                            items: snapshot.data,
-                            value: snapshot.data.first['_value'].toString(),
-                            mapValue: '_value',
-                            mapLabel: '_value',
+                          label: "Field:",
+                          items: items,
+                          value: snapshot.data.first['_value'].toString(),
                             onChanged: (value) {},
                             onSaved: (value) {
                               measurement = value!;
@@ -129,7 +133,7 @@ class _NewChartPageState extends StateMVC<NewChartPage> {
                         if (_formKey.currentState!.validate()) {
                           _formKey.currentState!.save();
 
-                          var lastChart = con.chartsList.reduce(
+                          var lastChart = con.dashboard.reduce(
                               (currentChart, nextChart) =>
                                   currentChart.row > nextChart.row ||
                                           (currentChart.row == nextChart.row &&

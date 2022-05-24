@@ -6,6 +6,20 @@ class DeviceConfig {
   String createdAt = '';
   String id = '';
 
+  DeviceConfig();
+
+  DeviceConfig.withParams(this.id, this.createdAt, this.influxOrg,
+      this.influxUrl, this.influxBucket, this.influxToken);
+
+  DeviceConfig.fromJson(Map<String, dynamic> json) {
+    influxUrl = json['influx_url'];
+    influxOrg = json['influx_org'];
+    influxToken = json['influx_token'];
+    influxBucket = json['influx_bucket'];
+    createdAt = json['createdAt'];
+    id = json['id'];
+  }
+
   void fromJson(Map<String, dynamic> json) {
     influxUrl = json['influx_url'];
     influxOrg = json['influx_org'];
@@ -24,3 +38,4 @@ class DeviceConfig {
         'id': id,
       };
 }
+

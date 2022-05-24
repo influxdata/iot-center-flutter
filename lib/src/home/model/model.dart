@@ -134,6 +134,10 @@ class Model extends ModelMVC {
     if (selectedDevice == null) return [];
     var deviceId = selectedDevice!['deviceId'];
 
+
+    // var tmpmodel = ModelInflux();
+    // var tmpdev = await tmpmodel.fetchDevices();
+
     if (deviceId != null) {
       await fetchDeviceConfig(iotCenterApi + "/api/env/$deviceId");
       var _client = createClient(_config);
@@ -184,8 +188,7 @@ class Model extends ModelMVC {
   Future<DeviceConfig> fetchDeviceConfig2(String url) async {
     var response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
-      var config = DeviceConfig();
-      config.fromJson(jsonDecode(response.body));
+      var config = DeviceConfig.fromJson(jsonDecode(response.body));
       return config;
     } else {
       throw Exception('Failed to load device config.');

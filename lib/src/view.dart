@@ -10,6 +10,8 @@ export 'package:iot_center_flutter_mvc/src/home/view/sensors.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/settings.dart';
 
+export 'package:iot_center_flutter_mvc/src/settings/view/settings2.dart';
+
 export 'package:iot_center_flutter_mvc/src/home/view/add_chart_page.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/edit_chart_page.dart';
@@ -36,3 +38,14 @@ export 'package:iot_center_flutter_mvc/src/home/view/common/form_row.dart';
 export 'package:iot_center_flutter_mvc/src/home/view/common/form_button.dart';
 
 export 'package:iot_center_flutter_mvc/src/home/view/common/styles.dart';
+
+
+
+
+export 'package:iot_center_flutter_mvc/src/settings/view/device_detail.dart';
+
+export 'package:iot_center_flutter_mvc/src/settings/view/devices.dart';
+
+export 'package:iot_center_flutter_mvc/src/settings/view/influx_settings.dart';
+
+export 'package:iot_center_flutter_mvc/src/settings/view/sensors.dart';

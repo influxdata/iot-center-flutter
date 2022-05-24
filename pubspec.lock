@@ -252,10 +252,10 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "4ae8cabb65d373ebd8ac96297891d2dce8aa9e9b"
+      resolved-ref: db17420a166df71ff4086bd4602ad577a4753765
       url: "https://github.com/influxdata/influxdb-client-dart"
     source: git
-    version: "2.4.0-dev"
+    version: "2.5.0-dev"
   intl:
     dependency: transitive
     description:

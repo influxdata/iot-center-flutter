@@ -1,22 +1,22 @@
-import 'package:iot_center_flutter_mvc/src/settings/controller/device_controller.dart';
+import 'package:iot_center_flutter_mvc/src/settings/controller/device_detail_controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
-class DeviceDetail extends StatefulWidget {
-  const DeviceDetail({required this.deviceId, Key? key}) : super(key: key);
+class DeviceDetailPage extends StatefulWidget {
+  const DeviceDetailPage({required this.deviceId, Key? key}) : super(key: key);
 
   final String deviceId;
 
   @override
-  _DeviceDetailState createState() {
-    return _DeviceDetailState();
+  _DeviceDetailPageState createState() {
+    return _DeviceDetailPageState();
   }
 }
 
-class _DeviceDetailState extends StateMVC<DeviceDetail> {
-  late DeviceController con;
+class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
+  late DeviceDetailController con;
 
-  _DeviceDetailState() : super(DeviceController()) {
-    con = controller as DeviceController;
+  _DeviceDetailPageState() : super(DeviceDetailController()) {
+    con = controller as DeviceDetailController;
   }
 
   @override
@@ -35,7 +35,16 @@ class _DeviceDetailState extends StateMVC<DeviceDetail> {
         appBar: AppBar(
           title: const Text('Device Info'),
           backgroundColor: darkBlue,
-          actions: [],
+          actions: [Visibility(
+            visible: con.selectedIndex == 1,
+            child: IconButton(
+              icon: const Icon(Icons.refresh),
+              color: Colors.white,
+              onPressed: () {
+                con.refreshMeasurements();
+              },
+            ),
+          ),],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: con.selectedIndex,

@@ -108,7 +108,7 @@ class InfluxModel extends ModelMVC {
   /// Parameters:
   /// * [String] deviceId: client identifier
   ///
-  Future<FluxRecord> fetchDevice(String deviceId) async {
+  Future<Device> fetchDevice(String deviceId) async {
     var _influxDBClient = client.clone();
     var queryApi = _influxDBClient.getQueryService();
 
@@ -119,14 +119,26 @@ class InfluxModel extends ModelMVC {
           from(bucket: "${_influxDBClient.bucket}")
               |> range(start: -30d)
               |> filter(fn: (r) => r["_measurement"] == "deviceauth" 
-                               and r.deviceId == "$deviceId"
-                               and r["_field"] == "key")
+                               and r.deviceId == "$deviceId")
               |> last()
           ''';
 
     try {
       var stream = await queryApi.query(fluxQuery);
-      return (await stream.toList()).first;
+      var result = await stream.toList();
+
+      var key = result.firstWhere((element) => element['_field'] == 'key');
+      var createdAt =
+          result.firstWhere((element) => element['_field'] == 'createdAt');
+
+      return Device(
+          deviceId,
+          createdAt['_value'],
+          key['_value'],
+          _influxDBClient.org!,
+          _influxDBClient.url!,
+          _influxDBClient.bucket!,
+          _influxDBClient.token!);
     } catch (e) {
       developer.log('Failed to load device $deviceId. - ${e.toString()}');
       throw Exception('Failed to load device $deviceId.');
@@ -353,11 +365,11 @@ class InfluxModel extends ModelMVC {
             predicate: 'clientId="$deviceId"',
             start: DateTime(1970).toUtc(),
             stop: DateTime.now().toUtc(),
-            bucket: 'iot_center',
-            org: 'my-org');
+            bucket: _influxDBClient.bucket,
+            org: _influxDBClient.org);
       } catch (e) {
         developer.log(e.toString());
-        throw Exception('Failed to delete device.');
+        throw Exception('Failed to delete data.');
       } finally {
         _influxDBClient.close();
       }
@@ -378,8 +390,8 @@ class InfluxModel extends ModelMVC {
 
     var device = await fetchDevice(deviceId);
 
-    if (device.isNotEmpty && device['_value'] != '') {
-      await _deleteIoTAuthorization(device['_value']);
+    if (device.key.isNotEmpty) {
+      await _deleteIoTAuthorization(device.key);
 
       var _influxDBClient = client.clone();
       var writeApi = _influxDBClient.getWriteService();
@@ -399,7 +411,7 @@ class InfluxModel extends ModelMVC {
       } finally {
         _influxDBClient.close();
       }
-    } else if (device.isNotEmpty) {
+    } else if (device.key.isEmpty) {
       developer.log('$deviceId authorization is already removed.');
       return false;
     } else {

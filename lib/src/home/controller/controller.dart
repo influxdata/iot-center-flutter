@@ -65,23 +65,11 @@ class Controller extends ControllerMVC {
   // TODO: should return typed data already instead of List of dynamics
   Future<void> loadFieldNames() => _model.loadFieldNames();
 
-  Future<List<FluxRecord>> getMeasurements(Map<String, dynamic>? device) async {
-    var deviceId = device != null ? device['deviceId'] : '';
-    return _model.fetchMeasurements(_model.iotCenterApi + "/api/env/$deviceId");
-  }
-
-  Future<DeviceConfig> getDeviceConfig(Map<String, dynamic>? device) async {
-    var deviceId = device != null ? device['deviceId'] : '';
-    return _model
-        .fetchDeviceConfig2(_model.iotCenterApi + "/api/env/$deviceId");
-  }
 
   Future removeDeviceConfig(Map<String, dynamic>? device) async {
     await _model.removeDeviceConfig(device);
   }
 
-  Future writeEmulatedData(String deviceId, Function onProgress) async =>
-      _model.writeEmulatedData(deviceId, onProgress);
 
   Future<void> refreshChartListView() async {
     for (var chart in dashboard) {
@@ -103,7 +91,7 @@ class Controller extends ControllerMVC {
   get sensorsInitialized => _sensorsInitialized;
   Future initSensors() async {
     _sensorsInitialized = true;
-    _senosors = await _model.availebleSensors();
+    _senosors = await _model.availableSensors();
   }
 
   Map<String, Stream<Map<String, double>>> _senosors = {};

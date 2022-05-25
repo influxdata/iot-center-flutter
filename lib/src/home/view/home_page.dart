@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key, this.title = 'IoT Center Demo'}) : super(key: key);
@@ -113,7 +110,7 @@ class _HomePageState extends StateMVC<HomePage> {
             color: Colors.white,
             onPressed: () async {
               await Navigator.push(context,
-                  MaterialPageRoute(builder: (c) => const Settings2Page()));
+                  MaterialPageRoute(builder: (c) => const SettingsPage()));
               refresh();
             },
           ),

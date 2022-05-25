@@ -1,19 +1,19 @@
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 
-class SensorsView extends StatefulWidget {
-  const SensorsView({Key? key}) : super(key: key);
+class SensorsTab extends StatefulWidget {
+  const SensorsTab({Key? key}) : super(key: key);
 
   @override
-  _SensorsViewState createState() {
-    return _SensorsViewState();
+  _SensorsTabState createState() {
+    return _SensorsTabState();
   }
 }
 
-class _SensorsViewState extends StateMVC<SensorsView> {
+class _SensorsTabState extends StateMVC<SensorsTab> {
   late Controller con;
 
-  _SensorsViewState() : super(Controller()) {
+  _SensorsTabState() : super(Controller()) {
     con = controller as Controller;
   }
 

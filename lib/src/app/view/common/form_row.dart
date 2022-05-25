@@ -8,6 +8,7 @@ class TextBoxRow extends FormRow {
       label,
       this.hint = '',
       this.inputFormatters = const [],
+      this.readOnly = false,
       this.controller,
       this.validator,
       this.onChanged,
@@ -18,13 +19,17 @@ class TextBoxRow extends FormRow {
           inputWidget: Container(
               decoration: boxDecor,
               child: TextFormField(
+                style: TextStyle(
+                  color: readOnly! ? Colors.black54 : Colors.black,
+                ),
+                readOnly: readOnly,
                 inputFormatters: inputFormatters,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderSide: BorderSide.none,
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  fillColor: Colors.white,
+                  fillColor: readOnly ? lightGrey : Colors.white,
                   filled: true,
                   hintText: hint,
                 ),
@@ -41,6 +46,7 @@ class TextBoxRow extends FormRow {
   final Function(String?)? onChanged;
   final Function(String?)? onSaved;
   final String? Function(String?)? validator;
+  final bool? readOnly;
 }
 
 class NumberBoxRow extends FormRow {

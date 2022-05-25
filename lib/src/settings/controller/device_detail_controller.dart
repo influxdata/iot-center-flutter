@@ -6,13 +6,13 @@ import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'dart:developer' as developer;
 import 'package:intl/intl.dart';
 
-class DeviceController extends ControllerMVC {
-  factory DeviceController([StateMVC? state]) =>
-      _this ??= DeviceController._(state);
-  DeviceController._(StateMVC? state)
+class DeviceDetailController extends ControllerMVC {
+  factory DeviceDetailController([StateMVC? state]) =>
+      _this ??= DeviceDetailController._(state);
+  DeviceDetailController._(StateMVC? state)
       : _model = InfluxModel(),
         super(state);
-  static DeviceController? _this;
+  static DeviceDetailController? _this;
   final InfluxModel _model;
 
   String? deviceId;
@@ -58,13 +58,11 @@ class DeviceController extends ControllerMVC {
   }
 
   Widget getDeviceDetailTab() {
-    var _client = client;
-
     return ListView(
       children: [
-        FutureBuilder<FluxRecord>(
+        FutureBuilder<Device>(
             future: deviceDetail(deviceId!),
-            builder: (context, AsyncSnapshot<FluxRecord> snapshot) {
+            builder: (context, AsyncSnapshot<Device> snapshot) {
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString());
               }
@@ -72,11 +70,17 @@ class DeviceController extends ControllerMVC {
                 return Column(
                   children: [
                     tile(deviceId!, 'Device Id', Icons.device_thermostat),
-                    tile(_client.url!, 'InfluxDB URL',
+                    tile(snapshot.data!.createdAt, 'Registration Time',
+                        Icons.lock_clock),
+                    tile(snapshot.data!.key, 'Device key', Icons.key),
+                    tile(snapshot.data!.influxUrl, 'InfluxDB URL',
                         Icons.cloud_done_outlined),
-                    tile(_client.org!, 'InfluxDB Organization', Icons.work),
-                    tile(_client.bucket!, 'InfluxDB Bucket',
+                    tile(snapshot.data!.influxOrg, 'InfluxDB Organization',
+                        Icons.work),
+                    tile(snapshot.data!.influxBucket, 'InfluxDB Bucket',
                         Icons.shopping_basket_rounded),
+                    tile(snapshot.data!.tokenSubstring, 'InfluxDB Token',
+                        Icons.theaters),
                   ],
                 );
               } else {
@@ -84,7 +88,7 @@ class DeviceController extends ControllerMVC {
               }
             }),
         Padding(
-          padding: const EdgeInsets.only(top: 30.0),
+          padding: const EdgeInsets.only(top: 20.0),
           child: FormButton(
             onPressed: () async {
               if (writeInProgress) {
@@ -208,8 +212,7 @@ class DeviceController extends ControllerMVC {
   bool writeInProgress = false;
   Future<List<FluxRecord>>? measurements;
 
-  Future<FluxRecord> deviceDetail(String deviceId) =>
-      _model.fetchDevice(deviceId);
+  Future<Device> deviceDetail(String deviceId) => _model.fetchDevice(deviceId);
 
   Future<num?> writeSampleData() async {
     setState(() {
@@ -222,11 +225,19 @@ class DeviceController extends ControllerMVC {
         developer.log("Write completed. $value points written.");
         setState(() {
           writeInProgress = false;
-          measurements = getMeasurements();
         });
+        refreshMeasurements();
         return value;
       });
     });
     return null;
+  }
+
+  void refreshMeasurements() {
+    setState(() {
+      measurements = getMeasurements();
+      measurementsTab = getMeasurementsTab();
+    });
+    bottomMenuOnTap(selectedIndex);
   }
 }

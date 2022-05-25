@@ -1,20 +1,20 @@
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 
-class Settings2Page extends StatefulWidget {
-  const Settings2Page({Key? key}) : super(key: key);
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({Key? key}) : super(key: key);
 
   @override
-  _Settings2PageState createState() {
-    return _Settings2PageState();
+  _SettingsPageState createState() {
+    return _SettingsPageState();
   }
 }
 
-class _Settings2PageState extends StateMVC<Settings2Page> {
-  late SettingsController con;
+class _SettingsPageState extends StateMVC<SettingsPage> {
+  late SettingsPageController con;
 
-  _Settings2PageState() : super(SettingsController()) {
-    con = controller as SettingsController;
+  _SettingsPageState() : super(SettingsPageController()) {
+    con = controller as SettingsPageController;
   }
 
   @override
@@ -56,6 +56,18 @@ class _Settings2PageState extends StateMVC<Settings2Page> {
                 },
               ),
             ),
+            Visibility(
+              visible: con.selectedIndex == 2,
+              child: IconButton(
+                icon: Icon(con.settingsReadonly
+                    ? Icons.lock_outline_rounded
+                    : Icons.lock_open),
+                color: Colors.white,
+                onPressed: () {
+                  con.changeReadonly();
+                },
+              ),
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -81,8 +93,7 @@ class _Settings2PageState extends StateMVC<Settings2Page> {
           ],
           onTap: con.bottomMenuOnTap,
         ),
-        body: Padding(
-            padding: const EdgeInsets.all(10),
-            child: con.actualTab!));
+        body:
+            Padding(padding: const EdgeInsets.all(10), child: con.actualTab!));
   }
 }

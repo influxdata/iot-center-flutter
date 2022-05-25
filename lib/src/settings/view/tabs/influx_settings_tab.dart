@@ -3,18 +3,18 @@ import 'package:iot_center_flutter_mvc/src/controller.dart';
 
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
-class InfluxSettings extends StatefulWidget {
-  const InfluxSettings({ required this.con, Key? key}) : super(key: key);
+class InfluxSettingsTab extends StatefulWidget {
+  const InfluxSettingsTab({ required this.con, Key? key}) : super(key: key);
 
-  final SettingsController con;
+  final SettingsPageController con;
 
   @override
-  _InfluxSettingsState createState() {
-    return _InfluxSettingsState();
+  _InfluxSettingsTabState createState() {
+    return _InfluxSettingsTabState();
   }
 }
 
-class _InfluxSettingsState extends StateMVC<InfluxSettings> {
+class _InfluxSettingsTabState extends StateMVC<InfluxSettingsTab> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController urlController;
@@ -42,6 +42,7 @@ class _InfluxSettingsState extends StateMVC<InfluxSettings> {
       child: ListView(
         children: [
           TextBoxRow(
+            readOnly: widget.con.settingsReadonly,
             label: "Url:",
             controller: urlController,
             onSaved: (value) {
@@ -49,6 +50,7 @@ class _InfluxSettingsState extends StateMVC<InfluxSettings> {
             },
           ),
           TextBoxRow(
+            readOnly: widget.con.settingsReadonly,
             label: "Token:",
             controller: tokenController,
             onSaved: (value) {
@@ -56,6 +58,7 @@ class _InfluxSettingsState extends StateMVC<InfluxSettings> {
             },
           ),
           TextBoxRow(
+            readOnly: widget.con.settingsReadonly,
             label: "Org:",
             controller: orgController,
             onSaved: (value) {
@@ -63,6 +66,7 @@ class _InfluxSettingsState extends StateMVC<InfluxSettings> {
             },
           ),
           TextBoxRow(
+            readOnly: widget.con.settingsReadonly,
             label: "Bucket:",
             controller: bucketController,
             onSaved: (value) {
@@ -71,20 +75,23 @@ class _InfluxSettingsState extends StateMVC<InfluxSettings> {
           ),
 
 
-          Padding(
-            padding:
-            const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
-            child: FormButton(
-                label: 'Save',
-                onPressed: () {
-                  // Validate returns true if the form is valid, or false otherwise.
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
+          Visibility(
+            visible: !widget.con.settingsReadonly,
+            child: Padding(
+              padding:
+              const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
+              child: FormButton(
+                  label: 'Save',
+                  onPressed: () {
+                    // Validate returns true if the form is valid, or false otherwise.
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
 
-                    widget.con.checkClient(client);
+                      widget.con.checkClient(client);
 
-                  }
-                }),
+                    }
+                  }),
+            ),
           ),
         ],
       ),

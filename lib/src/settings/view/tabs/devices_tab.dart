@@ -1,21 +1,21 @@
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
-class DevicesListView extends StatefulWidget {
-  const DevicesListView({
+class DevicesTab extends StatefulWidget {
+  const DevicesTab({
     required this.con,
     Key? key,
   }) : super(key: key);
 
-  final SettingsController con;
+  final SettingsPageController con;
 
   @override
   State<StatefulWidget> createState() {
-    return _DevicesListView();
+    return _DevicesTabState();
   }
 }
 
-class _DevicesListView extends State<DevicesListView> {
+class _DevicesTabState extends State<DevicesTab> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<dynamic>(
@@ -70,7 +70,7 @@ class _DevicesListView extends State<DevicesListView> {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => DeviceDetail(
+                                        builder: (context) => DeviceDetailPage(
                                             deviceId: snapshot.data[index]
                                                 ['deviceId']))).whenComplete(
                                     () => widget.con.refreshDevices());

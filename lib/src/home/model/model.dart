@@ -54,7 +54,7 @@ class Model extends ModelMVC {
 
   List<Chart> dashboard = [];
 
-  /// contains list of availeble dasboard keys
+  /// contains list of available dashboard keys
   List<String> dashboardList = [];
 
   Map<String, dynamic>? selectedDeviceOnChange(String? value, bool setNull) {
@@ -101,10 +101,6 @@ class Model extends ModelMVC {
   Future<List<dynamic>> loadFieldNames() async {
     if (selectedDevice == null) return [];
     var deviceId = selectedDevice!['deviceId'];
-
-
-    // var tmpmodel = ModelInflux();
-    // var tmpdev = await tmpmodel.fetchDevices();
 
     if (deviceId != null) {
       await fetchDeviceConfig(iotCenterApi + "/api/env/$deviceId");
@@ -318,13 +314,13 @@ class Model extends ModelMVC {
     }
   }
 
-  Future<void> _writeDshboardInflux(
-      String dahboardKey, String dashboardData) async {
+  Future<void> _writeDashboardInflux(
+      String dashboardKey, String dashboardData) async {
     final config = await influxConfig;
     final influxDBClient = createClient(config);
     final writeApi = influxDBClient.getWriteService();
     final point = Point(measurementDashboardFlutter)
-        .addTag("key", dahboardKey)
+        .addTag("key", dashboardKey)
         .addField("data", dashboardData);
     await writeApi.write(point);
   }
@@ -356,7 +352,7 @@ class Model extends ModelMVC {
     return Future.error("not implemented");
   }
 
-  //#endregion dasboard store influx
+  //#endregion dashboard store influx
 
   Future<Dashboard> _fetchDashboard(String dashboardKey) async {
     final stringDashboard = await _fetchDashboardInflux(dashboardKey);
@@ -384,7 +380,7 @@ class Model extends ModelMVC {
     }
   }
 
-  /// updates dasboardList property
+  /// updates dashboard List property
   Future<void> loadDashboardList() async {
     dashboardList = await fetchDashboardList();
   }
@@ -394,99 +390,10 @@ class Model extends ModelMVC {
     Dashboard? dashboard,
   ) async {
     final dashboardData = dashboard != null ? jsonEncode(dashboard) : "";
-    await _writeDshboardInflux(dashboardKey, dashboardData);
+    await _writeDashboardInflux(dashboardKey, dashboardData);
   }
 
-  Future writeEmulatedData(String deviceId, Function onProgress) async {
-    var config = await fetchDeviceConfig2(iotCenterApi + "/api/env/$deviceId");
-    var influxDBClient = createClient(config);
 
-// calculate window to emulate writes
-    var toTime =
-        (DateTime.now().toUtc().millisecondsSinceEpoch / 60000).truncate() *
-            60000;
-    var lastTime = toTime - 30 * 24 * 60 * 60 * 1000;
-
-// const getGPX = generateGPXData.bind(undefined, await fetchGPXData())
-    var totalPoints = ((toTime - lastTime) / 60000);
-    var pointsWritten = 0;
-
-    if (totalPoints > 0) {
-      var batchSize = 5000;
-
-      var writeApi = influxDBClient.getWriteService(WriteOptions()
-          .merge(batchSize: batchSize, precision: WritePrecision.ms
-              // defaultTags: {"clientId": deviceId}));
-              ));
-      try {
-        onProgress(0, 0, totalPoints);
-        while (lastTime < toTime) {
-          lastTime += 60000; // emulate next minute
-          var point = Point('environment');
-          point
-              .addTag('clientId', deviceId)
-              .addField('Temperature',
-                  _generate(period: 30, min: 0, max: 40, time: lastTime))
-              .addField('Humidity',
-                  _generate(period: 90, min: 0, max: 99, time: lastTime))
-              .addField('Pressure',
-                  _generate(period: 20, min: 970, max: 1050, time: lastTime))
-              //integer value
-              .addField(
-                  'CO2',
-                  _generate(period: 1, min: 400, max: 3000, time: lastTime)
-                      .toInt())
-              //integer value
-              .addField(
-                  'TVOC',
-                  _generate(period: 1, min: 250, max: 2000, time: lastTime)
-                      .toInt())
-              .addTag('TemperatureSensor', 'virtual_TemperatureSensor')
-              .addTag('HumiditySensor', 'virtual_HumiditySensor')
-              .addTag('PressureSensor', 'virtual_PressureSensor')
-              .addTag('CO2Sensor', 'virtual_CO2Sensor')
-              .addTag('TVOCSensor', 'virtual_TVOCSensor')
-              .addTag('GPSSensor', 'virtual_GPSSensor')
-              .time(lastTime);
-          writeApi.batchWrite(point);
-          pointsWritten++;
-          if (pointsWritten % batchSize == 0) {
-            await writeApi.flush();
-            onProgress((pointsWritten / totalPoints) * 100, pointsWritten,
-                totalPoints);
-          }
-        }
-      } catch (e) {
-        developer.log(e.toString(), level: 1000);
-      } finally {
-        await writeApi.flush();
-        await writeApi.close();
-        influxDBClient.close();
-      }
-      onProgress(100, pointsWritten, totalPoints);
-    }
-
-    return pointsWritten;
-  }
-
-  static const dayMillis = 24 * 60 * 60 * 1000;
-  final _rnd = Random();
-
-  num _generate(
-      {required num period, int min = 0, max = 40, required num time}) {
-    var dif = max - min;
-// generate main value
-    var periodValue =
-        (dif / 4) * sin((((time / dayMillis) % period) / period) * 2 * pi);
-// generate secondary value, which is lowest at noon
-    var dayValue =
-        (dif / 4) * sin(((time % dayMillis) / dayMillis) * 2 * pi - pi / 2);
-    return (((min +
-        dif / 2 +
-        periodValue +
-        dayValue +
-        _rnd.nextDouble() * 10)));
-  }
 
   Future writeSensor(
       String sensorName, Map<String, double> fieldValueMap) async {
@@ -569,25 +476,25 @@ class Model extends ModelMVC {
         return {"lat": pos.latitude, "lon": pos.longitude, "acc": pos.accuracy};
       });
 
-  Future<Map<String, Stream<Map<String, double>>>> availebleSensors() async {
-    final Map<String, Stream<Map<String, double>>> senosors = {};
-    senosors["Accelerometer"] = accelerometer;
-    senosors["UserAccelerometer"] = userAccelerometer;
-    senosors["Magnetometer"] = magnetometer;
-    senosors["Battery"] = battery;
+  Future<Map<String, Stream<Map<String, double>>>> availableSensors() async {
+    final Map<String, Stream<Map<String, double>>> sensors = {};
+    sensors["Accelerometer"] = accelerometer;
+    sensors["UserAccelerometer"] = userAccelerometer;
+    sensors["Magnetometer"] = magnetometer;
+    sensors["Battery"] = battery;
 
     final es = EnvironmentSensors();
     if (await es.getSensorAvailable(SensorType.AmbientTemperature)) {
-      senosors["Temperature"] = temperature;
+      sensors["Temperature"] = temperature;
     }
     if (await es.getSensorAvailable(SensorType.Humidity)) {
-      senosors["Humidity"] = humidity;
+      sensors["Humidity"] = humidity;
     }
     if (await es.getSensorAvailable(SensorType.Light)) {
-      senosors["Light"] = light;
+      sensors["Light"] = light;
     }
     if (await es.getSensorAvailable(SensorType.Pressure)) {
-      senosors["Pressure"] = pressure;
+      sensors["Pressure"] = pressure;
     }
     if (await Geolocator.isLocationServiceEnabled()) {
       var permission = await Geolocator.checkPermission();
@@ -597,10 +504,10 @@ class Model extends ModelMVC {
       }
       if (permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse) {
-        senosors["Geo"] = geo;
+        sensors["Geo"] = geo;
       }
     }
 
-    return senosors;
+    return sensors;
   }
 }

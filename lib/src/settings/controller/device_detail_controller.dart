@@ -16,7 +16,10 @@ class DeviceDetailController extends ControllerMVC {
   final InfluxModel _model;
 
   String? deviceId;
+  Device? selectedDevice;
   InfluxDBClient get client => _model.client;
+
+  get dashboardList => _model.fetchDashboards();
 
   Future writeEmulatedData(Function onProgress) async =>
       _model.writeEmulatedData(deviceId!, onProgress);
@@ -31,6 +34,7 @@ class DeviceDetailController extends ControllerMVC {
 
     deviceDetailTab = getDeviceDetailTab();
     measurementsTab = getMeasurementsTab();
+    dashboardTab = getDashboardTab();
 
     actualTab = deviceDetailTab;
 
@@ -39,6 +43,7 @@ class DeviceDetailController extends ControllerMVC {
 
   Widget? deviceDetailTab;
   Widget? measurementsTab;
+  Widget? dashboardTab;
 
   int selectedIndex = 0;
   Widget? actualTab;
@@ -52,6 +57,9 @@ class DeviceDetailController extends ControllerMVC {
           break;
         case 1:
           actualTab = measurementsTab;
+          break;
+        case 2:
+          actualTab = dashboardTab;
           break;
       }
     });
@@ -70,11 +78,13 @@ class DeviceDetailController extends ControllerMVC {
                 return Column(
                   children: [
                     tile(deviceId!, 'Device Id', Icons.device_thermostat),
+                    tile(snapshot.data!.dashboardKey, 'Dashboard Key',
+                        Icons.dashboard),
                     tile(snapshot.data!.createdAt, 'Registration Time',
                         Icons.lock_clock),
                     tile(snapshot.data!.key, 'Device key', Icons.key),
                     tile(snapshot.data!.influxUrl, 'InfluxDB URL',
-                        Icons.cloud_done_outlined),
+                        Icons.cloud_done),
                     tile(snapshot.data!.influxOrg, 'InfluxDB Organization',
                         Icons.work),
                     tile(snapshot.data!.influxBucket, 'InfluxDB Bucket',
@@ -87,20 +97,6 @@ class DeviceDetailController extends ControllerMVC {
                 return const Text("loading...");
               }
             }),
-        Padding(
-          padding: const EdgeInsets.only(top: 20.0),
-          child: FormButton(
-            onPressed: () async {
-              if (writeInProgress) {
-                return;
-              }
-              var x = await writeSampleData();
-              developer.log("Points written $x");
-            },
-            label:
-                writeInProgress ? "Write in progress..." : "Write testing data",
-          ),
-        ),
       ],
     );
   }
@@ -131,6 +127,82 @@ class DeviceDetailController extends ControllerMVC {
             }),
       ],
     );
+  }
+
+  Widget getDashboardTab() {
+    return FutureBuilder<dynamic>(
+        future: dashboardList,
+        builder: (context, AsyncSnapshot<dynamic> snapshot) {
+          if (snapshot.hasData &&
+              snapshot.connectionState == ConnectionState.done) {
+            return ListView.builder(
+                itemCount: snapshot.data.length,
+                itemBuilder: (_, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: Container(
+                      decoration: boxDecor,
+                      child: Row(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                                vertical: 30, horizontal: 10),
+                            child: Icon(
+                              Icons.dashboard,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${snapshot.data[index]['key']}',
+                                  style: const TextStyle(
+                                      color: darkBlue,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                              icon: Icon(
+                                snapshot.data[index]['key'] ==
+                                        selectedDevice?.dashboardKey
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: snapshot.data[index]['key'] ==
+                                        selectedDevice?.dashboardKey
+                                    ? pink
+                                    : darkBlue,
+                              ),
+                              onPressed: () {
+                                selectedDevice?.dashboardKey =
+                                    snapshot.data[index]['key'];
+
+                                _model.pairDeviceDashboard(selectedDevice!.id,
+                                    snapshot.data[index]['key']);
+
+                                setState(() {
+                                  selectedDevice?.dashboardKey;
+                                });
+                              }),
+                        ],
+                      ),
+                    ),
+                  );
+                });
+          } else {
+            return const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                color: pink,
+                strokeWidth: 3,
+              ),
+            );
+          }
+        });
   }
 
   ListTile tile(String title, String subtitle, IconData icon) => ListTile(
@@ -212,23 +284,20 @@ class DeviceDetailController extends ControllerMVC {
   bool writeInProgress = false;
   Future<List<FluxRecord>>? measurements;
 
-  Future<Device> deviceDetail(String deviceId) => _model.fetchDevice(deviceId);
+  Future<Device> deviceDetail(String deviceId) =>
+      _model.fetchDevice(deviceId).then((value) => selectedDevice = value);
 
   Future<num?> writeSampleData() async {
-    setState(() {
-      developer.log("write data.... $deviceId");
-      writeInProgress = true;
-      writeEmulatedData((progressPercent, writtenPoints, totalPoints) {
-        developer.log(
-            "$progressPercent%, $writtenPoints of $totalPoints points written");
-      }).then((value) {
-        developer.log("Write completed. $value points written.");
-        setState(() {
-          writeInProgress = false;
-        });
-        refreshMeasurements();
-        return value;
+    writeEmulatedData((progressPercent, writtenPoints, totalPoints) {
+      developer.log(
+          "$progressPercent%, $writtenPoints of $totalPoints points written");
+    }).then((value) {
+      developer.log("Write completed. $value points written.");
+      setState(() {
+        writeInProgress = false;
       });
+      refreshMeasurements();
+      return value;
     });
     return null;
   }
@@ -239,5 +308,19 @@ class DeviceDetailController extends ControllerMVC {
       measurementsTab = getMeasurementsTab();
     });
     bottomMenuOnTap(selectedIndex);
+  }
+
+  void writeStart() async {
+    if (writeInProgress) {
+      return;
+    }
+
+    developer.log("write data.... $deviceId");
+    setState(() {
+      writeInProgress = true;
+    });
+
+    var x = await writeSampleData();
+    developer.log("Points written $x");
   }
 }

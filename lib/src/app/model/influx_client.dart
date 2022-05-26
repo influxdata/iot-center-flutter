@@ -7,11 +7,7 @@ import 'dart:developer' as developer;
 extension InfluxClient on InfluxDBClient {
   InfluxDBClient clone() {
     return InfluxDBClient(
-        url: url,
-        token: token,
-        bucket: bucket,
-        debug: debug,
-        org: org);
+        url: url, token: token, bucket: bucket, debug: debug, org: org);
   }
 
   void _fromJson(Map<String, dynamic> json) {
@@ -31,7 +27,9 @@ extension InfluxClient on InfluxDBClient {
   Future<InfluxDBClient> loadInfluxClient() async {
     try {
       var prefs = await SharedPreferences.getInstance();
-      _fromJson(json.decode(prefs.getString("influxClient")!));
+      if (prefs.containsKey("influxClient")) {
+        _fromJson(json.decode(prefs.getString("influxClient")!));
+      }
       return this;
     } catch (e) {
       developer.log('Failed to load Influx Client' + e.toString());

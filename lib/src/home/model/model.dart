@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:influxdb_client/api.dart';
@@ -16,10 +15,6 @@ import 'package:geolocator/geolocator.dart';
 
 import 'dart:developer' as developer;
 
-const measurementDashboardFlutter = "dashboard-flutter";
-const defaultDashboardKey = "default";
-
-typedef Dashboard = List<Chart>;
 
 class Model extends ModelMVC {
   factory Model([StateMVC? state]) => _this ??= Model._(state);

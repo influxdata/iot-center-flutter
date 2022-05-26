@@ -35,16 +35,28 @@ class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
         appBar: AppBar(
           title: const Text('Device Info'),
           backgroundColor: darkBlue,
-          actions: [Visibility(
-            visible: con.selectedIndex == 1,
-            child: IconButton(
-              icon: const Icon(Icons.refresh),
-              color: Colors.white,
-              onPressed: () {
-                con.refreshMeasurements();
-              },
+          actions: [
+            Visibility(
+              visible: con.selectedIndex == 1,
+              child: IconButton(
+                icon: const Icon(Icons.refresh),
+                color: Colors.white,
+                onPressed: () {
+                  con.refreshMeasurements();
+                },
+              ),
             ),
-          ),],
+            Visibility(
+              visible: con.selectedIndex == 0,
+              child: IconButton(
+                icon: Icon(con.writeInProgress ? Icons.lock_outline : Icons.app_registration),
+                color: Colors.white,
+                onPressed: () async {
+                  con.writeStart();
+                },
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: con.selectedIndex,
@@ -61,6 +73,10 @@ class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics_outlined),
               label: 'Measurements',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_outlined),
+              label: 'Dashboard',
             ),
           ],
           onTap: con.bottomMenuOnTap,

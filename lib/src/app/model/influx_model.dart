@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,10 @@ import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'dart:async';
 
 import 'dart:developer' as developer;
+
+const measurementDashboardFlutter = "dashboard-flutter";
+const defaultDashboardKey = "default";
+typedef Dashboard = List<Chart>;
 
 class InfluxModel extends ModelMVC {
   factory InfluxModel([StateMVC? state]) => _this ??= InfluxModel._(state);
@@ -127,21 +132,173 @@ class InfluxModel extends ModelMVC {
       var stream = await queryApi.query(fluxQuery);
       var result = await stream.toList();
 
-      var key = result.firstWhere((element) => element['_field'] == 'key');
+      var keyRec = result.firstWhere((element) => element['_field'] == 'key',
+          orElse: () => FluxRecord(-1));
+      var createdAtRec = result.firstWhere(
+          (element) => element['_field'] == 'createdAt',
+          orElse: () => FluxRecord(-1));
+      var dashboardKeyRec = result.firstWhere(
+          (element) => element['_field'] == 'dashboardKey',
+          orElse: () => FluxRecord(-1));
+
+      var key = keyRec.containsKey("_value") ? keyRec['_value'] : "";
       var createdAt =
-          result.firstWhere((element) => element['_field'] == 'createdAt');
+          createdAtRec.containsKey("_value") ? createdAtRec['_value'] : "";
+      var dashboardKey = dashboardKeyRec.containsKey("_value")
+          ? dashboardKeyRec['_value']
+          : "";
 
       return Device(
           deviceId,
-          createdAt['_value'],
-          key['_value'],
+          createdAt,
+          key,
           _influxDBClient.org!,
           _influxDBClient.url!,
           _influxDBClient.bucket!,
-          _influxDBClient.token!);
+          _influxDBClient.token!,
+          dashboardKey);
     } catch (e) {
       developer.log('Failed to load device $deviceId. - ${e.toString()}');
       throw Exception('Failed to load device $deviceId.');
+    } finally {
+      _influxDBClient.close();
+    }
+  }
+
+  ///
+  /// Gets first device of this stream matching [deviceId] with
+  /// associated dashboard.
+  ///
+  /// Parameters:
+  /// * [String] deviceId: client identifier
+  ///
+  Future<Device> fetchDeviceWithDashboard(String deviceId) async {
+    var device = await fetchDevice(deviceId);
+    device.dashboard = await fetchDashboard(device.dashboardKey);
+    return device;
+  }
+
+  ///
+  /// Gets all dashboards from influx.
+  ///
+  Future<List<dynamic>> fetchDashboards() async {
+    var _influxDBClient = client.clone();
+    var queryApi = _influxDBClient.getQueryService();
+
+    developer.log('Fetch dashboards from bucket - ${_influxDBClient.bucket}');
+
+    var fluxQuery = '''
+          from(bucket: "${_influxDBClient.bucket}")
+              |> range(start: -30d)
+              |> filter(fn: (r) => r["_measurement"] == "$measurementDashboardFlutter")
+              |> last()
+          ''';
+
+    try {
+      var stream = await queryApi.query(fluxQuery);
+      return await stream.toList();
+    } catch (e) {
+      developer.log('Failed to load dashboards. - ${e.toString()}');
+      return [];
+    } finally {
+      _influxDBClient.close();
+    }
+  }
+
+  ///
+  /// Gets first dashboard of this stream matching [dashboardKey].
+  ///
+  /// Parameters:
+  /// * [String] dashboardKey: dashboard identifier
+  ///
+  Future<dynamic> fetchDashboard(String dashboardKey) async {
+    var _influxDBClient = client.clone();
+    var queryApi = _influxDBClient.getQueryService();
+
+    developer.log('Fetch dashboard $dashboardKey');
+
+    var fluxQuery = '''
+      from(bucket: "${_influxDBClient.bucket}") 
+        |> range(start: 0) 
+        |> filter(fn: (r) => r._measurement == "$measurementDashboardFlutter")
+        |> filter(fn: (r) => r.key == "$dashboardKey")
+        |> filter(fn: (r) => r._field == "data")
+        |> last()
+        |> filter(fn: (r) => r._value != "")
+    ''';
+
+    try {
+      final stream = await queryApi.query(fluxQuery);
+      final result = await stream.toList();
+      final stringDashboard = result.first["_value"].toString();
+
+      if (stringDashboard.isNotEmpty) {
+        var l = json.decode(stringDashboard);
+        var dashboard =
+            List<Chart>.from(l.map((model) => Chart.fromJson(model)));
+        return dashboard;
+      }
+
+      return null;
+    } catch (e) {
+      developer.log('Failed to load dashboard. - ${e.toString()}');
+      return null;
+    } finally {
+      _influxDBClient.close();
+    }
+  }
+
+  ///
+  /// Creates a new dashboard.
+  ///
+  /// Parameters:
+  /// * [String] dashboardKey: dashboard identifier
+  ///
+  Future<void> createDashboard(
+      String dashboardKey, String dashboardData) async {
+    developer.log('Create dashboard $dashboardKey');
+
+    var _influxDBClient = client.clone();
+    var writeApi = _influxDBClient.getWriteService();
+
+    var point = Point(measurementDashboardFlutter)
+        .addTag("key", dashboardKey)
+        .addField("data", dashboardData);
+
+    try {
+      await writeApi.write(point);
+    } catch (e) {
+      developer
+          .log('Failed to create dashboard $dashboardKey. - ${e.toString()}');
+      throw Exception('Failed to create dashboard $dashboardKey.');
+    } finally {
+      _influxDBClient.close();
+    }
+  }
+
+  ///
+  /// Pair dashboard with device.
+  ///
+  /// Parameters:
+  /// * [String] deviceId: client identifier
+  /// * [String] dashboardKey: dashboard identifier
+  ///
+  Future<void> pairDeviceDashboard(String deviceId, String dashboardKey) async {
+    developer.log('Pair dashboard $dashboardKey with $deviceId.');
+
+    var _influxDBClient = client.clone();
+    var writeApi = _influxDBClient.getWriteService();
+
+    var point = Point('deviceauth')
+        .addTag('deviceId', deviceId)
+        .addField('dashboardKey', dashboardKey);
+
+    try {
+      await writeApi.write(point);
+    } catch (e) {
+      developer.log(
+          'Failed to pair dashboard $dashboardKey with $deviceId. - ${e.toString()}');
+      throw Exception('Failed to pair dashboard $dashboardKey with $deviceId.');
     } finally {
       _influxDBClient.close();
     }
@@ -153,15 +310,13 @@ class InfluxModel extends ModelMVC {
   /// Parameters:
   /// * [Map<String, dynamic>?] deviceId
   ///
-  Future<List<dynamic>> fetchFieldNames(Map<String, dynamic>? device) async {
-    if (device == null) return [];
-    var deviceId = device['deviceId'];
+  Future<List<dynamic>> fetchFieldNames(String deviceId) async {
+    if (deviceId.isEmpty) return [];
 
-    if (deviceId != null) {
-      var _influxDBClient = client.clone();
-      var queryApi = _influxDBClient.getQueryService();
+    var _influxDBClient = client.clone();
+    var queryApi = _influxDBClient.getQueryService();
 
-      var fluxQuery = '''
+    var fluxQuery = '''
               import "influxdata/influxdb/schema"
               schema.fieldKeys(
                       bucket: "${_influxDBClient.bucket}",
@@ -169,18 +324,16 @@ class InfluxModel extends ModelMVC {
                                     and r["clientId"] == "$deviceId")
           ''';
 
-      try {
-        var stream = await queryApi.query(fluxQuery);
-        return await stream.toList();
-      } catch (e) {
-        developer
-            .log('Failed to load field names for $deviceId. - ${e.toString()}');
-        throw Exception('Failed to load field names for $deviceId.');
-      } finally {
-        _influxDBClient.close();
-      }
+    try {
+      var stream = await queryApi.query(fluxQuery);
+      return await stream.toList();
+    } catch (e) {
+      developer
+          .log('Failed to load field names for $deviceId. - ${e.toString()}');
+      throw Exception('Failed to load field names for $deviceId.');
+    } finally {
+      _influxDBClient.close();
     }
-    return [];
   }
 
   ///
@@ -349,7 +502,8 @@ class InfluxModel extends ModelMVC {
   }
 
   ///
-  /// TODO - check if works
+  /// If [deleteWithData] is true, will delete device authorization and all
+  /// data associated to device. Else delete only device authorization.
   ///
   /// Parameters:
   /// * [String] deviceId: client identifier
@@ -454,6 +608,8 @@ class InfluxModel extends ModelMVC {
     return url;
   }
 
+//#region Write emulated data
+
   Future writeEmulatedData(String deviceId, Function onProgress) async {
     developer.log('Write emulated data for device $deviceId');
 
@@ -545,4 +701,6 @@ class InfluxModel extends ModelMVC {
         dayValue +
         _rnd.nextDouble() * 10)));
   }
+
+//#endregion Write emulated data
 }

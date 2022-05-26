@@ -41,10 +41,22 @@ class _DevicesTabState extends State<DevicesTab> {
                             ),
                           ),
                           Expanded(
-                            child: Text(
-                              '${snapshot.data[index]['deviceId']}',
-                              style: const TextStyle(
-                                  color: darkBlue, fontWeight: FontWeight.w500),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${snapshot.data[index]['deviceId']}',
+                                  style: const TextStyle(
+                                      color: darkBlue,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                // Text(
+                                //   '${snapshot.data[index]['dashboardKey']}',
+                                //   style: const TextStyle(
+                                //       color: Colors.grey,
+                                //       fontWeight: FontWeight.w400),
+                                // ),
+                              ],
                             ),
                           ),
                           IconButton(
@@ -56,7 +68,8 @@ class _DevicesTabState extends State<DevicesTab> {
                                 showDialog(
                                   context: context,
                                   builder: (BuildContext context) {
-                                    return widget.con.removeDeviceDialog(context,
+                                    return widget.con.removeDeviceDialog(
+                                        context,
                                         snapshot.data[index]['deviceId']);
                                   },
                                 );

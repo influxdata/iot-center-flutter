@@ -1,4 +1,4 @@
-import 'package:iot_center_flutter_mvc/src/home/model/default_dashboard.dart';
+import 'package:iot_center_flutter_mvc/src/device/model/default_dashboard.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 
 class Device {

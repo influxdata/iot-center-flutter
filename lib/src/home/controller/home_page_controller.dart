@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 
@@ -12,133 +13,141 @@ class HomePageController extends ControllerMVC {
   static HomePageController? _this;
   final InfluxModel _model;
 
-  bool expandAppBar = false;
-  bool editableCharts = false;
+  InfluxDBClient get client => _model.client;
+  Future<List<dynamic>> get deviceList => _model.fetchDevices();
 
-  Device? selectedDevice;
-  List<dynamic>? deviceList;
-  Future<dynamic> get futureDeviceList async =>
-      await _model.fetchDevices().then((value) => deviceList = value);
+  Future<void> checkClient(InfluxDBClient client) => _model.checkClient(client);
 
-  String selectedTimeOption = "-1h";
-  List<DropDownItem> timeOptionsList = [
-    DropDownItem(label: 'Past 5m', value: '-5m'),
-    DropDownItem(label: 'Past 15m', value: '-15m'),
-    DropDownItem(label: 'Past 1h', value: '-1h'),
-    DropDownItem(label: 'Past 6h', value: '-6h'),
-    DropDownItem(label: 'Past 1d', value: '-1d'),
-    DropDownItem(label: 'Past 3d', value: '-3d'),
-    DropDownItem(label: 'Past 7d', value: '-7d'),
-    DropDownItem(label: 'Past 30d', value: '-30d'),
-  ];
+  DevicesTab? devicesListView;
+  late SensorsTab sensorsView;
+  InfluxSettingsTab? influxSettings;
 
-  int get rowCount => selectedDevice?.dashboard != null
-      ? selectedDevice!.dashboard!
-              .reduce((currentChart, nextChart) =>
-                  currentChart.row > nextChart.row ? currentChart : nextChart)
-              .row +
-          1
-      : 0;
+  int selectedIndex = 0;
+  Widget? actualTab;
 
-  void updateRowCount() {
-    setState(() {
-      rowCount;
-    });
-  }
-
-  Widget buildChartListViewRow(context, index) {
-    var chartRow =
-        selectedDevice!.dashboard!.where((e) => e.row == index).toList();
-    List<Widget> chartWidgets = [];
-
-    if (chartRow.isNotEmpty) {
-      chartRow.sort(((a, b) => a.column.compareTo(b.column)));
-      for (var chart in chartRow) {
-        chartWidgets.add(chart.widget);
-      }
-    }
-    return Row(
-      children: chartWidgets,
-    );
-  }
-
-  Future<void> refreshChartListView() async {
-    if (selectedDevice?.dashboard != null) {
-    for (var chart in selectedDevice!.dashboard!) {
-      await chart.data.refreshChart!();
-    }}
-  }
-
-  void refreshChartEditable() {
-    if (selectedDevice?.dashboard != null) {
-      for (var chart in selectedDevice!.dashboard!) {
-        chart.data.refreshHeader!();
-      }
-    }
-  }
+  bool deleteWithData = false;
+  bool settingsReadonly = true;
 
   @override
-  void refresh() async {
-    await futureDeviceList;
+  void initState() {
+    super.initState();
+
+ }
+
+
+
+  void refreshDevices() {
     setState(() {
       deviceList;
     });
   }
 
-  @override
-  Future<bool> initAsync() async {
-    await super.initAsync();
-    _model.client.loadInfluxClient();
-
-    return true;
+  /// Load client settings for a InfluxDB from Shared Preferences.
+  void loadSavedInfluxClient() {
+    client.loadInfluxClient();
   }
 
-  void onItemTapped(int index) {
-    switch (index) {
-      case 0:
-        // Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //         builder: (c) =>
-        //             NewChartPage(refreshCharts: updateRowCount)));
-        break;
-      case 1:
-        if (editableCharts) {
-          // saveDashboard();
-          setState(() {
-            editableCharts = false;
-          });
-        } else {
-          setState(() {
-            editableCharts = true;
-          });
-        }
-        refreshChartEditable();
-        break;
-      case 2:
-        refresh();
-        break;
-      case 3:
-        break;
+  /// Save client settings for a InfluxDB from Shared Preferences.
+  void saveInfluxClient() {
+    client.saveInfluxClient();
+  }
+
+  Widget newDeviceDialog(BuildContext context) {
+    late TextEditingController newDeviceController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("New Device"),
+      content: Form(
+        key: _formKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          Expanded(
+              child: TextBoxRow(
+                hint: 'Device ID',
+                label: '',
+                controller: newDeviceController,
+                padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Device ID cannot be empty';
+                  }
+                  return null;
+                },
+                onSaved: (value) async {
+                  await _model.createDevice(value.toString());
+                  refreshDevices();
+
+                  Navigator.of(context).pop();
+                },
+              )),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Save", style: TextStyle(color: pink)),
+            onPressed: (() async {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+              }
+            })),
+      ],
+    );
+  }
+
+  Color getColor(Set<MaterialState> states) {
+    const Set<MaterialState> interactiveStates = <MaterialState>{
+      MaterialState.pressed,
+      MaterialState.hovered,
+      MaterialState.focused,
+    };
+    if (states.any(interactiveStates.contains)) {
+      return Colors.blue;
     }
+    return pink;
   }
 
-  void selectedDeviceOnChange(String? deviceId) async {
-    if (deviceList!.isNotEmpty) {
-      var device =
-          deviceList!.firstWhere((element) => element['deviceId'] == deviceId);
+  Widget removeDeviceDialog(BuildContext context, deviceId) {
+    deleteWithData = false;
+    return AlertDialog(
+      title: Text("Confirm delete device $deviceId ?"),
+      content: StatefulBuilder(builder: (context, setState) {
+        return Row(children: <Widget>[
+          Checkbox(
+            checkColor: Colors.white,
+            fillColor: MaterialStateProperty.resolveWith(getColor),
+            value: deleteWithData,
+            onChanged: (bool? value) {
+              setState(() {
+                deleteWithData = value!;
+              });
+            },
+          ),
+          const Text("Delete device with data?"),
+        ]);
+      }),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Delete", style: TextStyle(color: pink)),
+            onPressed: (() async {
+              await _model.deleteDevice(deviceId!, deleteWithData);
+              Navigator.of(context).pop();
 
-      await _model
-          .fetchDeviceWithDashboard(device['deviceId'])
-          .then((value) => selectedDevice = value)
-          .whenComplete(() => _model.fetchFieldNames(device['deviceId']));
-
-      setState(() {
-        selectedDevice;
-      });
-    } else {
-      selectedDevice = null;
-    }
-    refreshChartListView();
+              refreshDevices();
+            })),
+      ],
+    );
   }
+
 }

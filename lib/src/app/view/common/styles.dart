@@ -19,6 +19,15 @@ const LinearGradient pinkPurpleGradient = LinearGradient(
   ],
 );
 
+const LinearGradient buttonGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [
+    pink,
+    purple,
+  ],
+);
+
 BoxDecoration boxDecor = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(5),

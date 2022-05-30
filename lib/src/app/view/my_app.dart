@@ -1,4 +1,4 @@
-import 'package:iot_center_flutter_mvc/src/home/view/home_page2.dart';
+import 'package:iot_center_flutter_mvc/src/home/view/home_page.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 
@@ -30,7 +30,7 @@ class _MyAppState extends AppStateMVC<MyApp> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 if (snapshot.data!) {
-                  return HomePage2(key: UniqueKey());
+                  return HomePage(key: UniqueKey());
                 } else {
                   return const Text('Failed to startup');
                 }

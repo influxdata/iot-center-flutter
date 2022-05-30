@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:influxdb_client/api.dart';
+import 'package:iot_center_flutter_mvc/src/device/view/dashboard.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'dart:developer' as developer;
@@ -14,10 +15,12 @@ class DeviceDetailController extends ControllerMVC {
         super(state);
   static DeviceDetailController? _this;
   final InfluxModel _model;
+  late final DashboardController dashboardController;
 
   String? deviceId;
-  Device? selectedDevice;
+  Future<Device>? selectedDevice;
   InfluxDBClient get client => _model.client;
+  bool editable = false;
 
   get dashboardList => _model.fetchDashboards();
 
@@ -27,16 +30,38 @@ class DeviceDetailController extends ControllerMVC {
   Future<List<FluxRecord>> getMeasurements() async =>
       _model.fetchMeasurements(deviceId!);
 
+  int rowCount = 0;
+
+  int getRowCount(Device device) {
+    return device.dashboard != null
+        ? device.dashboard!
+                .reduce((currentChart, nextChart) =>
+                    currentChart.row > nextChart.row ? currentChart : nextChart)
+                .row +
+            1
+        : 0;
+  }
+
+  void updateRowCount(Device device) {
+    setState(() {
+      rowCount = getRowCount(device);
+    });
+  }
+
   @override
   void initState() {
     selectedIndex = 0;
+
+    selectedDevice = _model.fetchDeviceWithDashboard(deviceId!);
     measurements = getMeasurements();
 
+    dashboardTab = getDashboardTab();
     deviceDetailTab = getDeviceDetailTab();
     measurementsTab = getMeasurementsTab();
-    dashboardTab = getDashboardTab();
 
-    actualTab = deviceDetailTab;
+    dashboardController = DashboardController();
+
+    actualTab = dashboardTab;
 
     super.initState();
   }
@@ -53,13 +78,13 @@ class DeviceDetailController extends ControllerMVC {
       selectedIndex = index;
       switch (index) {
         case 0:
-          actualTab = deviceDetailTab;
+          actualTab = dashboardTab ;
           break;
         case 1:
-          actualTab = measurementsTab;
+          actualTab = deviceDetailTab ;
           break;
         case 2:
-          actualTab = dashboardTab;
+          actualTab = measurementsTab;
           break;
       }
     });
@@ -69,7 +94,7 @@ class DeviceDetailController extends ControllerMVC {
     return ListView(
       children: [
         FutureBuilder<Device>(
-            future: deviceDetail(deviceId!),
+            future: selectedDevice,
             builder: (context, AsyncSnapshot<Device> snapshot) {
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString());
@@ -83,14 +108,8 @@ class DeviceDetailController extends ControllerMVC {
                     tile(snapshot.data!.createdAt, 'Registration Time',
                         Icons.lock_clock),
                     tile(snapshot.data!.key, 'Device key', Icons.key),
-                    tile(snapshot.data!.influxUrl, 'InfluxDB URL',
-                        Icons.cloud_done),
-                    tile(snapshot.data!.influxOrg, 'InfluxDB Organization',
-                        Icons.work),
                     tile(snapshot.data!.influxBucket, 'InfluxDB Bucket',
                         Icons.shopping_basket_rounded),
-                    tile(snapshot.data!.tokenSubstring, 'InfluxDB Token',
-                        Icons.theaters),
                   ],
                 );
               } else {
@@ -130,77 +149,17 @@ class DeviceDetailController extends ControllerMVC {
   }
 
   Widget getDashboardTab() {
-    return FutureBuilder<dynamic>(
-        future: dashboardList,
-        builder: (context, AsyncSnapshot<dynamic> snapshot) {
+    return FutureBuilder<Device>(
+        future: selectedDevice,
+        builder: (context, AsyncSnapshot<Device> snapshot) {
+          if (snapshot.hasError) {
+            return Text(snapshot.error.toString());
+          }
           if (snapshot.hasData &&
               snapshot.connectionState == ConnectionState.done) {
-            return ListView.builder(
-                itemCount: snapshot.data.length,
-                itemBuilder: (_, index) {
-                  return Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: Container(
-                      decoration: boxDecor,
-                      child: Row(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 30, horizontal: 10),
-                            child: Icon(
-                              Icons.dashboard,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${snapshot.data[index]['key']}',
-                                  style: const TextStyle(
-                                      color: darkBlue,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                              icon: Icon(
-                                snapshot.data[index]['key'] ==
-                                        selectedDevice?.dashboardKey
-                                    ? Icons.check_circle
-                                    : Icons.circle_outlined,
-                                color: snapshot.data[index]['key'] ==
-                                        selectedDevice?.dashboardKey
-                                    ? pink
-                                    : darkBlue,
-                              ),
-                              onPressed: () {
-                                selectedDevice?.dashboardKey =
-                                    snapshot.data[index]['key'];
-
-                                _model.pairDeviceDashboard(selectedDevice!.id,
-                                    snapshot.data[index]['key']);
-
-                                setState(() {
-                                  selectedDevice?.dashboardKey;
-                                });
-                              }),
-                        ],
-                      ),
-                    ),
-                  );
-                });
+           return DashboardTab(selectedDevice: snapshot.data!);
           } else {
-            return const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                color: pink,
-                strokeWidth: 3,
-              ),
-            );
+            return const Text("loading...");
           }
         });
   }
@@ -284,9 +243,6 @@ class DeviceDetailController extends ControllerMVC {
   bool writeInProgress = false;
   Future<List<FluxRecord>>? measurements;
 
-  Future<Device> deviceDetail(String deviceId) =>
-      _model.fetchDevice(deviceId).then((value) => selectedDevice = value);
-
   Future<num?> writeSampleData() async {
     writeEmulatedData((progressPercent, writtenPoints, totalPoints) {
       developer.log(
@@ -322,5 +278,9 @@ class DeviceDetailController extends ControllerMVC {
 
     var x = await writeSampleData();
     developer.log("Points written $x");
+  }
+
+  void refreshChartEditable() async{
+    dashboardController.editable = editable;
   }
 }

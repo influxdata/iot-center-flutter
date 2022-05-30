@@ -15,7 +15,7 @@ class DeviceDetailController extends ControllerMVC {
         super(state);
   static DeviceDetailController? _this;
   final InfluxModel _model;
-  late final DashboardController dashboardController;
+  DashboardController? dashboardController;
 
   String? deviceId;
   Future<Device>? selectedDevice;
@@ -281,6 +281,6 @@ class DeviceDetailController extends ControllerMVC {
   }
 
   void refreshChartEditable() async{
-    dashboardController.editable = editable;
+    dashboardController!.editable = editable;
   }
 }

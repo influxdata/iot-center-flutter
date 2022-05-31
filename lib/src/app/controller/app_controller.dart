@@ -12,7 +12,8 @@ class AppController extends ControllerMVC {
       await Future.wait([
         // TODO: add reason why we wait 2 seconds
         Future.delayed(const Duration(seconds: 2), () {})
-      ]);
+        // TODO: remove this quickfix - this probably doesn't stop http requests
+      ]).timeout(const Duration(seconds: 5));
     } catch (e) {
       // TODO: escalation
     }

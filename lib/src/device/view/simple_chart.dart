@@ -5,9 +5,11 @@ import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class SimpleChart extends StatefulWidget {
-  const SimpleChart({Key? key, required this.chartData}) : super(key: key);
+  const SimpleChart({Key? key, required this.chartData, required this.con})
+      : super(key: key);
 
   final ChartData chartData;
+  final DashboardController con;
 
   @override
   State<StatefulWidget> createState() {
@@ -16,21 +18,15 @@ class SimpleChart extends StatefulWidget {
 }
 
 class _SimpleChart extends StateMVC<SimpleChart> {
-  late Controller con;
   Future<List<FluxRecord>>? _data;
-
-  _SimpleChart() : super(Controller()) {
-    con = controller as Controller;
-  }
 
   @override
   void initState() {
-    add(con);
     super.initState();
-    _data = con.getDataFromInflux(widget.chartData.measurement, false);
+    _data = widget.con.getDataFromInflux(widget.chartData.measurement, false);
 
     widget.chartData.refreshChart = () {
-      _data = con.getDataFromInflux(widget.chartData.measurement, false);
+      _data = widget.con.getDataFromInflux(widget.chartData.measurement, false);
       refresh();
     };
   }

@@ -33,7 +33,7 @@ class SettingsPageController extends ControllerMVC {
     super.initState();
 
     devicesListView = DevicesTab(con: this);
-    sensorsView = const SensorsTab();
+    sensorsView = SensorsTab(con: this);
     influxSettings = InfluxSettingsTab(con: this);
 
     if (actualTab != null) {
@@ -184,4 +184,36 @@ class SettingsPageController extends ControllerMVC {
     });
     bottomMenuOnTap(selectedIndex);
   }
+
+  var _sensorsInitialized = false;
+  get sensorsInitialized => _sensorsInitialized;
+  Future initSensors() async {
+    _sensorsInitialized = true;
+    _senosors = await _model.availableSensors();
+  }
+
+  Map<String, Stream<Map<String, double>>> _senosors = {};
+
+  List<String> get sensors => _senosors.keys.toList();
+
+  final Map<String, StreamSubscription> _sensorSubscriptions = {};
+
+  bool sensorIsWriting(String sensor) =>
+      _sensorSubscriptions.containsKey(sensor);
+
+  setSensorIsWriting(String sensor, bool val) {
+    if (val == sensorIsWriting(sensor)) return;
+    final sensorStream = _senosors[sensor];
+    if (sensorStream == null) throw Error();
+    if (val) {
+      // TODO(sensors): use other isolate for smooth ui ?
+      _sensorSubscriptions[sensor] = sensorStream.listen((event) {
+        _model.writeSensor(sensor, event);
+      });
+    } else if (_sensorSubscriptions[sensor] != null) {
+      _sensorSubscriptions[sensor]!.cancel();
+      _sensorSubscriptions.remove(sensor);
+    }
+  }
+
 }

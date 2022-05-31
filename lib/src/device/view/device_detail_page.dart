@@ -41,7 +41,9 @@ class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
               child: IconButton(
                 icon: const Icon(Icons.refresh),
                 color: Colors.white,
-                onPressed: () {},
+                onPressed: () {
+                  con.refreshData();
+                },
               ),
             ),
             Visibility(
@@ -86,7 +88,9 @@ class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
           child: FloatingActionButton(
             backgroundColor: darkBlue,
             child: const Icon(Icons.add),
-            onPressed: () {},
+            onPressed: () {
+              con.newChartPage(context);
+            },
           ),
         ),
         bottomNavigationBar: Visibility(

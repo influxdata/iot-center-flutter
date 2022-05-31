@@ -1,6 +1,5 @@
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
-import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 import 'package:vector_math/vector_math.dart' show radians;
@@ -9,10 +8,11 @@ import 'dart:math' show cos, pi, sin;
 class GaugeChart extends StatefulWidget {
   const GaugeChart({
     Key? key,
-    required this.chartData,
+    required this.chartData, required this.con,
   }) : super(key: key);
 
   final ChartData chartData;
+  final DashboardController con;
 
   @override
   StateMVC<StatefulWidget> createState() {
@@ -21,23 +21,18 @@ class GaugeChart extends StatefulWidget {
 }
 
 class _GaugeChart extends StateMVC<GaugeChart> {
-  _GaugeChart() : super(Controller()) {
-    con = controller as Controller;
-  }
 
   @override
   void initState() {
-    add(con);
     super.initState();
-    _data = con.getDataFromInflux(widget.chartData.measurement, true);
+    _data = widget.con.getDataFromInflux(widget.chartData.measurement, true);
 
     widget.chartData.refreshChart = () {
-      _data = con.getDataFromInflux(widget.chartData.measurement, true);
+      _data = widget.con.getDataFromInflux(widget.chartData.measurement, true);
       refresh();
     };
   }
 
-  late Controller con;
   Future<List<FluxRecord>>? _data;
 
   @override
@@ -62,7 +57,7 @@ class _GaugeChart extends StateMVC<GaugeChart> {
                                   ConnectionState.done) {
                             widget.chartData.data = snapshot.data;
                             final value = widget.chartData.data.isNotEmpty
-                                ? con.getDouble(
+                                ? widget.con.getDouble(
                                     widget.chartData.data.last["_value"])
                                 : widget.chartData.startValue;
 

@@ -253,6 +253,7 @@ class DeviceDetailController extends ControllerMVC {
         writeInProgress = false;
       });
       refreshMeasurements();
+      refreshData();
       return value;
     });
     return null;
@@ -282,5 +283,32 @@ class DeviceDetailController extends ControllerMVC {
 
   void refreshChartEditable() async{
     dashboardController!.editable = editable;
+  }
+
+  void refreshData() {
+    dashboardController!.refreshCharts();
+  }
+
+  void newChartPage(BuildContext context) {
+    var chart = Chart(
+            row: 0,
+            column: 0,
+            data: ChartData.gauge(
+              measurement: '',
+              endValue: 100,
+              label: 'label',
+              unit: 'unit',
+              startValue: 0,
+              decimalPlaces: 0,
+            ));
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (c) => ChartDetailPage(
+            chart: chart,
+            newChart: true,
+          ),
+        ));
   }
 }

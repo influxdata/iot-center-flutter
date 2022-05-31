@@ -4,6 +4,8 @@ import 'package:iot_center_flutter_mvc/src/view.dart';
 class Chart {
   Chart({required this.data, required this.row, required this.column});
 
+  Chart.empty();
+
   Chart.fromJson(Map<String, dynamic> json) {
     var chartType = json['chartType'];
 

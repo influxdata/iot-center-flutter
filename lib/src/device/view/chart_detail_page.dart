@@ -3,28 +3,27 @@ import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
-class EditChartPage extends StatefulWidget {
-  const EditChartPage({Key? key, required this.chart}) : super(key: key);
+class ChartDetailPage extends StatefulWidget {
+  const ChartDetailPage({Key? key, required this.chart, required this.newChart})
+      : super(key: key);
 
   final Chart chart;
+  final bool newChart;
 
   @override
-  _EditChartPageState createState() {
-    return _EditChartPageState();
+  _ChartDetailPageState createState() {
+    return _ChartDetailPageState();
   }
 }
 
-class _EditChartPageState extends StateMVC<EditChartPage> {
+class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
   final _formKey = GlobalKey<FormState>();
 
-  _EditChartPageState() : super(Controller()) {
-    con = controller as Controller;
-    con.loadFieldNames();
+  _ChartDetailPageState() : super() {
+    con =  DashboardController();
   }
 
-  late Controller con;
-  var isGauge = true;
-  var chartType = '';
+  late DashboardController con;
 
   showAlertDialog(BuildContext context) {
     // set up the buttons
@@ -37,10 +36,7 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
     Widget continueButton = TextButton(
       child: const Text("Delete"),
       onPressed: () {
-        con.dashboard.removeWhere((element) =>
-            element.row == widget.chart.row &&
-            element.column == widget.chart.column);
-        con.removeItemFromListView!();
+        con.deleteChart(widget.chart.row, widget.chart.column);
         Navigator.of(context).pop();
         Navigator.of(context).pop();
       },
@@ -67,14 +63,19 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
     return Scaffold(
         appBar: AppBar(
             backgroundColor: darkBlue,
-            title: const Text("Edit chart"),
+            title: widget.newChart
+                ? const Text("New chart")
+                : const Text("Edit chart"),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.delete),
-                color: Colors.white,
-                onPressed: () {
-                  showAlertDialog(context);
-                },
+              Visibility(
+                visible: !widget.newChart,
+                child: IconButton(
+                  icon: const Icon(Icons.delete),
+                  color: Colors.white,
+                  onPressed: () {
+                    showAlertDialog(context);
+                  },
+                ),
               ),
             ]),
         backgroundColor: lightGrey,
@@ -91,21 +92,22 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   value: widget.chart.data.chartType.toString(),
                   onChanged: (value) {
                     setState(() {
-                      isGauge = value == 'ChartType.gauge';
+                      con.isGauge = value == 'ChartType.gauge';
                     });
                   },
                   onSaved: (value) {
-                    chartType = value!;
+                    con.chartType = value!;
                   },
                 ),
-                FutureBuilder<dynamic>(
-                    future: con.loadFieldNames(),
-                    builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                FutureBuilder<List<FluxRecord>>(
+                    future: con.fieldNames,
+                    builder:
+                        (context, AsyncSnapshot<List<FluxRecord>> snapshot) {
                       if (snapshot.hasError) {
                         return Text(snapshot.error.toString());
                       }
                       if (snapshot.hasData) {
-                        final List<FluxRecord> data = snapshot.data;
+                        final List<FluxRecord> data = snapshot.data!;
                         final items = data
                             .map((x) => DropDownItem(
                                 label: x["_value"], value: x["_value"]))
@@ -134,35 +136,36 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   },
                 ),
                 Visibility(
-                  visible: isGauge,
+                  visible: con.isGauge,
                   child: DoubleNumberBoxRow(
                     label: "Range:",
                     firstController: TextEditingController(
                         text: widget.chart.data.startValue.toStringAsFixed(0)),
                     firstOnSaved: (value) {
                       widget.chart.data.startValue =
-                          isGauge ? double.parse(value!) : 0;
+                          con.isGauge ? double.parse(value!) : 0;
                     },
                     secondController: TextEditingController(
                         text: widget.chart.data.endValue.toStringAsFixed(0)),
                     secondOnChanged: (value) {
                       widget.chart.data.endValue =
-                          isGauge ? double.parse(value!) : 0;
+                          con.isGauge ? double.parse(value!) : 0;
                     },
                   ),
                 ),
                 Visibility(
-                  visible: isGauge,
+                  visible: con.isGauge,
                   child: NumberBoxRow(
                     label: "Rounded:",
                     controller: TextEditingController(
-                        text: isGauge && widget.chart.data.decimalPlaces != null
+                        text: con.isGauge &&
+                                widget.chart.data.decimalPlaces != null
                             ? widget.chart.data.decimalPlaces!
                                 .toStringAsFixed(0)
                             : '0'),
                     onSaved: (value) {
                       widget.chart.data.decimalPlaces =
-                          isGauge ? int.parse(value!) : 0;
+                          con.isGauge ? int.parse(value!) : 0;
                     },
                   ),
                 ),
@@ -178,17 +181,13 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 35, horizontal: 3),
                   child: FormButton(
-                      label: 'Update',
+                      label: widget.newChart ? 'Create' : 'Update',
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           _formKey.currentState!.save();
 
-                          widget.chart.data.chartType =
-                              chartType == 'ChartType.gauge'
-                                  ? ChartType.gauge
-                                  : ChartType.simple;
 
-                          widget.chart.data.refreshWidget!();
+                          con.saveChart(widget.chart, widget.newChart);
 
                           Navigator.pop(context);
                         }
@@ -203,6 +202,6 @@ class _EditChartPageState extends StateMVC<EditChartPage> {
   @override
   void initState() {
     super.initState();
-    isGauge = widget.chart.data.chartType == ChartType.gauge;
+    con.isGauge = widget.chart.data.chartType == ChartType.gauge;
   }
 }

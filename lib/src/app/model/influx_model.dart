@@ -1,13 +1,18 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:battery_plus/battery_plus.dart';
+import 'package:environment_sensors/environment_sensors.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'dart:async';
 
 import 'dart:developer' as developer;
+
+import 'package:sensors_plus/sensors_plus.dart';
 
 const measurementDashboardFlutter = "dashboard-flutter";
 const defaultDashboardKey = "default";
@@ -310,7 +315,7 @@ class InfluxModel extends ModelMVC {
   /// Parameters:
   /// * [Map<String, dynamic>?] deviceId
   ///
-  Future<List<dynamic>> fetchFieldNames(String deviceId) async {
+  Future<List<FluxRecord>> fetchFieldNames(String deviceId) async {
     if (deviceId.isEmpty) return [];
 
     var _influxDBClient = client.clone();
@@ -598,6 +603,55 @@ class InfluxModel extends ModelMVC {
 
   //#endregion Devices
 
+  Future<List<FluxRecord>> fetchDeviceDataFieldMedian(
+      String field, bool median, Device device, String maxTime) async {
+    var _influxDBClient = client.clone();
+    var queryApi = _influxDBClient.getQueryService();
+
+    var aggregate = '1m';
+
+    switch (maxTime) {
+      case '-3d':
+      case '-7d':
+        aggregate = '30m';
+        break;
+      case '-30d':
+        aggregate = '2h';
+        break;
+    }
+
+    var fluxQuery = median
+        ? '''
+          import "influxdata/influxdb/v1"
+          from(bucket: "${_influxDBClient.bucket}")
+              |> range(start: $maxTime)
+              |> filter(fn: (r) => r.clientId == "${device.id}" 
+                                and r._measurement == "environment" 
+                                and r["_field"] == "$field")
+              |> mean()
+          '''
+        : '''
+          import "influxdata/influxdb/v1"
+          from(bucket: "${_influxDBClient.bucket}")
+              |> range(start: $maxTime)
+              |> filter(fn: (r) => r.clientId == "${device.id}" 
+                               and r._measurement == "environment" 
+                               and r["_field"] == "$field")
+              |> keep(columns: ["_value", "_time"])
+              |> aggregateWindow(column: "_value", every: $aggregate, fn: mean)
+          ''';
+
+    try {
+      var stream = await queryApi.query(fluxQuery);
+      return await stream.toList();
+    } catch (e) {
+      developer.log(e.toString());
+      return [];
+    } finally {
+      _influxDBClient.close();
+    }
+  }
+
   /// replace localhost with 10.0.2.2 for android devices
   String fixLocalhost(String? url) {
     url ??= "http://localhost:5000";
@@ -703,4 +757,122 @@ class InfluxModel extends ModelMVC {
   }
 
 //#endregion Write emulated data
+
+//#region Sensors
+
+  Future writeSensor(
+      String sensorName, Map<String, double> fieldValueMap) async {
+    var _influxDBClient = client.clone();
+    final writeApi = _influxDBClient.getWriteService();
+
+    final point = Point('environment')
+        // TODO(sensors): mobile name/id/type
+        .addTag('clientId', "mobile");
+    fieldValueMap.forEach((key, value) {
+      final name = key != "" ? "${sensorName}_$key" : sensorName;
+      point.addField(name, value);
+    });
+
+    // TODO(sensors): batch write
+    writeApi.write(point);
+  }
+
+  Stream<Map<String, double>> get accelerometer =>
+      SensorsPlatform.instance.accelerometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get userAccelerometer =>
+      SensorsPlatform.instance.userAccelerometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get gyroscope =>
+      SensorsPlatform.instance.gyroscopeEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get magnetometer =>
+      SensorsPlatform.instance.magnetometerEvents
+          .map((event) => {"x": event.x, "y": event.y, "z": event.z});
+
+  Stream<Map<String, double>> get battery async* {
+    final battery = Battery();
+    final Map<String, double> batteryLastState = {};
+    bool changed = true;
+
+    setField(String name, double value) {
+      if (batteryLastState[name] != value) {
+        changed = true;
+        batteryLastState[name] = value;
+      }
+    }
+
+    await for (var _ in Stream.periodic(const Duration(seconds: 1))) {
+      final level = (await battery.batteryLevel).toDouble();
+      setField("level", level);
+
+      final state = (await battery.batteryState);
+      if (state != BatteryState.unknown) {
+        setField("charging", state == BatteryState.charging ? 1 : 0);
+      }
+
+      if (changed) {
+        changed = false;
+        yield Map.from(batteryLastState);
+      }
+    }
+  }
+
+  Stream<Map<String, double>> get temperature =>
+      EnvironmentSensors().temperature.map((x) => {"": x});
+
+  Stream<Map<String, double>> get humidity =>
+      EnvironmentSensors().humidity.map((x) => {"": x});
+
+  Stream<Map<String, double>> get light =>
+      EnvironmentSensors().light.map((x) => {"": x});
+
+  Stream<Map<String, double>> get pressure =>
+      EnvironmentSensors().pressure.map((x) => {"": x});
+
+  Stream<Map<String, double>> get geo =>
+      Geolocator.getPositionStream().map((pos) {
+        // TODO: more metrics
+        return {"lat": pos.latitude, "lon": pos.longitude, "acc": pos.accuracy};
+      });
+
+  Future<Map<String, Stream<Map<String, double>>>> availableSensors() async {
+    final Map<String, Stream<Map<String, double>>> sensors = {};
+    sensors["Accelerometer"] = accelerometer;
+    sensors["UserAccelerometer"] = userAccelerometer;
+    sensors["Magnetometer"] = magnetometer;
+    sensors["Battery"] = battery;
+
+    final es = EnvironmentSensors();
+    if (await es.getSensorAvailable(SensorType.AmbientTemperature)) {
+      sensors["Temperature"] = temperature;
+    }
+    if (await es.getSensorAvailable(SensorType.Humidity)) {
+      sensors["Humidity"] = humidity;
+    }
+    if (await es.getSensorAvailable(SensorType.Light)) {
+      sensors["Light"] = light;
+    }
+    if (await es.getSensorAvailable(SensorType.Pressure)) {
+      sensors["Pressure"] = pressure;
+    }
+    if (await Geolocator.isLocationServiceEnabled()) {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // TODO: ask when clicked on switch instead
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        sensors["Geo"] = geo;
+      }
+    }
+
+    return sensors;
+  }
+
+//#endregion Sensors
 }

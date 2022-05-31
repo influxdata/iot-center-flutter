@@ -16,7 +16,6 @@ class _MyAppState extends AppStateMVC<MyApp> {
       : super(
           controller: AppController(),
           controllers: [
-            Controller(),
             HomePageController(),
           ],
         );

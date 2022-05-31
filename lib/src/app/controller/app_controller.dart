@@ -8,12 +8,8 @@ class AppController extends ControllerMVC {
 
   @override
   Future<bool> initAsync() async {
-    var con = Controller();
     try {
-      await con.initAsync();
       await Future.wait([
-        con.loadDevices(),
-        con.loadSavedData(),
         // TODO: add reason why we wait 2 seconds
         Future.delayed(const Duration(seconds: 2), () {})
       ]);

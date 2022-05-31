@@ -2,7 +2,9 @@ import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'package:iot_center_flutter_mvc/src/controller.dart';
 
 class SensorsTab extends StatefulWidget {
-  const SensorsTab({Key? key}) : super(key: key);
+  const SensorsTab({Key? key, required this.con}) : super(key: key);
+
+  final SettingsPageController con;
 
   @override
   _SensorsTabState createState() {
@@ -11,37 +13,30 @@ class SensorsTab extends StatefulWidget {
 }
 
 class _SensorsTabState extends StateMVC<SensorsTab> {
-  late Controller con;
-
-  _SensorsTabState() : super(Controller()) {
-    con = controller as Controller;
-  }
-
   @override
   void initState() {
-    add(con);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     // TODO: find better way of initializating sensors
-    if (!con.sensorsInitialized) {
-      con.initSensors().then((value) => setState(
+    if (!widget.con.sensorsInitialized) {
+      widget.con.initSensors().then((value) => setState(
             () {},
       ));
     }
 
     onChanged(String sensor) => (bool value) {
       setState(() {
-        con.setSensorIsWriting(sensor, value);
+        widget.con.setSensorIsWriting(sensor, value);
       });
     };
 
     return ListView(
-        children: con.sensors
+        children: widget.con.sensors
             .map((String sensor) => SwitchListTile(
-          value: con.sensorIsWriting(sensor),
+          value: widget.con.sensorIsWriting(sensor),
           onChanged: onChanged(sensor),
           title: Text(sensor),
         ))

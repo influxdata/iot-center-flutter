@@ -208,7 +208,7 @@ class _FormRowState extends State<FormRow> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.label!.isNotEmpty
+    return widget.label != null && widget.label!.isNotEmpty
         ? Padding(
             padding: widget.padding,
             child: Row(

@@ -200,4 +200,50 @@ class DashboardController extends ControllerMVC {
 
     refreshCharts();
   }
+
+  Widget changeTimeRange(BuildContext context) {
+    late TextEditingController newDeviceController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("Change time range"),
+      content: Form(
+        key: _formKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          Expanded(
+              child: DropDownListRow(
+                items: timeOptionList,
+                value: selectedTimeOption,
+                onChanged: (value) {
+                  // setState(() {
+                  //   selectedTimeOption = value!;
+                  // });
+                },
+                onSaved: (value) {
+                  setState(() {
+                    selectedTimeOption = value!;
+                  });
+                  refreshCharts();
+                  Navigator.of(context).pop();
+                },
+              ),),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Save", style: TextStyle(color: pink)),
+            onPressed: (() async {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+              }
+            })),
+      ],
+    );
+  }
 }

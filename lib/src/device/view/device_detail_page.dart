@@ -38,6 +38,21 @@ class _DeviceDetailPageState extends StateMVC<DeviceDetailPage> {
           actions: [
             Visibility(
               visible: con.selectedIndex == 0,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w500),
+                  primary: Colors.white,
+                ),
+                onPressed: () async {
+                  con.timeRangeOnChange(context);
+                },
+                child: Text(con.dashboardController!.selectedTimeOption),
+              ),
+            ),
+            Visibility(
+              visible: con.selectedIndex == 0,
               child: IconButton(
                 icon: const Icon(Icons.refresh),
                 color: Colors.white,

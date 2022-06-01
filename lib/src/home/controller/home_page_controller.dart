@@ -31,10 +31,7 @@ class HomePageController extends ControllerMVC {
   @override
   void initState() {
     super.initState();
-
- }
-
-
+  }
 
   void refreshDevices() {
     setState(() {
@@ -63,23 +60,23 @@ class HomePageController extends ControllerMVC {
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           Expanded(
               child: TextBoxRow(
-                hint: 'Device ID',
-                label: '',
-                controller: newDeviceController,
-                padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Device ID cannot be empty';
-                  }
-                  return null;
-                },
-                onSaved: (value) async {
-                  await _model.createDevice(value.toString());
-                  refreshDevices();
+            hint: 'Device ID',
+            label: '',
+            controller: newDeviceController,
+            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Device ID cannot be empty';
+              }
+              return null;
+            },
+            onSaved: (value) async {
+              await _model.createDevice(value.toString());
+              refreshDevices();
 
-                  Navigator.of(context).pop();
-                },
-              )),
+              Navigator.of(context).pop();
+            },
+          )),
         ]),
       ),
       actions: [
@@ -149,5 +146,4 @@ class HomePageController extends ControllerMVC {
       ],
     );
   }
-
 }

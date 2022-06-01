@@ -311,4 +311,13 @@ class DeviceDetailController extends ControllerMVC {
           ),
         ));
   }
+
+  void timeRangeOnChange(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return dashboardController!.changeTimeRange(context);
+      },
+    ).whenComplete(() => setState((){dashboardController!.selectedTimeOption;}));
+  }
 }

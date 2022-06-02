@@ -18,7 +18,6 @@ class DashboardController extends ControllerMVC {
 
   Future<List<FluxRecord>>? fieldNames;
   var isGauge = true;
-  var chartType = '';
 
   List<DropDownItem> timeOptionList = [
     DropDownItem(label: 'Past 5m', value: '-5m'),
@@ -29,10 +28,6 @@ class DashboardController extends ControllerMVC {
     DropDownItem(label: 'Past 3d', value: '-3d'),
     DropDownItem(label: 'Past 7d', value: '-7d'),
     DropDownItem(label: 'Past 30d', value: '-30d'),
-  ];
-  List<DropDownItem> chartTypeList = [
-    DropDownItem(label: 'Gauge chart', value: ChartType.gauge.toString()),
-    DropDownItem(label: 'Simple chart', value: ChartType.simple.toString()),
   ];
 
   @override
@@ -67,7 +62,11 @@ class DashboardController extends ControllerMVC {
 
   void refreshCharts() {
     for (var chart in selectedDevice.dashboard!) {
-      chart.data.refreshChart!();
+      chart.data.reloadData!();
+      setState(() {
+        chart.data;
+      });
+
     }
   }
 
@@ -163,6 +162,7 @@ class DashboardController extends ControllerMVC {
         (element) => element.row == row && element.column == column);
 
     refreshCharts();
+    setRowCount();
   }
 
   Chart getLastChart() {
@@ -174,12 +174,7 @@ class DashboardController extends ControllerMVC {
             : nextChart);
   }
 
-  void addNewChart(Chart chart) {}
-
   void saveChart(Chart chart, bool newChart) {
-    chart.data.chartType =
-        chartType == 'ChartType.gauge' ? ChartType.gauge : ChartType.simple;
-
     if (newChart) {
       var lastChart = getLastChart();
 
@@ -193,16 +188,18 @@ class DashboardController extends ControllerMVC {
         chart.column = 1;
       }
 
-      addNewChart(chart);
+      selectedDevice.dashboard!.add(chart);
     } else {
-      // chart.data.refreshWidget!();
+      chart.data.reloadData!();
+      setState(() {
+        chart.data;
+      });
     }
 
-    refreshCharts();
+    setRowCount();
   }
 
   Widget changeTimeRange(BuildContext context) {
-    late TextEditingController newDeviceController = TextEditingController();
     final _formKey = GlobalKey<FormState>();
 
     return AlertDialog(
@@ -211,22 +208,19 @@ class DashboardController extends ControllerMVC {
         key: _formKey,
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           Expanded(
-              child: DropDownListRow(
-                items: timeOptionList,
-                value: selectedTimeOption,
-                onChanged: (value) {
-                  // setState(() {
-                  //   selectedTimeOption = value!;
-                  // });
-                },
-                onSaved: (value) {
-                  setState(() {
-                    selectedTimeOption = value!;
-                  });
-                  refreshCharts();
-                  Navigator.of(context).pop();
-                },
-              ),),
+            child: DropDownListRow(
+              items: timeOptionList,
+              value: selectedTimeOption,
+              onChanged: (value) {},
+              onSaved: (value) {
+                setState(() {
+                  selectedTimeOption = value!;
+                });
+                refreshCharts();
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
         ]),
       ),
       actions: [

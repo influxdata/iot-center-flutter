@@ -1,5 +1,4 @@
 import 'package:influxdb_client/api.dart';
-import 'package:iot_center_flutter_mvc/src/view.dart';
 
 enum ChartType {
   gauge,
@@ -36,10 +35,7 @@ class ChartData {
   double size = 120;
   int? decimalPlaces;
 
-  Function()? refreshHeader;
-  Function()? refreshChart;
-  Function()? refreshWidget;
-  Function()? removeChart;
+  Function()? reloadData;
 
   ChartType chartType = ChartType.simple;
 }

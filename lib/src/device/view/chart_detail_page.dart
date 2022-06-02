@@ -1,6 +1,6 @@
 import 'package:influxdb_client/api.dart';
+import 'package:iot_center_flutter_mvc/src/device/controller/chart_detail_controller.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
-import 'package:iot_center_flutter_mvc/src/controller.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class ChartDetailPage extends StatefulWidget {
@@ -19,43 +19,10 @@ class ChartDetailPage extends StatefulWidget {
 class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
   final _formKey = GlobalKey<FormState>();
 
-  _ChartDetailPageState() : super() {
-    con =  DashboardController();
-  }
+  late ChartDetailController con;
 
-  late DashboardController con;
-
-  showAlertDialog(BuildContext context) {
-    // set up the buttons
-    Widget cancelButton = TextButton(
-      child: const Text("Cancel"),
-      onPressed: () {
-        Navigator.of(context).pop();
-      },
-    );
-    Widget continueButton = TextButton(
-      child: const Text("Delete"),
-      onPressed: () {
-        con.deleteChart(widget.chart.row, widget.chart.column);
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-      },
-    );
-    // set up the AlertDialog
-    AlertDialog alert = AlertDialog(
-      title: const Text("Delete chart"),
-      actions: [
-        cancelButton,
-        continueButton,
-      ],
-    );
-    // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
+  _ChartDetailPageState() : super(ChartDetailController()) {
+    con = controller as ChartDetailController;
   }
 
   @override
@@ -73,7 +40,7 @@ class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
                   icon: const Icon(Icons.delete),
                   color: Colors.white,
                   onPressed: () {
-                    showAlertDialog(context);
+                    con.showAlertDialog(context, widget.chart);
                   },
                 ),
               ),
@@ -129,53 +96,26 @@ class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
                     }),
                 TextBoxRow(
                   label: "Label:",
-                  controller:
-                      TextEditingController(text: widget.chart.data.label),
-                  onSaved: (value) {
-                    widget.chart.data.label = value!;
-                  },
+                  controller: con.label,
                 ),
                 Visibility(
                   visible: con.isGauge,
                   child: DoubleNumberBoxRow(
                     label: "Range:",
-                    firstController: TextEditingController(
-                        text: widget.chart.data.startValue.toStringAsFixed(0)),
-                    firstOnSaved: (value) {
-                      widget.chart.data.startValue =
-                          con.isGauge ? double.parse(value!) : 0;
-                    },
-                    secondController: TextEditingController(
-                        text: widget.chart.data.endValue.toStringAsFixed(0)),
-                    secondOnChanged: (value) {
-                      widget.chart.data.endValue =
-                          con.isGauge ? double.parse(value!) : 0;
-                    },
+                    firstController: con.startValue,
+                    secondController: con.endValue,
                   ),
                 ),
                 Visibility(
                   visible: con.isGauge,
                   child: NumberBoxRow(
                     label: "Rounded:",
-                    controller: TextEditingController(
-                        text: con.isGauge &&
-                                widget.chart.data.decimalPlaces != null
-                            ? widget.chart.data.decimalPlaces!
-                                .toStringAsFixed(0)
-                            : '0'),
-                    onSaved: (value) {
-                      widget.chart.data.decimalPlaces =
-                          con.isGauge ? int.parse(value!) : 0;
-                    },
+                    controller: con.decimalPlaces,
                   ),
                 ),
                 TextBoxRow(
                   label: "Unit:",
-                  controller:
-                      TextEditingController(text: widget.chart.data.unit),
-                  onSaved: (value) {
-                    widget.chart.data.unit = value!;
-                  },
+                  controller: con.unit,
                 ),
                 Padding(
                   padding:
@@ -185,10 +125,7 @@ class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           _formKey.currentState!.save();
-
-
-                          con.saveChart(widget.chart, widget.newChart);
-
+                          con.saveChart(widget.newChart);
                           Navigator.pop(context);
                         }
                       }),
@@ -202,6 +139,7 @@ class _ChartDetailPageState extends StateMVC<ChartDetailPage> {
   @override
   void initState() {
     super.initState();
-    con.isGauge = widget.chart.data.chartType == ChartType.gauge;
+    add(con);
+    con.chart = widget.chart;
   }
 }

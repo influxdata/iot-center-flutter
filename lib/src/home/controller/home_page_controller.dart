@@ -28,11 +28,6 @@ class HomePageController extends ControllerMVC {
   bool deleteWithData = false;
   bool settingsReadonly = true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void refreshDevices() {
     setState(() {
       deviceList;

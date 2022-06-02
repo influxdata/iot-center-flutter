@@ -1,5 +1,4 @@
 import 'package:iot_center_flutter_mvc/src/model.dart';
-import 'package:iot_center_flutter_mvc/src/view.dart';
 
 class Chart {
   Chart({required this.data, required this.row, required this.column});

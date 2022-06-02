@@ -27,7 +27,7 @@ class _GaugeChart extends StateMVC<GaugeChart> {
     super.initState();
     _data = widget.con.getDataFromInflux(widget.chartData.measurement, true);
 
-    widget.chartData.refreshChart = () {
+    widget.chartData.reloadData = () {
       _data = widget.con.getDataFromInflux(widget.chartData.measurement, true);
       refresh();
     };

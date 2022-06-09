@@ -124,16 +124,8 @@ class _HomePageState extends StateMVC<HomePage> {
                                       color: darkBlue,
                                     ),
                                     onPressed: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  DeviceDetailPage(
-                                                      deviceId: snapshot
-                                                          .data[index]
-                                                      ['deviceId'])))
-                                          .whenComplete(
-                                              () => con.refreshDevices());
+                                      con.deviceDetail(context,
+                                          snapshot.data[index]['deviceId']);
                                     }),
                               ],
                             ),

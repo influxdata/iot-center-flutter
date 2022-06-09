@@ -52,7 +52,7 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                 icon: const Icon(Icons.refresh),
                 color: Colors.white,
                 onPressed: () {
-                  con.refreshDevices();
+                  con.refreshDashboards();
                 },
               ),
             ),
@@ -79,8 +79,8 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
           unselectedFontSize: 12,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.thermostat_outlined),
-              label: 'Devices',
+              icon: Icon(Icons.dashboard_outlined),
+              label: 'Dashboards',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.sensors),

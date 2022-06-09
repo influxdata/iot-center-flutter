@@ -5,11 +5,12 @@ class DeviceConfig {
   String influxBucket = '';
   String createdAt = '';
   String id = '';
+  String type = '';
 
   DeviceConfig();
 
   DeviceConfig.withParams(this.id, this.createdAt, this.influxOrg,
-      this.influxUrl, this.influxBucket, this.influxToken);
+      this.influxUrl, this.influxBucket, this.influxToken, this.type);
 
   DeviceConfig.fromJson(Map<String, dynamic> json) {
     influxUrl = json['influx_url'];

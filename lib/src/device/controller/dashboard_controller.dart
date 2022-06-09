@@ -13,7 +13,7 @@ class DashboardController extends ControllerMVC {
   static DashboardController? _this;
   final InfluxModel _model;
 
-  late Device selectedDevice;
+  Device? selectedDevice;
   String selectedTimeOption = "-1h";
 
   Future<List<FluxRecord>>? fieldNames;
@@ -32,7 +32,7 @@ class DashboardController extends ControllerMVC {
 
   @override
   void initState() {
-    fieldNames = _model.fetchFieldNames(selectedDevice.id);
+    fieldNames = _model.fetchFieldNames(selectedDevice!.id);
     super.initState();
   }
 
@@ -48,8 +48,9 @@ class DashboardController extends ControllerMVC {
   int _rowCount = 0;
   int get rowCount => _rowCount;
   void setRowCount() {
-    _rowCount = selectedDevice.dashboard != null
-        ? selectedDevice.dashboard!
+    _rowCount = selectedDevice!.dashboard != null &&
+            selectedDevice!.dashboard!.isNotEmpty
+        ? selectedDevice!.dashboard!
                 .reduce((currentChart, nextChart) =>
                     currentChart.row > nextChart.row ? currentChart : nextChart)
                 .row +
@@ -61,18 +62,17 @@ class DashboardController extends ControllerMVC {
   }
 
   void refreshCharts() {
-    for (var chart in selectedDevice.dashboard!) {
+    for (var chart in selectedDevice!.dashboard!) {
       chart.data.reloadData!();
       setState(() {
         chart.data;
       });
-
     }
   }
 
   Widget buildChartListViewRow(index, BuildContext context) {
     var chartRow =
-        selectedDevice.dashboard!.where((e) => e.row == index).toList();
+        selectedDevice!.dashboard!.where((e) => e.row == index).toList();
     List<Widget> chartWidgets = [];
 
     if (chartRow.isNotEmpty) {
@@ -151,44 +151,51 @@ class DashboardController extends ControllerMVC {
   Future<List<FluxRecord>> getDataFromInflux(
       String measurement, bool median) async {
     return _model.fetchDeviceDataFieldMedian(
-        measurement, median, selectedDevice, selectedTimeOption);
+        measurement, median, selectedDevice!, selectedTimeOption);
   }
 
   double getDouble(dynamic value) =>
       value is String ? double.parse(value) : value.toDouble();
 
   void deleteChart(int row, int column) {
-    selectedDevice.dashboard!.removeWhere(
+    selectedDevice!.dashboard!.removeWhere(
         (element) => element.row == row && element.column == column);
 
     refreshCharts();
     setRowCount();
   }
 
-  Chart getLastChart() {
-    return selectedDevice.dashboard!.reduce((currentChart, nextChart) =>
-        currentChart.row > nextChart.row ||
-                (currentChart.row == nextChart.row &&
-                    currentChart.column > nextChart.column)
-            ? currentChart
-            : nextChart);
+  Chart? getLastChart() {
+    return selectedDevice!.dashboard != null &&
+            selectedDevice!.dashboard!.isNotEmpty
+        ? selectedDevice!.dashboard!.reduce((currentChart, nextChart) =>
+            currentChart.row > nextChart.row ||
+                    (currentChart.row == nextChart.row &&
+                        currentChart.column > nextChart.column)
+                ? currentChart
+                : nextChart)
+        : null;
   }
 
   void saveChart(Chart chart, bool newChart) {
     if (newChart) {
       var lastChart = getLastChart();
 
-      if (chart.data.chartType == ChartType.gauge &&
+      if (lastChart != null &&
+          chart.data.chartType == ChartType.gauge &&
           lastChart.data.chartType == ChartType.gauge &&
           lastChart.column == 1) {
         chart.row = lastChart.row;
         chart.column = 2;
-      } else {
+      } else if (lastChart != null) {
         chart.row = lastChart.row + 1;
+        chart.column = 1;
+      } else {
+        chart.row = 1;
         chart.column = 1;
       }
 
-      selectedDevice.dashboard!.add(chart);
+      selectedDevice!.dashboard!.add(chart);
     } else {
       chart.data.reloadData!();
       setState(() {
@@ -239,5 +246,158 @@ class DashboardController extends ControllerMVC {
             })),
       ],
     );
+  }
+
+  Widget changeDashboard(BuildContext context, String? dashboardKey) {
+    final _formKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("Change dashboard"),
+      content: Form(
+        key: _formKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          FutureBuilder<dynamic>(
+              future: _model.fetchDashboardsByType(selectedDevice!.type),
+              builder: (context, AsyncSnapshot<dynamic> snapshot) {
+                if (snapshot.hasData &&
+                    snapshot.connectionState == ConnectionState.done) {
+                  final data = snapshot.data;
+                  late List<DropDownItem> dashboardList = List.empty();
+                  if (data is List) {
+                    dashboardList = data
+                        .map((d) =>
+                            DropDownItem(label: d['key'], value: d['key']))
+                        .toList();
+                  }
+                  var selectedDashboard =
+                      dashboardKey == null || dashboardKey.isEmpty
+                          ? selectedDevice!.dashboardKey
+                          : dashboardKey;
+
+                  return Expanded(
+                    child: DropDownListRow(
+                      items: dashboardList,
+                      value: selectedDashboard,
+                      onChanged: (value) {
+                        selectedDevice!.dashboardKey = value.toString();
+                      },
+                      onSaved: (value) {
+                        selectedDevice!.dashboardKey = value.toString();
+                      },
+                    ),
+                  );
+                } else {
+                  return const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: pink,
+                      strokeWidth: 3,
+                    ),
+                  );
+                }
+              }),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+          child: const Text("New"),
+          onPressed: () {
+            Navigator.of(context).pop();
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return newDashboard(context);
+              },
+            );
+          },
+        ),
+        TextButton(
+            child: const Text("Save", style: TextStyle(color: pink)),
+            onPressed: (() async {
+              _formKey.currentState!.save();
+              _model.pairDeviceDashboard(
+                  selectedDevice!.id, selectedDevice!.dashboardKey);
+
+              selectedDevice!.dashboard = await _model.fetchDashboard(
+                  selectedDevice!.dashboardKey, selectedDevice!.type);
+
+              Navigator.of(context).pop();
+
+              setRowCount();
+              refreshCharts();
+            })),
+      ],
+    );
+  }
+
+  Widget newDashboard(BuildContext context) {
+    late TextEditingController newDashboardController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
+
+    return AlertDialog(
+      title: const Text("New dashboard"),
+      content: Form(
+        key: _formKey,
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          Expanded(
+              child: TextBoxRow(
+            hint: 'Dashboard key',
+            label: '',
+            controller: newDashboardController,
+            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Dashboard ID cannot be empty';
+              }
+              return null;
+            },
+          )),
+        ]),
+      ),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+            child: const Text("Create", style: TextStyle(color: pink)),
+            onPressed: (() async {
+              await _model.createDashboard(
+                  newDashboardController.text, selectedDevice!.type, null);
+
+              Navigator.of(context).pop();
+
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return changeDashboard(context, newDashboardController.text);
+                },
+              );
+            })),
+      ],
+    );
+  }
+
+  Future<bool> saveDashboard() async{
+    var pairDeviceDashboard = selectedDevice!.dashboardKey.isEmpty;
+    var dashboardKey = await _model.createDashboard(selectedDevice!.dashboardKey, selectedDevice!.type,
+        selectedDevice!.dashboard);
+
+    if (pairDeviceDashboard) {
+      selectedDevice!.dashboardKey = dashboardKey;
+      _model.pairDeviceDashboard(
+          selectedDevice!.id, selectedDevice!.dashboardKey);
+    }
+
+    return pairDeviceDashboard;
   }
 }

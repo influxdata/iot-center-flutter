@@ -12,23 +12,25 @@ class DeviceDetailController extends ControllerMVC {
       _this ??= DeviceDetailController._(state);
   DeviceDetailController._(StateMVC? state)
       : _model = InfluxModel(),
+        _dashboardController = DashboardController(),
         super(state);
   static DeviceDetailController? _this;
   final InfluxModel _model;
-  DashboardController? dashboardController;
+  DashboardController _dashboardController;
 
-  String? deviceId;
   Future<Device>? selectedDevice;
+
   InfluxDBClient get client => _model.client;
   bool editable = false;
+  String get selectedTimeOption => _dashboardController.selectedTimeOption;
 
   get dashboardList => _model.fetchDashboards();
 
-  Future writeEmulatedData(Function onProgress) async =>
-      _model.writeEmulatedData(deviceId!, onProgress);
+  Future writeEmulatedData(Function onProgress, String deviceId) async =>
+      _model.writeEmulatedData(deviceId, onProgress);
 
-  Future<List<FluxRecord>> getMeasurements() async =>
-      _model.fetchMeasurements(deviceId!);
+  Future<List<FluxRecord>> getMeasurements(String deviceId) async =>
+      _model.fetchMeasurements(deviceId);
 
   int rowCount = 0;
 
@@ -48,22 +50,23 @@ class DeviceDetailController extends ControllerMVC {
     });
   }
 
-  @override
-  void initState() {
+  void initDevice(String deviceId) {
     selectedIndex = 0;
+    selectedDevice = _model.fetchDeviceWithDashboard(deviceId).then((value) => initTabs(value));
+  }
 
-    selectedDevice = _model.fetchDeviceWithDashboard(deviceId!);
-    measurements = getMeasurements();
+  Device initTabs(Device device) {
+    measurements = getMeasurements(device.id);
 
-    dashboardTab = getDashboardTab();
-    deviceDetailTab = getDeviceDetailTab();
+    dashboardTab = getDashboardTab(device);
+    deviceDetailTab = getDeviceDetailTab(device);
     measurementsTab = getMeasurementsTab();
 
-    dashboardController = DashboardController();
+    _dashboardController = DashboardController();
 
     actualTab = dashboardTab;
 
-    super.initState();
+    return device;
   }
 
   Widget? deviceDetailTab;
@@ -78,10 +81,10 @@ class DeviceDetailController extends ControllerMVC {
       selectedIndex = index;
       switch (index) {
         case 0:
-          actualTab = dashboardTab ;
+          actualTab = dashboardTab;
           break;
         case 1:
-          actualTab = deviceDetailTab ;
+          actualTab = deviceDetailTab;
           break;
         case 2:
           actualTab = measurementsTab;
@@ -90,32 +93,17 @@ class DeviceDetailController extends ControllerMVC {
     });
   }
 
-  Widget getDeviceDetailTab() {
+  Widget getDeviceDetailTab(Device device) {
     return ListView(
       children: [
-        FutureBuilder<Device>(
-            future: selectedDevice,
-            builder: (context, AsyncSnapshot<Device> snapshot) {
-              if (snapshot.hasError) {
-                return Text(snapshot.error.toString());
-              }
-              if (snapshot.hasData && deviceId!.isNotEmpty) {
-                return Column(
-                  children: [
-                    tile(deviceId!, 'Device Id', Icons.device_thermostat),
-                    tile(snapshot.data!.dashboardKey, 'Dashboard Key',
-                        Icons.dashboard),
-                    tile(snapshot.data!.createdAt, 'Registration Time',
-                        Icons.lock_clock),
-                    tile(snapshot.data!.key, 'Device key', Icons.key),
-                    tile(snapshot.data!.influxBucket, 'InfluxDB Bucket',
-                        Icons.shopping_basket_rounded),
-                  ],
-                );
-              } else {
-                return const Text("loading...");
-              }
-            }),
+        tile(device.id, 'Device Id', Icons.device_thermostat),
+        tile(device.dashboardKey, 'Dashboard Key',
+            Icons.dashboard),
+        tile(device.createdAt, 'Registration Time',
+            Icons.lock_clock),
+        tile(device.key, 'Device key', Icons.key),
+        tile(device.influxBucket, 'InfluxDB Bucket',
+            Icons.shopping_basket_rounded),
       ],
     );
   }
@@ -148,20 +136,8 @@ class DeviceDetailController extends ControllerMVC {
     );
   }
 
-  Widget getDashboardTab() {
-    return FutureBuilder<Device>(
-        future: selectedDevice,
-        builder: (context, AsyncSnapshot<Device> snapshot) {
-          if (snapshot.hasError) {
-            return Text(snapshot.error.toString());
-          }
-          if (snapshot.hasData &&
-              snapshot.connectionState == ConnectionState.done) {
-           return DashboardTab(selectedDevice: snapshot.data!);
-          } else {
-            return const Text("loading...");
-          }
-        });
+  Widget getDashboardTab(Device device) {
+    return DashboardTab(selectedDevice: device);
   }
 
   ListTile tile(String title, String subtitle, IconData icon) => ListTile(
@@ -243,31 +219,32 @@ class DeviceDetailController extends ControllerMVC {
   bool writeInProgress = false;
   Future<List<FluxRecord>>? measurements;
 
-  Future<num?> writeSampleData() async {
+  Future<num?> writeSampleData(String deviceId) async {
     writeEmulatedData((progressPercent, writtenPoints, totalPoints) {
       developer.log(
           "$progressPercent%, $writtenPoints of $totalPoints points written");
-    }).then((value) {
+    }, deviceId)
+        .then((value) {
       developer.log("Write completed. $value points written.");
       setState(() {
         writeInProgress = false;
       });
-      refreshMeasurements();
+      refreshMeasurements(deviceId);
       refreshData();
       return value;
     });
     return null;
   }
 
-  void refreshMeasurements() {
+  void refreshMeasurements(String deviceId) {
     setState(() {
-      measurements = getMeasurements();
+      measurements = getMeasurements(deviceId);
       measurementsTab = getMeasurementsTab();
     });
     bottomMenuOnTap(selectedIndex);
   }
 
-  void writeStart() async {
+  void writeStart(String deviceId) async {
     if (writeInProgress) {
       return;
     }
@@ -277,30 +254,40 @@ class DeviceDetailController extends ControllerMVC {
       writeInProgress = true;
     });
 
-    var x = await writeSampleData();
+    var x = await writeSampleData(deviceId);
     developer.log("Points written $x");
   }
 
-  void refreshChartEditable() async{
-    dashboardController!.editable = editable;
+  void editableOnChange(Device device) async {
+    if (editable) {
+      if (await _dashboardController.saveDashboard()){
+        setState(() { 
+          deviceDetailTab = getDeviceDetailTab(device);
+        });
+      }
+    }
+    setState(() {
+      editable = !editable;
+    });
+    _dashboardController.editable = editable;
   }
 
   void refreshData() {
-    dashboardController!.refreshCharts();
+    _dashboardController.refreshCharts();
   }
 
   void newChartPage(BuildContext context) {
     var chart = Chart(
-            row: 0,
-            column: 0,
-            data: ChartData.gauge(
-              measurement: '',
-              endValue: 100,
-              label: 'label',
-              unit: 'unit',
-              startValue: 0,
-              decimalPlaces: 0,
-            ));
+        row: 0,
+        column: 0,
+        data: ChartData.gauge(
+          measurement: '',
+          endValue: 100,
+          label: 'label',
+          unit: 'unit',
+          startValue: 0,
+          decimalPlaces: 0,
+        ));
 
     Navigator.push(
         context,
@@ -316,8 +303,19 @@ class DeviceDetailController extends ControllerMVC {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return dashboardController!.changeTimeRange(context);
+        return _dashboardController.changeTimeRange(context);
       },
-    ).whenComplete(() => setState((){dashboardController!.selectedTimeOption;}));
+    ).whenComplete(() => setState(() {
+          _dashboardController.selectedTimeOption;
+        }));
+  }
+
+  void changeDashboard(BuildContext context, Device device) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return _dashboardController.changeDashboard(context, '');
+      },
+    );
   }
 }

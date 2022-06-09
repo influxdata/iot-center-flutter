@@ -33,7 +33,7 @@ export 'package:iot_center_flutter_mvc/src/app/view/common/styles.dart';
 
 export 'package:iot_center_flutter_mvc/src/device/view/device_detail_page.dart';
 
-export 'package:iot_center_flutter_mvc/src/settings/view/tabs/devices_tab.dart';
+export 'package:iot_center_flutter_mvc/src/settings/view/tabs/dashboards_tab.dart';
 
 export 'package:iot_center_flutter_mvc/src/settings/view/tabs/influx_settings_tab.dart';
 

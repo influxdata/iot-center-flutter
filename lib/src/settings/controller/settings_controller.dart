@@ -14,11 +14,11 @@ class SettingsPageController extends ControllerMVC {
   final InfluxModel _model;
 
   InfluxDBClient get client => _model.client;
-  Future<List<dynamic>> get deviceList => _model.fetchDevices();
+  Future<List<dynamic>> get dashboardList => _model.fetchDashboards();
 
   Future<void> checkClient(InfluxDBClient client) => _model.checkClient(client);
 
-  DevicesTab? devicesListView;
+  DashboardsTab? dashboardsListView;
   late SensorsTab sensorsView;
   InfluxSettingsTab? influxSettings;
 
@@ -32,14 +32,14 @@ class SettingsPageController extends ControllerMVC {
   void initState() {
     super.initState();
 
-    devicesListView = DevicesTab(con: this);
+    dashboardsListView = DashboardsTab(con: this);
     sensorsView = SensorsTab(con: this);
     influxSettings = InfluxSettingsTab(con: this);
 
     if (actualTab != null) {
       bottomMenuOnTap(selectedIndex);
     } else {
-      actualTab = devicesListView;
+      actualTab = dashboardsListView;
     }
   }
 
@@ -48,7 +48,7 @@ class SettingsPageController extends ControllerMVC {
       selectedIndex = index;
       switch (index) {
         case 0:
-          actualTab = devicesListView;
+          actualTab = dashboardsListView;
           break;
         case 1:
           actualTab = sensorsView;
@@ -60,10 +60,10 @@ class SettingsPageController extends ControllerMVC {
     });
   }
 
-  void refreshDevices() {
+  void refreshDashboards() {
     setState(() {
-      deviceList;
-      devicesListView = DevicesTab(con: this);
+      dashboardList;
+      dashboardsListView = DashboardsTab(con: this);
     });
 
     bottomMenuOnTap(selectedIndex);
@@ -101,8 +101,8 @@ class SettingsPageController extends ControllerMVC {
               return null;
             },
             onSaved: (value) async {
-              await _model.createDevice(value.toString());
-              refreshDevices();
+              await _model.createDevice(value.toString(), '');
+              refreshDashboards();
 
               Navigator.of(context).pop();
             },
@@ -139,25 +139,9 @@ class SettingsPageController extends ControllerMVC {
     return pink;
   }
 
-  Widget removeDeviceDialog(BuildContext context, deviceId) {
-    deleteWithData = false;
+  Widget removeDashboardDialog(BuildContext context, dashboardKey) {
     return AlertDialog(
-      title: Text("Confirm delete device $deviceId ?"),
-      content: StatefulBuilder(builder: (context, setState) {
-        return Row(children: <Widget>[
-          Checkbox(
-            checkColor: Colors.white,
-            fillColor: MaterialStateProperty.resolveWith(getColor),
-            value: deleteWithData,
-            onChanged: (bool? value) {
-              setState(() {
-                deleteWithData = value!;
-              });
-            },
-          ),
-          const Text("Delete device with data?"),
-        ]);
-      }),
+      title: Text("Confirm delete dashboard $dashboardKey ?"),
       actions: [
         TextButton(
           child: const Text("Cancel"),
@@ -168,10 +152,10 @@ class SettingsPageController extends ControllerMVC {
         TextButton(
             child: const Text("Delete", style: TextStyle(color: pink)),
             onPressed: (() async {
-              await _model.deleteDevice(deviceId!, deleteWithData);
+              _model.deleteDashboard(dashboardKey);
               Navigator.of(context).pop();
 
-              refreshDevices();
+              refreshDashboards();
             })),
       ],
     );
@@ -216,4 +200,7 @@ class SettingsPageController extends ControllerMVC {
     }
   }
 
+  Future<List<dynamic>> deviceList(String data) {
+    return _model.fetchDashboardDevices(data);
+  }
 }

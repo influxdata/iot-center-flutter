@@ -47,5 +47,7 @@
 	<string>This app allow log device geolocation into influxdb</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app allow log device geolocation into influxdb in the background.</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 </dict>
 </plist>

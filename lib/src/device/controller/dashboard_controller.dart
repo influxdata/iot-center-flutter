@@ -63,10 +63,12 @@ class DashboardController extends ControllerMVC {
 
   void refreshCharts() {
     for (var chart in selectedDevice!.dashboard!) {
-      chart.data.reloadData!();
-      setState(() {
-        chart.data;
-      });
+      if (chart.data.reloadData != null) {
+        chart.data.reloadData!();
+        setState(() {
+          chart.data;
+        });
+      }
     }
   }
 

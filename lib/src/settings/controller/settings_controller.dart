@@ -79,35 +79,46 @@ class SettingsPageController extends ControllerMVC {
     client.saveInfluxClient();
   }
 
-  Widget newDeviceDialog(BuildContext context) {
-    late TextEditingController newDeviceController = TextEditingController();
+  Widget newDashboardDialog(BuildContext context) {
+    late var newDashboardController = TextEditingController();
     final _formKey = GlobalKey<FormState>();
 
+    var selectedDeviceType = _model.deviceTypeList.first.value;
     return AlertDialog(
-      title: const Text("New Device"),
+      title: const Text("New Dashboard"),
       content: Form(
         key: _formKey,
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          Expanded(
-              child: TextBoxRow(
-            hint: 'Device ID',
-            label: '',
-            controller: newDeviceController,
-            padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Device ID cannot be empty';
-              }
-              return null;
-            },
-            onSaved: (value) async {
-              await _model.createDevice(value.toString(), '');
-              refreshDashboards();
-
-              Navigator.of(context).pop();
-            },
-          )),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              Expanded(
+                  child: TextBoxRow(
+                hint: 'Dashboard key',
+                label: '',
+                controller: newDashboardController,
+                padding: const EdgeInsets.fromLTRB(10, 10, 0, 20),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Dashboard key cannot be empty';
+                  }
+                  return null;
+                },
+              )),
+            ]),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              Expanded(
+                child: DropDownListRow(
+                  items: _model.deviceTypeList,
+                  value: selectedDeviceType,
+                  onChanged: (value) {
+                    selectedDeviceType = value!;
+                  },
+                ),
+              ),
+            ]),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -121,6 +132,12 @@ class SettingsPageController extends ControllerMVC {
             onPressed: (() async {
               if (_formKey.currentState!.validate()) {
                 _formKey.currentState!.save();
+
+                await _model.createDashboard(newDashboardController.text,
+                    selectedDeviceType, List.empty(growable: true));
+                refreshDashboards();
+
+                Navigator.of(context).pop();
               }
             })),
       ],

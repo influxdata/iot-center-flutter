@@ -41,7 +41,7 @@ class _SettingsPageState extends StateMVC<SettingsPage> {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
-                        return con.newDeviceDialog(context);
+                        return con.newDashboardDialog(context);
                       },
                     );
                   })),

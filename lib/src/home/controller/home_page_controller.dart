@@ -46,7 +46,7 @@ class HomePageController extends ControllerMVC {
   }
 
   Widget newDeviceDialog(BuildContext context) {
-    late TextEditingController newDeviceController = TextEditingController();
+    late var newDeviceController = TextEditingController();
     final _formKey = GlobalKey<FormState>();
 
     var selectedDeviceType = _model.deviceTypeList.first.value;

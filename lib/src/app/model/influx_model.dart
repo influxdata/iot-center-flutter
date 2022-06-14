@@ -31,7 +31,7 @@ class InfluxModel extends ModelMVC {
   String defaultVirtualDashboard =
       '[{"measurement":"Temperature","label":"Temperature","unit":"°C","startValue":0.0,"endValue":40.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":1},{"measurement":"CO2","label":"CO2","unit":"ppm","startValue":400.0,"endValue":3000.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":2},{"measurement":"TVOC","label":"TVOC","unit":"ppm","startValue":0.0,"endValue":100.0,"decimalPlaces":null,"chartType":"ChartType.simple","row":2,"column":1},{"measurement":"Humidity","label":"Humidity","unit":"%","startValue":0.0,"endValue":100.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":3,"column":1},{"measurement":"Pressure","label":"Pressure","unit":"hPa","startValue":900.0,"endValue":1100.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":3,"column":2}]';
   String defaultMobileDashboard =
-      '[{"measurement":"Geo_acc","label":"Geo_acc","unit":"","startValue":0.0,"endValue":30.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":1},{"measurement":"Geo_lat","label":"Geo_lat","unit":"","startValue":0.0,"endValue":50.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":2},{"measurement":"Geo_lon","label":"Geo_lon","unit":"","startValue":0.0,"endValue":100.0,"decimalPlaces":0,"chartType":"ChartType.simple","row":2,"column":1}]';  //#region Client
+      '[{"measurement":"Geo_acc","label":"Geo_acc","unit":"","startValue":0.0,"endValue":30.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":1},{"measurement":"Geo_lat","label":"Geo_lat","unit":"","startValue":0.0,"endValue":50.0,"decimalPlaces":0,"chartType":"ChartType.gauge","row":1,"column":2},{"measurement":"Geo_lon","label":"Geo_lon","unit":"","startValue":0.0,"endValue":100.0,"decimalPlaces":0,"chartType":"ChartType.simple","row":2,"column":1}]'; //#region Client
 
   /// Create a new client for a InfluxDB with default values.
   final InfluxDBClient client = InfluxDBClient(
@@ -412,10 +412,11 @@ class InfluxModel extends ModelMVC {
   Future<void> deleteDashboard(String dashboardKey) async {
     var _influxDBClient = client.clone();
     var deleteApi = _influxDBClient.getDeleteService();
+    var pred = 'key="$dashboardKey"';
 
     try {
       await deleteApi.delete(
-          predicate: 'key="$dashboardKey"',
+          predicate: pred,
           start: DateTime(1970).toUtc(),
           stop: DateTime.now().toUtc(),
           bucket: _influxDBClient.bucket,

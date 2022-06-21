@@ -242,7 +242,7 @@ App bar on this tab has this functions:
   ![Lock open](assets/images/icons/lock_open_dark_24dp.svg#gh-light-mode-only)
   enable/disable editing 
 
-Loading is in method [loadInfluxClient](/lib/src/app/model/influx_client.dart#L27 :
+Loading is in method [loadInfluxClient](/lib/src/app/model/influx_client.dart#L27):
 ```dart
 var prefs = await SharedPreferences.getInstance();
 if (prefs.containsKey("influxClient")) {
@@ -250,7 +250,7 @@ if (prefs.containsKey("influxClient")) {
 }
 ```
 
-Save credentials is allowed only in editable mode. Method for save is [saveInfluxClient](/lib/src/app/model/influx_client.dart#L40 :
+Save credentials is allowed only in editable mode. Method for save is [saveInfluxClient](/lib/src/app/model/influx_client.dart#L40):
 ```dart
 SharedPreferences prefs = await SharedPreferences.getInstance();
 prefs.setString("influxClient", jsonEncode(this));

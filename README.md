@@ -80,7 +80,7 @@ Each device tile contains DeviceId and following actions:
 To `TextBox` enter device id, in `DropDownList` select type of device and click to Save for create. Device is automatically 
 registered in InfluxDB - it's write as point via `WriteService` with its authorization.
 
-Example of creating device point in InfluxDB - [createDevice](/lib/src/app/model/influx_model.dart#L525):
+Example of creating device point in InfluxDB - [createDevice](/lib/src/app/model/influx_model.dart#L524):
 ```dart
 var writeApi = _influxDBClient.getWriteService();
 var point = Point('deviceauth')
@@ -90,7 +90,7 @@ var point = Point('deviceauth')
 writeApi.write(point);
 ```
 
-Creating device IoT authorization via `AuthorizationsApi` - [_createIoTAuthorization](/lib/src/app/model/influx_model.dart#L593):
+Creating device IoT authorization via `AuthorizationsApi` - [_createIoTAuthorization](/lib/src/app/model/influx_model.dart#L592):
 ```dart
 var authorizationApi = _influxDBClient.getAuthorizationsApi();
 var permissions = [
@@ -139,7 +139,7 @@ On each tile of device is ![Settings](assets/images/icons/delete_white_24dp.svg#
 for deleting device. After clicking on it, there is confirmation dialog with `CheckBox` for choose deleting 
 device with associated data - if it's checked, data are deleted too.
 
-Example of deleting data via `DeleteService` - [deleteDevice](/lib/src/app/model/influx_model.dart#L644):
+Example of deleting data via `DeleteService` - [deleteDevice](/lib/src/app/model/influx_model.dart#L643):
 ```dart
 var deleteApi = _influxDBClient.getDeleteService();
 if (deleteWithData) {
@@ -156,7 +156,7 @@ After deleting device **isn't** remove from InfluxDB - in this case **deleting**
 authorization** and **IoT Authorization**.
 
 Removed device has in InfluxDB empty fields `key` and `token`, it means, that device authorization was removed via 
-`WriteService`- [_removeDeviceAuthorization](/lib/src/app/model/influx_model.dart#L674):
+`WriteService`- [_removeDeviceAuthorization](/lib/src/app/model/influx_model.dart#L673):
 ```dart
 var writeApi = _influxDBClient.getWriteService();
 var point = Point('deviceauth')
@@ -167,7 +167,7 @@ writeApi.write(point);
 ```
 <img align="right" src="assets/images/settings-dashboards.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
-IoT Authorization is also removed, in this case `AuthorizationsApi` is used - [_deleteIoTAuthorization](/lib/src/app/model/influx_model.dart#L715):
+IoT Authorization is also removed, in this case `AuthorizationsApi` is used - [_deleteIoTAuthorization](/lib/src/app/model/influx_model.dart#L714):
 ```dart
  var authorizationApi = _influxDBClient.getAuthorizationsApi();
  authorizationApi.deleteAuthorizationsID(key);
@@ -187,7 +187,7 @@ from(bucket: "${_influxDBClient.bucket}")
 ```
 
 For loading associated devices is use `QueryService` for each dashboard (identify by `dashboardKey`) - 
-[fetchDashboardDevices](/lib/src/app/model/influx_model.dart#L315):
+[fetchDashboardDevices](/lib/src/app/model/influx_model.dart#L314):
 
 <img align="right" src="assets/images/settings-dashboards-add.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
@@ -213,7 +213,7 @@ After clicking **add new device** button dialog is shown - to `TextBox` enter da
 type of dashboard and click to Save for create. Dashboard is automatically registered in InfluxDB - it's write as 
 point via `WriteService`.
 
-Example of creating dashboard point in InfluxDB - [createDashboard](/lib/src/app/model/influx_model.dart#L347):
+Example of creating dashboard point in InfluxDB - [createDashboard](/lib/src/app/model/influx_model.dart#L346):
 ```dart
 var writeApi = _influxDBClient.getWriteService();
 var point = Point(measurementDashboardFlutter)
@@ -327,7 +327,7 @@ writeApi.write(point);
 ```
 In 'change dashboard' dialog new dashboard can be created - after clicking 'New' is open another dialog with `TextBox`
 for DashboardKey. The type of dashboard created in Device Detail page is the same as current device. Empty dashboard is saved to
-InfluxDB by `WriteService` - [createDashboard](/lib/src/app/model/influx_model.dart#L347):
+InfluxDB by `WriteService` - [createDashboard](/lib/src/app/model/influx_model.dart#L346):
 
 <img align="right" src="assets/images/device-dashboard-new-dashboard.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 

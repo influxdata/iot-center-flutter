@@ -152,7 +152,7 @@ class DashboardController extends ControllerMVC {
 
   Future<List<FluxRecord>> getDataFromInflux(
       String measurement, bool median) async {
-    return _model.fetchDeviceDataFieldMedian(
+    return _model.fetchDeviceDataField(
         measurement, median, selectedDevice!, selectedTimeOption);
   }
 

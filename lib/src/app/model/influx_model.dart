@@ -239,7 +239,6 @@ class InfluxModel extends ModelMVC {
               |> filter(fn: (r) => r["_measurement"] == "$measurementDashboardFlutter")
               |> filter(fn: (r) => r["deviceType"] == "$deviceType")
               |> last()
-
           ''';
 
     try {
@@ -730,7 +729,7 @@ class InfluxModel extends ModelMVC {
 
   //#endregion Devices
 
-  Future<List<FluxRecord>> fetchDeviceDataFieldMedian(
+  Future<List<FluxRecord>> fetchDeviceDataField(
       String field, bool median, Device device, String maxTime) async {
     var _influxDBClient = client.clone();
     var queryApi = _influxDBClient.getQueryService();

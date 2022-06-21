@@ -309,7 +309,6 @@ dashboard in InfluxDB
 
 Button 'change dashboard' open dialog with `DropDownMenu` - for getting dashboards is use `QueryService`, where are 
 dashboards filtered by device type - [fetchDashboardsByType](/lib/src/app/model/influx_model.dart#L230):
-<img align="right" src="assets/images/device-dashboard-change-dashboard.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 ```sql
 from(bucket: "${_influxDBClient.bucket}")
     |> range(start: -30d)
@@ -317,6 +316,8 @@ from(bucket: "${_influxDBClient.bucket}")
     |> filter(fn: (r) => r["deviceType"] == "$deviceType")
     |> last()
 ```
+<img align="right" src="assets/images/device-dashboard-change-dashboard.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+
 After selecting dashboard and clicking 'Save' is dashboard associated to device. New point is created and write to
 InfluxDB by `WriteService` - [pairDeviceDashboard](/lib/src/app/model/influx_model.dart#L384):
 ```dart
@@ -326,12 +327,12 @@ var point = Point('deviceauth')
         .addField('dashboardKey', dashboardKey);
 writeApi.write(point);
 ```
-
-<img align="right" src="assets/images/device-dashboard-new-dashboard.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
-
 In 'change dashboard' dialog new dashboard can be created - after clicking 'New' is open another dialog with `TextBox`
 for DashboardKey. The type of dashboard created in Device Detail page is the same as current device. Empty dashboard is saved to
 InfluxDB by `WriteService` - [createDashboard](/lib/src/app/model/influx_model.dart#L347):
+
+<img align="right" src="assets/images/device-dashboard-new-dashboard.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+
 ```dart
 var writeApi = _influxDBClient.getWriteService();
 var point = Point(measurementDashboardFlutter)

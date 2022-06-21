@@ -165,16 +165,13 @@ var point = Point('deviceauth')
           .addField('token', '');
 writeApi.write(point);
 ```
+<img align="right" src="assets/images/settings-dashboards.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 IoT Authorization is also removed, in this case `AuthorizationsApi` is used - [_deleteIoTAuthorization](/lib/src/app/model/influx_model.dart#L715):
 ```dart
  var authorizationApi = _influxDBClient.getAuthorizationsApi();
  authorizationApi.deleteAuthorizationsID(key);
 ```
-
-<img align="right" src="assets/images/settings-dashboards.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
-
-
 ### Settings Page
 
 #### Dashboards
@@ -191,6 +188,9 @@ from(bucket: "${_influxDBClient.bucket}")
 
 For loading associated devices is use `QueryService` for each dashboard (identify by `dashboardKey`) - 
 [fetchDashboardDevices](/lib/src/app/model/influx_model.dart#L315):
+
+<img align="right" src="assets/images/settings-dashboards-add.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
+
 ```sql
 from(bucket: "${_influxDBClient.bucket}") 
     |> range(start: 0) 
@@ -199,8 +199,6 @@ from(bucket: "${_influxDBClient.bucket}")
     |> last()
     |> filter(fn: (r) => r._value == "$dashboardKey")
 ```
-
-<img align="right" src="assets/images/settings-dashboards-add.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 App bar on this tab has this functions:
 

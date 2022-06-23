@@ -27,7 +27,7 @@ class _DashboardsTabState extends State<DashboardsTab> {
                 itemCount: dashboardRecords.data.length,
                 itemBuilder: (_, index) {
                   var devicesList = widget.con
-                      .deviceList(dashboardRecords.data[index]['key'] ?? "");
+                      .deviceList(dashboardRecords.data[index]['dashboardKey'] ?? "");
 
                   return Padding(
                     padding: const EdgeInsets.all(5.0),
@@ -53,7 +53,7 @@ class _DashboardsTabState extends State<DashboardsTab> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Dashboard key:   ${dashboardRecords.data[index]['key']}',
+                                        'Dashboard key:   ${dashboardRecords.data[index]['dashboardKey']}',
                                         style: const TextStyle(
                                             color: darkBlue,
                                             fontWeight: FontWeight.w500),
@@ -74,7 +74,7 @@ class _DashboardsTabState extends State<DashboardsTab> {
                                               .removeDashboardDialog(
                                                   context,
                                                   dashboardRecords.data[index]
-                                                      ['key']);
+                                                      ['dashboardKey']);
                                         },
                                       );
                                     }),

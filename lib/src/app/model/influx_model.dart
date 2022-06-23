@@ -268,7 +268,7 @@ class InfluxModel extends ModelMVC {
       from(bucket: "${_influxDBClient.bucket}") 
         |> range(start: 0) 
         |> filter(fn: (r) => r._measurement == "$measurementDashboardFlutter")
-        |> filter(fn: (r) => r.key == "$dashboardKey")
+        |> filter(fn: (r) => r.dashboardKey == "$dashboardKey")
         |> filter(fn: (r) => r._field == "data")
         |> last()
     ''';
@@ -358,7 +358,7 @@ class InfluxModel extends ModelMVC {
     var writeApi = _influxDBClient.getWriteService();
 
     var point = Point(measurementDashboardFlutter)
-        .addTag("key", key)
+        .addTag("dashboardKey", key)
         .addTag("deviceType", deviceType)
         .addField("data", dashboardData);
 
@@ -389,8 +389,8 @@ class InfluxModel extends ModelMVC {
 
     var point = Point('deviceauth')
         .addTag('deviceId', deviceId)
-        .addField('dashboardKey', dashboardKey);
-
+        .addField('dashboardKey', dashboardKey)
+        .addTag('dashboardKey', dashboardKey); // because of possibility to delete point - DeleteService doesn't support predicates containing _field or _value
     try {
       await writeApi.write(point);
     } catch (e) {
@@ -411,11 +411,10 @@ class InfluxModel extends ModelMVC {
   Future<void> deleteDashboard(String dashboardKey) async {
     var _influxDBClient = client.clone();
     var deleteApi = _influxDBClient.getDeleteService();
-    var pred = 'key="$dashboardKey"';
 
     try {
       await deleteApi.delete(
-          predicate: pred,
+          predicate: 'dashboardKey="$dashboardKey"',
           start: DateTime(1970).toUtc(),
           stop: DateTime.now().toUtc(),
           bucket: _influxDBClient.bucket,

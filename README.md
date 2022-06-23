@@ -222,6 +222,19 @@ var point = Point(measurementDashboardFlutter)
         .addField("data", dashboardData);
 writeApi.write(point);
 ```
+On each dashboard tile is ![Settings](assets/images/icons/delete_white_24dp.svg#gh-dark-mode-only)![Lock](assets/images/icons/delete_dark_24dp.svg#gh-light-mode-only)
+for deleting - after clicking on it and after confirmation by `Delete` in dialog, dashboard is deleted from InfluxDB 
+with all associations to devices via `DeleteService` - [deleteDashboard](/lib/src/app/model/influx_model.dart#L411):
+```dart
+var deleteApi = _influxDBClient.getDeleteService();
+deleteApi.delete(
+  predicate: 'dashboardKey="$dashboardKey"',
+  start: DateTime(1970).toUtc(),
+  stop: DateTime.now().toUtc(),
+  bucket: _influxDBClient.bucket,
+  org: _influxDBClient.org);
+```
+
 <img align="right" src="assets/images/settings-sensors.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 #### Sensors
@@ -323,8 +336,12 @@ var writeApi = _influxDBClient.getWriteService();
 var point = Point('deviceauth')
         .addTag('deviceId', deviceId)
         .addField('dashboardKey', dashboardKey);
+        .addTag('dashboardKey', dashboardKey);
 writeApi.write(point);
 ```
+With InfluxDB 2.2, delete predicates can use any column or tag except _time, _field,or _value, so because of future
+possibility of deleting point is also added tag 'dashboardKey'.
+
 In 'change dashboard' dialog new dashboard can be created - after clicking 'New' is open another dialog with `TextBox`
 for DashboardKey. The type of dashboard created in Device Detail page is the same as current device. Empty dashboard is saved to
 InfluxDB by `WriteService` - [createDashboard](/lib/src/app/model/influx_model.dart#L346):

@@ -28,6 +28,11 @@ the data, Telegraf and MQTT.
 - editable charts parameters
 - customizable - adding and deleting charts
 
+### Sensors
+- event based sensor listening
+- requesting permission from user
+- normalized object for simple write 
+- detect available sensors
 
 ## Getting Started
 
@@ -238,6 +243,12 @@ deleteApi.delete(
 <img align="right" src="assets/images/settings-sensors.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 
 #### Sensors
+
+Each sensor is enabled individualy by pressing it's corresponding switch. Sensor sends all data immediately after switch is enabled. 
+Running sensor also show current value underneath its name.
+
+User is asked to allow permission when enables switch if needed. Sensors written in gray are not availeble.
+
 
 <img align="right" src="assets/images/settings-influx.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 

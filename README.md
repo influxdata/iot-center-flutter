@@ -249,6 +249,42 @@ Running sensor also show current value underneath its name.
 
 User is asked to allow permission when enables switch if needed. Sensors written in gray are not availeble.
 
+All sensors sends data via events so we have informations when sensor values change.
+
+Sensors are iplemented using dart/flutter libraries:
+  - sensors_plus
+  - battery_plus
+  - environment_sensors
+  - geolocator
+
+Most of these libraries uses event's to comunicate state changes, some has only getter. Libraries with getters uses *Stream.periodic* to "convert" getter into events.
+
+All sensors sends events with normalized data:
+```dart
+typedef SensorMeasurement = Map<String, double>;
+```
+From this map we can simply create object that we can sent into influxdb:
+```dart
+final measurements = metrics.map((key, value) {
+  final field = sensor.name + (key != "" ? "_$key" : "");
+  return MapEntry(field, value);
+});
+```
+*some sensors sends only one value so it's map has only "" key*
+
+Now we have everything we need for inflxudb write.
+```dart
+var writeApi = _influxDBClient.getWriteService();
+final point = Point("environment");
+point.addTag("clientId", clientID)
+  .addTag("device", device)
+  .time(DateTime.now().toUtc());
+for (var m in measurements.entries) {
+  point.addField(m.key, m.value);
+}
+writeApi.write(point);
+```
+
 
 <img align="right" src="assets/images/settings-influx.png" alt="drawing" width="25%" style="margin-left: 15px; margin-bottom: 15px; border-radius: 10px; filter: drop-shadow(1px 5px 5px black);">
 

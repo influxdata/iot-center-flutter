@@ -1,18 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:battery_plus/battery_plus.dart';
-import 'package:environment_sensors/environment_sensors.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:influxdb_client/api.dart';
 import 'package:iot_center_flutter_mvc/src/model.dart';
 import 'package:iot_center_flutter_mvc/src/view.dart';
 import 'dart:async';
 
 import 'dart:developer' as developer;
-
-import 'package:sensors_plus/sensors_plus.dart';
 
 const measurementDashboardFlutter = "dashboard-flutter";
 const defaultDashboardKey = "default";
@@ -91,7 +86,7 @@ class InfluxModel extends ModelMVC {
   /// Gets devices without empty/unknown key (InfluxDB authorization is not
   /// associated).
   ///
-  Future<List<dynamic>> fetchDevices() async {
+  Future<List<FluxRecord>> fetchDevices() async {
     var _influxDBClient = client.clone();
     var queryApi = _influxDBClient.getQueryService();
 
@@ -258,7 +253,8 @@ class InfluxModel extends ModelMVC {
   /// Parameters:
   /// * [String] dashboardKey: dashboard identifier
   ///
-  Future<dynamic> fetchDashboard(String dashboardKey, String deviceType) async {
+  Future<List<Chart>?> fetchDashboard(
+      String dashboardKey, String deviceType) async {
     var _influxDBClient = client.clone();
     var queryApi = _influxDBClient.getQueryService();
 
@@ -311,7 +307,7 @@ class InfluxModel extends ModelMVC {
   /// Parameters:
   /// * [String] dashboardKey: dashboard identifier
   ///
-  Future<List<dynamic>> fetchDashboardDevices(String dashboardKey) async {
+  Future<List<FluxRecord>> fetchDashboardDevices(String dashboardKey) async {
     var _influxDBClient = client.clone();
     var queryApi = _influxDBClient.getQueryService();
 

@@ -14,7 +14,7 @@ class SettingsPageController extends ControllerMVC {
   final InfluxModel _model;
 
   InfluxDBClient get client => _model.client;
-  Future<List<dynamic>> get dashboardList => _model.fetchDashboards();
+  Future<List<FluxRecord>> get dashboardList => _model.fetchDashboards();
 
   Future<void> checkClient(InfluxDBClient client) => _model.checkClient(client);
 
@@ -186,11 +186,17 @@ class SettingsPageController extends ControllerMVC {
     bottomMenuOnTap(selectedIndex);
   }
 
-  Future<List<dynamic>> deviceList(String data) {
-    return _model.fetchDashboardDevices(data);
+  Future<List<FluxRecord>> deviceList([String? dashboardKey]) {
+    return dashboardKey != null
+        ? _model.fetchDashboardDevices(dashboardKey)
+        : _model.fetchDevices();
   }
 
   void writeSensor(Map<String, double> fieldValueMap) {
     _model.writePoint(fieldValueMap);
+  }
+
+  Future<DeviceConfig> createDevice(String deviceId, String deviceType) {
+    return _model.createDevice(deviceId, deviceType);
   }
 }
